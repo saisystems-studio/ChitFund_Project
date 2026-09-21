@@ -43,6 +43,19 @@ class LoanTypeSerializer(AllFields):
             raise serializers.ValidationError(f"Unknown or inactive installment IDs: {invalid}")
         return value
 
+    def validate(self, attrs):
+        """Default collection types may be configured, but never renamed or disabled."""
+        attrs = super().validate(attrs)
+        if self.instance and self.instance.name.strip().lower() in {"chit", "interest"}:
+            if "name" in attrs and attrs["name"].strip().lower() != self.instance.name.strip().lower():
+                raise serializers.ValidationError({"name": "The default loan type name cannot be changed."})
+            if attrs.get("is_active") is False:
+                raise serializers.ValidationError({"is_active": "Default loan types cannot be deactivated."})
+            # Preserve canonical display casing even if a client submits different casing.
+            attrs["name"] = "Chit" if self.instance.name.strip().lower() == "chit" else "Interest"
+            attrs["is_active"] = True
+        return attrs
+
     def create(self, validated_data):
         ids = validated_data.pop("allowed_installment_ids", [])
         validated_data["allowed_installment_ids"] = json.dumps(ids, separators=(",", ":"))

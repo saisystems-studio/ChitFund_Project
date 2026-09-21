@@ -44,15 +44,34 @@ def adjustment_types(request):
 class LoanTypeViewSet(FinanceViewSet):
     queryset = LoanType.objects.all(); serializer_class = LoanTypeSerializer
 
+    @staticmethod
+    def _ensure_defaults():
+        # Seed only the two protected defaults; existing custom types are untouched.
+        for name in ("Chit", "Interest"):
+            item = LoanType.objects.filter(name__iexact=name).order_by("id").first()
+            if item is None:
+                LoanType.objects.create(name=name, is_active=True)
+            elif not item.is_active or item.name != name:
+                item.name = name
+                item.is_active = True
+                item.save(update_fields=("name", "is_active"))
+
     def get_queryset(self):
+        self._ensure_defaults()
         # Selection requests expose usable master records; deletion removes records permanently.
         if self.request.query_params.get("include_inactive") == "true" or self.action != "list":
             return LoanType.objects.all()
-        return LoanType.objects.filter(is_active=True)
+        return LoanType.objects.filter(is_active=True, name__in=("Chit", "Interest"))
+
+    def create(self, request, *args, **kwargs):
+        return Response({"detail": "Only the fixed Chit and Interest loan types are available."}, status=405)
 
     def destroy(self, request, *args, **kwargs):
+        item = self.get_object()
+        if item.name.strip().lower() in {"chit", "interest"}:
+            return Response({"detail": "Default loan types cannot be deleted."}, status=400)
         try:
-            self.get_object().delete()
+            item.delete()
         except ProtectedError:
             return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
         return Response(status=204)

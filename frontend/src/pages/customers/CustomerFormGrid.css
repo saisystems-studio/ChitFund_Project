@@ -4,8 +4,42 @@
   column-gap: 16px !important;
   row-gap: 14px !important;
   align-items: start !important;
-  padding: 14px 16px 76px !important;
+  padding: 14px 16px 16px !important;
 }
+
+/* Keep the existing desktop field placement, while making the card and action
+   area use the available page height without artificial empty trailing space. */
+.singleForm .customer-form-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  padding: 0 0 24px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .customer-form-grid { padding: 12px 14px !important; }
+  .singleForm .customer-form-actions { margin-top: 20px; padding-bottom: 22px; }
+}
+
+/* Add Customer production layout: shared application/sidebar remains intact. */
+.page:has(.customer-form-grid){background:#fff;min-height:100%;padding:18px 22px 28px;box-sizing:border-box}
+.page:has(.customer-form-grid) .header{margin:0 0 18px;min-height:28px}
+.singleForm .customer-form-grid{border:1px solid #e5e7eb!important;border-radius:12px!important;background:#fff!important;box-shadow:0 1px 2px rgba(15,23,42,.03)!important}
+.singleForm .customer-form-grid .field{color:#6b7280!important;font-size:12px!important;font-weight:600!important}
+.singleForm .customer-form-grid .field input,.singleForm .customer-form-grid .field select,.singleForm .customer-form-grid .field textarea,.singleForm .customer-form-grid .district-dropdown input{height:40px!important;min-height:40px!important;margin-top:7px!important;padding:10px 14px!important;border:1px solid #d1d5db!important;border-radius:8px!important;background:#fff!important;color:#1f2937!important;font-size:13px!important}
+.singleForm .customer-form-grid .field textarea{resize:none!important}
+.singleForm .customer-form-grid .field input:focus,.singleForm .customer-form-grid .field select:focus,.singleForm .customer-form-grid .field textarea:focus{border-color:#2563eb!important;box-shadow:0 0 0 3px rgba(37,99,235,.12)!important}
+.singleForm .customer-form-grid .roleField{color:#6b7280!important;font-size:12px!important;font-weight:600!important}
+.singleForm .customer-form-grid .roles{margin-top:10px!important}
+.singleForm .customer-form-actions{display:flex!important;justify-content:center!important;align-items:center!important;gap:15px!important;width:100%!important}
+.singleForm .customer-form-actions .cancel{border-color:#d1d5db!important;background:#fff!important;color:#4b5563!important}
+.singleForm .customer-form-actions .primary{background:#1e3a8a!important;color:#fff!important}
+@media (max-width:900px){.page:has(.customer-form-grid){padding:16px}.singleForm .customer-form-grid{padding:18px!important;row-gap:18px!important}.singleForm .customer-form-actions{margin-top:20px!important}}
+@media (max-width:600px){.page:has(.customer-form-grid){padding:12px}.singleForm .customer-form-grid{padding:16px!important}.singleForm .customer-form-actions{gap:10px!important;flex-wrap:wrap}.singleForm .customer-form-actions button{flex:1 1 120px}}
 
 .customer-form-grid > * {
   min-width: 0 !important;
@@ -125,4 +159,44 @@
   .customer-form-grid {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* Authoritative desktop layout: keep JSX/data order while giving the white
+   card its own vertical space and one consistent gap between visual rows. */
+@media (min-width: 901px) {
+  .singleForm .customer-form-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    column-gap: 20px !important;
+    row-gap: 24px !important;
+    grid-template-rows: repeat(6, auto) !important;
+    min-height: 650px !important;
+    height: auto !important;
+    padding: 24px 20px 30px !important;
+    align-items: start !important;
+    align-content: stretch !important;
+  }
+  .singleForm .customer-form-grid > :nth-child(1) { grid-area: 1 / 1 !important; }
+  .singleForm .customer-form-grid > :nth-child(2) { grid-area: 1 / 2 !important; }
+  .singleForm .customer-form-grid > :nth-child(3) { grid-area: 1 / 3 !important; }
+  .singleForm .customer-form-grid > :nth-child(4) { grid-area: 2 / 1 !important; }
+  .singleForm .customer-form-grid > :nth-child(6) { grid-area: 2 / 2 !important; }
+  .singleForm .customer-form-grid > :nth-child(5) { grid-area: 2 / 3 !important; }
+  .singleForm .customer-form-grid > :nth-child(7) { grid-area: 3 / 1 !important; }
+  .singleForm .customer-form-grid > :nth-child(8) { grid-area: 3 / 2 !important; }
+  .singleForm .customer-form-grid > :nth-child(9) { grid-area: 3 / 3 !important; }
+  .singleForm .customer-form-grid > :nth-child(10) { grid-area: 4 / 1 !important; }
+  .singleForm .customer-form-grid > :nth-child(11) { grid-area: 4 / 2 !important; align-self: end !important; }
+  .singleForm .customer-form-grid > :nth-child(12) { grid-area: 4 / 3 !important; }
+  .singleForm .customer-form-grid > :nth-child(13) { grid-area: 5 / 1 !important; }
+  .singleForm .customer-form-grid > :nth-child(14) { grid-area: 5 / 2 !important; }
+  .singleForm .customer-form-grid > :nth-child(15) { grid-area: 5 / 3 !important; }
+  .singleForm .customer-form-grid > :nth-child(16) { grid-area: 6 / 1 !important; }
+  .singleForm .customer-form-grid > :nth-child(17) { grid-area: 6 / 2 !important; }
+  .singleForm .customer-form-grid > :nth-child(18) { grid-area: 6 / 3 !important; }
+  .singleForm .customer-form-grid .field input,
+  .singleForm .customer-form-grid .field select,
+  .singleForm .customer-form-grid .field textarea { height: 36px !important; min-height: 36px !important; margin-top: 7px !important; }
+  .singleForm .customer-form-grid .roleField { padding-bottom: 1px !important; }
+  .singleForm .customer-form-actions { margin-top: 18px !important; padding: 0 0 24px !important; }
 }
