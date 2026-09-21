@@ -16,6 +16,7 @@ import WorkInProgress from "./pages/modules/WorkInProgress";
 import LoanTypeSetup from "./pages/masters/LoanTypeSetup";
 import "./styles/customer-actions.css";
 import "./styles/customer-details-drawer.css";
+import "./styles/customer-list-task.css";
 import "./styles.css";
 import "./styles/admin.css";
 import "./styles/customer-shell.css";
@@ -72,7 +73,7 @@ export default function App() {
   }, []);
   const [session, setSession] = useState(readSession);
   if (!session) return <Login onLogin={data => { localStorage.setItem("finance_session", JSON.stringify(data)); setSession(data); }} />;
-  return <Shell session={session} onLogout={() => { localStorage.removeItem("finance_session"); setSession(null); }} />;
+  return <Shell session={session} onLogout={() => { localStorage.removeItem("finance_session"); localStorage.removeItem("finance_last_activity"); setSession(null); }} />;
 }
 function Shell({session,onLogout}) {
   useFormKeyboardNavigation();
@@ -80,6 +81,21 @@ function Shell({session,onLogout}) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("finance_sidebar_collapsed") === "true");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 767px)").matches);
+  useEffect(() => {
+    const timeout = 60 * 60 * 1000;
+    let timer;
+    const expire = () => { localStorage.removeItem("finance_session"); localStorage.removeItem("finance_last_activity"); onLogout(); };
+    const schedule = () => {
+      const last = Number(localStorage.getItem("finance_last_activity")) || Date.now();
+      const remaining = timeout - (Date.now() - last);
+      if (remaining <= 0) expire(); else { clearTimeout(timer); timer = window.setTimeout(expire, remaining); }
+    };
+    const activity = () => { localStorage.setItem("finance_last_activity", String(Date.now())); schedule(); };
+    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
+    if (!localStorage.getItem("finance_last_activity")) localStorage.setItem("finance_last_activity", String(Date.now()));
+    schedule(); events.forEach(event => window.addEventListener(event, activity, { passive: true }));
+    return () => { clearTimeout(timer); events.forEach(event => window.removeEventListener(event, activity)); };
+  }, [onLogout]);
   useEffect(() => { const query = window.matchMedia("(max-width: 767px)"); const update = () => setIsMobile(query.matches); update(); query.addEventListener?.("change", update); return () => query.removeEventListener?.("change", update); }, []);
   useEffect(() => { if (!isMobile) setMobileMenuOpen(false); }, [isMobile]);
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem("finance_theme", theme); }, [theme]);
@@ -103,6 +119,13 @@ const asRows = data => data?.results ?? data ?? [];
 const amount = value => Number(value || 0);
 const money = formatINR;
 const isoDate = date => { const value = new Date(date); return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`; };
+const dashboardGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Good morning, Admin";
+  if (hour >= 12 && hour < 17) return "Good afternoon, Admin";
+  if (hour >= 17) return "Good evening, Admin";
+  return "Good night, Admin";
+};
 const dueValue = row => amount(row.principal_due) + amount(row.normal_interest_due) + amount(row.compound_interest_due) + amount(row.penalty_due);
 
 function DashboardModern({ api, auth, go }) {
@@ -143,7 +166,7 @@ function DashboardModern({ api, auth, go }) {
   const customersById = new Map(data.customers.map(item => [item.id, item.full_name]));
   const loansById = new Map(data.loans.map(item => [item.id, item.number]));
   const countAndAmount = rows => `${rows.length} ${rows.length === 1 ? "collection" : "collections"} · ${money(rows.reduce((sum, row) => sum + dueValue(row), 0))}`;
-  return <div className="dashboard-page"><header className="dashboard-header"><div className="dashboard-header-left"><p className="eyebrow">OPERATIONS / OVERVIEW</p><h1>Dashboard</h1></div><div className="dashboard-header-right"><strong className="dashboard-greeting">Good morning, Admin</strong><span className="dashboard-subtitle">Here's today's finance collection overview.</span><span>{new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span></div></header>
+  return <div className="dashboard-page"><header className="dashboard-header"><div className="dashboard-header-left"><p className="eyebrow">OPERATIONS / OVERVIEW</p><h1>Dashboard</h1></div><div className="dashboard-header-right"><strong className="dashboard-greeting">{dashboardGreeting()}</strong><span className="dashboard-subtitle">Here's today's finance collection overview.</span><span>{new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span></div></header>
     <section className="dashboard-kpis"><Kpi label="Total Customers" value={loading ? "—" : data.customers.length} detail="Active customer records" tone="blue"/><Kpi label="Active Loans" value={loading ? "—" : activeLoans.length} detail={`${money(activeLoans.reduce((sum, item) => sum + amount(item.approved_principal), 0))} principal`} tone="navy"/><Kpi label="Today's Collection" value={money(collectedToday)} detail={`${todayPayments.length} collections recorded`} tone="green"/><Kpi label="Pending Amount" value={money(pendingToday)} detail={`${todaySchedules.length} collections due today`} tone="orange"/></section>
     <section className="dashboard-overview"><div className="dashboard-chart-card"><div className="dashboard-section-head"><div><p className="eyebrow">COLLECTION OVERVIEW</p><h2>Expected vs collected</h2></div><select value={period} onChange={event => setPeriod(event.target.value)}><option value="week">This Week</option><option value="month">This Month</option><option value="year">This Year</option></select></div><div className="chart-legend"><span><i className="legend-expected"/>Expected</span><span><i className="legend-collected"/>Collected</span></div><div className="trend-chart">{trend.map(item => <div className="trend-column" key={item.label}><div className="trend-bars"><span className="trend-expected" style={{ height: `${Math.max(3, item.expected / maxTrend * 100)}%` }} title={`Expected ${money(item.expected)}`}/><span className="trend-collected" style={{ height: `${Math.max(3, item.collected / maxTrend * 100)}%` }} title={`Collected ${money(item.collected)}`}/></div><small>{item.label}</small></div>)}</div>{!data.schedules.length && !data.payments.length && <p className="chart-empty">No collection activity for this period</p>}</div><div className="dashboard-summary"><p className="eyebrow">TODAY'S SUMMARY</p><h2>Collection health</h2><SummaryLine label="Expected" value={money(expectedToday)}/><SummaryLine label="Collected" value={money(collectedToday)}/><SummaryLine label="Pending" value={money(pendingToday)}/><div className="rate-row"><span>Collection Rate</span><strong>{rate}%</strong></div><div className="progress"><span style={{ width: `${rate}%` }}/></div><button className="text-action" onClick={() => go("/collection-entry")}>Record Collection →</button></div></section>
     <section className="dashboard-section"><div className="dashboard-section-title"><p className="eyebrow">ATTENTION REQUIRED</p></div><div className="attention-grid"><Attention title="Overdue Collections" value={countAndAmount(overdue)} action="View Pending →" tone="danger" onClick={() => go("/pending-collection")}/><Attention title="Due Today" value={`${todaySchedules.length} collections · ${money(expectedToday)} expected`} action="Record Collection →" tone="warning" onClick={() => go("/collection-entry")}/><Attention title="Upcoming" value={`${upcoming.length} collections · ${money(upcoming.reduce((sum, row) => sum + dueValue(row), 0))} expected`} action="View Schedule →" tone="blue" onClick={() => go("/active-loans")}/></div></section>
@@ -191,6 +214,17 @@ CustomersEnhanced = function CustomersEnhancedDrawer({api,auth,go}) {
   const closeDrawer=()=>setSelectedCustomer(null);
   useEffect(()=>{if(!selectedCustomer)return;const onKeyDown=event=>event.key==="Escape"&&closeDrawer();document.addEventListener("keydown",onKeyDown);return()=>document.removeEventListener("keydown",onKeyDown)},[selectedCustomer]);
   return <><ListPageToolbar eyebrow="CUSTOMERS" title="Customer List" search={search} onSearch={setSearch} placeholder="Search customer..." action={<button className="primary" onClick={()=>go("/customers/new")}>+ Add Customer</button>}/>{toast&&<div className="toast">{toast}</div>}<section className="panel list-container"><div className="table-wrap"><table><thead><tr><th>S.No</th><th>Customer Code</th><th>Customer</th><th>Phone</th><th>Type</th><th>Status</th><th aria-label="row actions"/></tr></thead><tbody>{items.map((c,i)=><tr className="customer-row" tabIndex="0" key={c.id}><td>{i+1}</td><td className="mono">{c.customer_code}</td><td><strong>{c.full_name}</strong><small>{c.email||"No email"}</small></td><td>{c.primary_mobile}</td><td><span className={`badge ${(c.role||"").toLowerCase()}`}>{c.role_display||c.role}</span></td><td><span className="status"><i/> {c.is_active?"Active":"Inactive"}</span></td><td><div className="row-actions"><button title="View Customer" aria-label="View Customer" onClick={()=>setSelectedCustomer(c)}>◉</button><button title="Edit" onClick={()=>go(`/customers/${c.id}/edit`)}>✎</button><button title="Deactivate" onClick={()=>deactivate(c.id)}>⌫</button></div></td></tr>)}</tbody></table>{!items.length&&<div className="empty">No customers found.</div>}</div><div className="customer-mobile-cards">{items.map((c,i)=><article className="customer-mobile-card" key={`mobile-${c.id}`}><div className="customer-mobile-main"><b>{i+1}</b><strong>{c.full_name||"—"}</strong><span className="customer-mobile-status">{c.is_active?"Active":"Inactive"}</span></div><div className="customer-mobile-phone"><small>Phone</small><b>{c.primary_mobile||"—"}</b></div><div className="customer-mobile-actions"><button onClick={()=>setSelectedCustomer(c)}>View More ▼</button><button aria-label="Edit" onClick={()=>go(`/customers/${c.id}/edit`)}>✎</button><button aria-label="Deactivate" onClick={()=>deactivate(c.id)}>⌫</button></div></article>)}</div></section>{selectedCustomer&&<CustomerDetailsDrawer customer={selectedCustomer} value={value} sections={sections} onClose={closeDrawer} onEdit={()=>go(`/customers/${selectedCustomer.id}/edit`)}/>}</>;
+};
+
+CustomersEnhanced = function CustomerList({api,auth,go}) {
+  const [items,setItems]=useState([]),[search,setSearch]=useState(""),[toast,setToast]=useState("");
+  const load=()=>api.get("/customers/",{...auth,params:{search}}).then(r=>setItems(r.data.results??r.data));
+  useEffect(()=>{load()},[search]);
+  const deactivate=async id=>{if(!await confirmDelete("Are you sure you want to delete the record?"))return;try{await api.delete(`/customers/${id}/`,auth);setToast("Record deleted successfully.");load();setTimeout(()=>setToast(""),500)}catch{setToast("Unable to delete this record.");setTimeout(()=>setToast(""),500)}};
+  const address=c=>{const parts=[c.address,c.district,c.state,c.country].filter(Boolean);return `${parts.join(", ")}${c.pincode?(parts.length?" - ":"")+c.pincode:""}`};
+  const open=c=>go(`/customers/${c.id}`);
+  const onRowKey=(event,c)=>{if((event.key==="Enter"||event.key===" ")&&!event.target.closest("button")){event.preventDefault();open(c)}};
+  return <><ListPageToolbar eyebrow="CUSTOMERS" title="Customer List" search={search} onSearch={setSearch} placeholder="Search customer..." action={<button className="primary" onClick={()=>go("/customers/new")}>+ Add Customer</button>}/>{toast&&<div className="toast">{toast}</div>}<section className="panel list-container"><div className="table-wrap"><table><thead><tr><th>S.No</th><th>Customer Code</th><th>Customer Name</th><th>Phone Number</th><th>Address</th><th>PAN Number</th><th>Aadhaar Number</th><th aria-label="row actions"/></tr></thead><tbody>{items.map((c,i)=><tr className="customer-row" tabIndex="0" key={c.id} onClick={()=>open(c)} onKeyDown={event=>onRowKey(event,c)}><td>{i+1}</td><td className="mono customer-code-cell">{c.customer_code}</td><td><strong>{c.full_name}</strong></td><td>{c.primary_mobile}</td><td className="customer-address-cell">{address(c)||"—"}</td><td>{c.pan_number||"—"}</td><td>{c.aadhaar_number||"—"}</td><td><div className="row-actions"><button title="Edit" aria-label="Edit" onClick={event=>{event.stopPropagation();go(`/customers/${c.id}/edit`)}}>✎</button><button title="Deactivate" aria-label="Deactivate" onClick={event=>{event.stopPropagation();deactivate(c.id)}}>⌫</button></div></td></tr>)}</tbody></table>{!items.length&&<div className="empty">No customers found.</div>}</div><div className="customer-mobile-cards">{items.map((c,i)=><article className="customer-mobile-card" key={`mobile-${c.id}`} onClick={()=>open(c)}><div className="customer-mobile-main"><b>{i+1}</b><strong>{c.full_name||"—"}</strong><span className="customer-mobile-status">{c.is_active?"Active":"Inactive"}</span></div><div className="customer-mobile-phone"><small>Phone</small><b>{c.primary_mobile||"—"}</b></div><div className="customer-mobile-actions"><button onClick={event=>{event.stopPropagation();go(`/customers/${c.id}/edit`)}} aria-label="Edit">✎</button><button onClick={event=>{event.stopPropagation();deactivate(c.id)}} aria-label="Deactivate">⌫</button></div></article>)}</div></section></>;
 };
 
 function CustomerDetailsDrawer({customer,value,sections,onClose,onEdit}) {

@@ -18,3 +18,16 @@
   flex-basis: 100%;
   color: #9a6b2d;
 }
+
+/* Holiday Master density only; data, filters and views remain unchanged. */
+.holidayPage .holidayToolbar{padding:10px 14px!important;gap:10px!important}
+.holidayPage .holidayToolbar label select,.holidayPage .holidayToolbar .searchField input{height:34px!important}
+.holidayPage .holidayTabs,.holidayPage .holidayTabs button{height:34px!important}
+.holidayPage .addCircle{width:36px!important;height:36px!important;font-size:21px!important}
+.holidayPage .statGrid{gap:9px!important;padding:10px 14px 3px!important}
+.holidayPage .statCard{height:58px!important;min-height:58px!important;padding:8px 10px!important}
+.holidayPage .monthList{padding:2px 14px 14px!important}
+.holidayPage .monthCard{margin-top:7px!important}
+.holidayPage .monthHead{padding:8px 11px!important}
+.holidayPage .holidayRow{min-height:32px!important;padding:6px 8px!important}
+.holidayPage .holidayRowHead{padding:7px 8px!important}

@@ -37,6 +37,8 @@ class CustomerSerializer(serializers.ModelSerializer):
         return value
 
     def validate_aadhaar_number(self, value):
+        if not value:
+            return value
         if not value.isdigit() or len(value) != 12: raise serializers.ValidationError("Aadhaar number must contain exactly 12 digits.")
         return value
 
@@ -61,6 +63,8 @@ class CustomerSerializer(serializers.ModelSerializer):
         return value.strip()
 
     def validate_pan_number(self, value):
+        if not value:
+            return value
         value = value.upper()
         if not re.fullmatch(r"[A-Z]{5}[0-9]{4}[A-Z]", value): raise serializers.ValidationError("Enter PAN in format ABCDE1234F.")
         return value
@@ -71,10 +75,6 @@ class CustomerSerializer(serializers.ModelSerializer):
                 "full_name": "Customer name is required.",
                 "role": "Customer role is required.",
                 "primary_mobile": "Phone number is required.",
-                "alternate_mobile": "Alternative phone number is required.",
-                "dob": "Date of birth is required.",
-                "aadhaar_number": "Aadhaar number is required.",
-                "pan_number": "PAN number is required.",
                 "address": "Address is required.",
                 "district": "District is required.",
                 "state": "State is required.",

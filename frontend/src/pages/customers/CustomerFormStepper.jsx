@@ -8,24 +8,32 @@ import "./CustomerFormGrid.css";
 import PageBreadcrumb from "../../components/PageBreadcrumb";
 
 const empty = { customer_code: "", full_name: "", dob: "", gender: "", occupation: "", monthly_income: "", role: "", email: "", primary_mobile: "", alternate_mobile: "", whatsapp_number: "", is_whatsapp_same_as_phone: false, aadhaar_number: "", pan_number: "", address: "", district: "", state: "", country: "", pincode: "", is_active: true };
+const CUSTOMER_DRAFT_KEY = "chitufund:draft:add-customer";
+const loadDraft = () => {
+  try {
+    const saved = sessionStorage.getItem(CUSTOMER_DRAFT_KEY);
+    const parsed = saved ? JSON.parse(saved) : null;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? { ...empty, ...parsed } : empty;
+  } catch { return empty; }
+};
 const numeric = new Set(["primary_mobile", "alternate_mobile", "whatsapp_number", "aadhaar_number", "pincode"]);
 const validators = {
   full_name: value => value.trim().length < 2 ? "Enter at least 2 characters." : !/^[A-Za-z .'-]+$/.test(value.trim()) ? "Use letters, spaces, dot or hyphen only." : "",
   email: value => value && !/^\S+@\S+\.\S+$/.test(value) ? "Enter a valid email address." : "",
   primary_mobile: value => !/^\d{10}$/.test(value) ? "Phone Number must contain 10 digits." : "",
-  alternate_mobile: value => !/^\d{10}$/.test(value) ? "Alternative Number must contain 10 digits." : "",
+  alternate_mobile: value => value && !/^\d{10}$/.test(value) ? "Alternative Number must contain 10 digits." : "",
   whatsapp_number: value => value && !/^\d{10}$/.test(value) ? "WhatsApp Number must contain 10 digits." : "",
-  aadhaar_number: value => !/^\d{12}$/.test(value) ? "Aadhar Number must contain 12 digits." : "",
-  pan_number: value => !/^[A-Z]{5}\d{4}[A-Z]$/.test(value) ? "PAN Number must be in format ABCDE1234F." : "",
-  dob: value => !value ? "Date of Birth is required." : new Date(`${value}T00:00:00`) > new Date() ? "Date of Birth cannot be in the future." : "",
+  aadhaar_number: value => value && !/^\d{12}$/.test(value) ? "Aadhar Number must contain 12 digits." : "",
+  pan_number: value => value && !/^[A-Z]{5}\d{4}[A-Z]$/.test(value) ? "PAN Number must be in format ABCDE1234F." : "",
+  dob: value => value && new Date(`${value}T00:00:00`) > new Date() ? "Date of Birth cannot be in the future." : "",
   monthly_income: value => value && Number(value) < 0 ? "Income cannot be negative." : "",
   address: value => value.trim().length < 5 ? "Enter a complete address." : "",
   pincode: value => value && !/^\d{6}$/.test(value) ? "Pincode must contain 6 digits." : ""
 };
-const required = new Set(["full_name", "dob", "primary_mobile", "alternate_mobile", "aadhaar_number", "pan_number", "address", "district", "state", "country", "role"]);
+const required = new Set(["full_name", "primary_mobile", "address", "district", "state", "country", "role"]);
 
 export default function CustomerFormStepper({ api, auth, go }) {
-  const [form, setForm] = useState(empty);
+  const [form, setForm] = useState(loadDraft);
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -34,8 +42,13 @@ export default function CustomerFormStepper({ api, auth, go }) {
   const checkboxEnter = useRef(0);
 
   useEffect(() => {
-    api.get("/customers/next-code/", auth).then(({ data }) => setForm(current => ({ ...current, customer_code: data.customer_code }))).catch(() => setErrors({ customer_code: "Unable to generate customer code." }));
+    let active = true;
+    api.get("/customers/next-code/", auth).then(({ data }) => {
+      if (active && data?.customer_code) setForm(current => ({ ...current, customer_code: data.customer_code }));
+    }).catch(() => { if (active) actionToast("Unable to generate customer code.", false); });
+    return () => { active = false; };
   }, [api, auth]);
+  useEffect(() => { try { sessionStorage.setItem(CUSTOMER_DRAFT_KEY, JSON.stringify(form)); } catch {} }, [form]);
 
   const focus = key => refs.current[key]?.focus();
   const nextKey = key => {
@@ -67,17 +80,18 @@ export default function CustomerFormStepper({ api, auth, go }) {
     setSaving(true); setNotice(""); setSaveError("");
     try {
       const { data } = await api.post("/customers/", form, auth);
-      actionToast("Customer saved successfully."); setNotice("Customer saved successfully.");
+      actionToast("Customer saved successfully.");
+      try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {}
       const next = await api.get("/customers/next-code/", auth);
       setForm({ ...empty, customer_code: next.data.customer_code }); setErrors({}); focus("full_name");
     } catch (error) {
       const raw = error.response?.data;
       const entries = raw && typeof raw === "object" ? Object.entries(raw) : [];
       const mapped = Object.fromEntries(entries.map(([key, value]) => [key, Array.isArray(value) ? value[0] : typeof value === "object" ? Object.values(value).flat()[0] : String(value)]));
-      setErrors(mapped); const message = Object.values(mapped).filter(Boolean).join(" ") || "Unable to save customer. Please check the highlighted fields."; setSaveError(message); actionToast(message, false);
+      setErrors(mapped); const message = Object.values(mapped).filter(Boolean).join(" ") || "Unable to save customer. Please check the highlighted fields."; actionToast(message, false);
     } finally { setSaving(false); }
   };
-  const reset = () => { setForm(current => ({ ...empty, customer_code: current.customer_code })); setErrors({}); setNotice(""); setSaveError(""); focus("full_name"); };
+  const reset = () => { try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {} setForm(current => ({ ...empty, customer_code: current.customer_code })); setErrors({}); setNotice(""); setSaveError(""); focus("full_name"); };
   const keyDown = (event, key) => {
     if (event.altKey && event.key.toLowerCase() === "s") { event.preventDefault(); event.stopPropagation(); save(event); return; }
     if (event.key !== "Enter" || event.isComposing) return;
@@ -90,8 +104,9 @@ export default function CustomerFormStepper({ api, auth, go }) {
   const field = (key, label, options = {}) => <Field key={key} inputRef={node => { refs.current[key] = node; }} label={label} required={required.has(key)} error={errors[key]} onKeyDown={event => keyDown(event, key)} value={form[key] || ""} onChange={event => set(key, event.target.value)} {...options}/>;
   const location = (key, label, kind, next, onSelect) => <label className={`${styles.field} ${errors[key] ? styles.invalid : ""}`} key={key}>{label} <b>*</b><DistrictDropdown kind={kind} value={form[key] || ""} inputRef={node => { refs.current[key] = node; }} nextRef={{ get current() { return refs.current[next]; } }} error={errors[key]} onChange={value => set(key, value)} onSelect={onSelect} /><FieldError message={errors[key]}/></label>;
 
-  return <div className={styles.page}><header className={styles.header}><PageBreadcrumb root="Masters" current="Add Customer" onBack={() => go("/masters")} /></header>{notice && <div className={styles.success}>{notice}</div>}{(saveError || errors.customer_code) && <div className={styles.alert}>{saveError || errors.customer_code}</div>}<form className={`${styles.form} ${styles.singleForm}`} onSubmit={save} onKeyDown={event => { if (event.altKey && event.key.toLowerCase() === "s") keyDown(event, ""); }} noValidate><div className={`${styles.formGrid} customer-form-grid`}>
-    <Field inputRef={node => { refs.current.customer_code = node; }} label="Customer Code" value={form.customer_code} readOnly/>
+  const cancel = () => { try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {} go("/customers"); };
+  return <div className={styles.page}><header className={styles.header}><PageBreadcrumb root="Masters" current="Add Customer" onBack={() => go("/masters")} /></header><form className={`${styles.form} ${styles.singleForm}`} onSubmit={save} onKeyDown={event => { if (event.altKey && event.key.toLowerCase() === "s") keyDown(event, ""); }} noValidate><div className={`${styles.formGrid} customer-form-grid`}>
+    <Field label="Customer Code" value={form.customer_code} readOnly tabIndex={-1} aria-readonly="true" className={styles.generatedCode}/>
     {field("full_name", "Customer Name")}{field("email", "Email", { type: "email" })}
     {field("primary_mobile", "Phone Number", { inputMode: "numeric" })}{field("alternate_mobile", "Alternative Number", { inputMode: "numeric" })}
     {field("whatsapp_number", "WhatsApp Number", { inputMode: "numeric", placeholder: "Enter WhatsApp Number", readOnly: form.is_whatsapp_same_as_phone, "aria-readonly": form.is_whatsapp_same_as_phone, labelExtra: <span className={styles.whatsappSame} onKeyDown={event => keyDown(event, "is_whatsapp_same_as_phone")}><input ref={node => { refs.current.is_whatsapp_same_as_phone = node; }} type="checkbox" checked={form.is_whatsapp_same_as_phone} onChange={event => set("is_whatsapp_same_as_phone", event.target.checked)}/> Same as Phone</span> })}
@@ -102,7 +117,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
     {location("district", "District", "district", "state", item => setForm(current => ({ ...current, district: item.name, state: item.state, country: item.country, pincode: item.pincode || "" })))}
     {location("state", "State", "state", "country", item => set("state", item.name))}{location("country", "Country", "country", "pincode", item => set("country", item.name))}
     {field("pincode", "Pincode", { inputMode: "numeric" })}{field("aadhaar_number", "Aadhar Number", { inputMode: "numeric" })}{field("pan_number", "PAN Number")}
-  </div><div className="form-action-footer"><button type="button" className={styles.cancel} onClick={() => go("/customers")}>Cancel</button><button type="button" className={styles.cancel} onClick={reset}>Reset</button><button type="submit" className={styles.primary} disabled={saving}>{saving ? "Saving..." : "Save Customer"}</button></div></form></div>;
+  </div><div className="form-action-footer customer-form-actions"><button type="button" className={styles.cancel} onClick={cancel}>Cancel</button><button type="button" className={styles.cancel} onClick={reset}>Reset</button><button type="submit" className={styles.primary} disabled={saving}>{saving ? "Saving..." : "Save Customer"}</button></div></form></div>;
 }
 
 function Field({ label, required, error, wide, inputRef, type = "text", children, labelExtra, ...props }) { return <label className={`${styles.field} ${labelExtra ? "whatsapp-field" : ""} ${wide ? styles.wide : ""} ${error ? styles.invalid : ""}`}>{labelExtra ? <span className={styles.whatsappLabelRow}>{label}{required && <b> *</b>}{labelExtra}</span> : <>{label}{required && <b> *</b>}</>}{children || <input ref={inputRef} type={type} {...props}/>}<FieldError message={error}/></label>; }

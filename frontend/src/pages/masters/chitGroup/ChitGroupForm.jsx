@@ -8,38 +8,22 @@ import { formatINR, formatINRNumber } from "../../../utils/currency";
 import { actionToast } from "../../../utils/actionToast";
 import PageBreadcrumb from "../../../components/PageBreadcrumb";
 
-const splitAmounts = (value, count) => {
-  const cents = Math.round(Number(value || 0) * 100);
-  if (!cents || !count) return Array(count).fill("0.00");
-  const weightTotal = count * (count + 1) / 2;
-  let assigned = 0;
-  return Array.from({ length: count }, (_, index) => {
-    const part = index === count - 1 ? cents - assigned : Math.round(cents * (count - index) / weightTotal);
-    assigned += part;
-    return (part / 100).toFixed(2);
-  });
-};
-
 export default function ChitGroupForm({ api, auth, go, id }) {
   const [form, setForm] = useState({ code: "", name: "", duration: 1, duration_type: "DAY", collection_day: 1, collection_month: 1, total_amount: "" });
   const [amounts, setAmounts] = useState([]);
-  const [mode, setMode] = useState("auto");
+  const [startDate, setStartDate] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => typeof window === "undefined" ? 15 : Math.max(10, Math.min(15, Math.floor((window.innerHeight - 320) / 38))));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [confirmAction, setConfirmAction] = useState(null);
   const [totalFocused, setTotalFocused] = useState(false);
   const amountRefs = useRef({});
-  const originalAmounts = useRef({});
-  const previousTotal = useRef("");
 
   useEffect(() => {
     if (id) {
       api.get(`/finance/chit-groups/${id}/`, auth).then(({ data }) => {
         setForm({ ...data, total_amount: String(data.total_amount ?? data.grand_total ?? "") });
         setAmounts((data.template_installments || data.installments || []).map(item => String(item.installment_amount ?? "0.00")));
-        setMode("manual");
       }).catch(() => setError("Unable to load Chit Group."));
     } else {
       api.get("/finance/chit-groups/", { ...auth, params: { page_size: 1000 } }).then(({ data }) => {
@@ -60,8 +44,7 @@ export default function ChitGroupForm({ api, auth, go, id }) {
   }, []);
 
   const count = Math.max(1, Math.min(3650, Number(form.duration) || 1));
-  const scheduleLabel = index => form.duration_type === "DAY" ? `Day ${index + 1}` : form.duration_type === "MONTH" ? `Month ${index + 1} - Day ${form.collection_day || 1}` : `Year ${index + 1} - ${form.collection_month || 1}/${form.collection_day || 1}`;
-  const rows = useMemo(() => Array.from({ length: count }, (_, index) => ({ number: index + 1, schedule: scheduleLabel(index), amount: amounts[index] ?? "0.00" })), [count, form.duration_type, form.collection_day, form.collection_month, amounts]);
+  const rows = useMemo(() => Array.from({ length: count }, (_, index) => ({ number: index + 1, schedule: `Installment ${index + 1}`, amount: amounts[index] ?? "0.00" })), [count, amounts]);
   const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
   const pages = Math.max(1, Math.ceil(rows.length / pageSize));
   const toPaise = value => Math.round(Number(String(value ?? "0").replace(/,/g, "")) * 100);
@@ -94,52 +77,23 @@ export default function ChitGroupForm({ api, auth, go, id }) {
 
   const changeDuration = value => {
     const nextCount = Math.max(1, Math.min(3650, Number(value) || 1));
-    if (mode === "manual" && nextCount !== count) { setConfirmAction({ type: "duration", value, nextCount }); return; }
     applyDuration(value, nextCount);
   };
 
   const applyDuration = (value, nextCount) => {
     set("duration", value);
     setPage(1);
-    if (mode === "auto") setAmounts(splitAmounts(form.total_amount, nextCount));
-    else setAmounts(current => current.slice(0, nextCount));
+    setAmounts(current => current.slice(0, nextCount));
   };
 
   const changeTotal = value => {
     value = String(value).replace(/,/g, "");
-    if (!previousTotal.current) previousTotal.current = form.total_amount || "";
     set("total_amount", value);
-    if (mode === "auto") setAmounts(splitAmounts(value, count));
-  };
-
-  const finishTotalChange = () => {
-    if (mode === "manual" && toPaise(form.total_amount) !== grandTotalPaise) {
-      setConfirmAction({ type: "total", value: form.total_amount });
-    }
-    previousTotal.current = "";
-  };
-
-  const confirmRecalculate = () => {
-    if (!confirmAction) return;
-    if (confirmAction.type === "duration") applyDuration(confirmAction.value, confirmAction.nextCount);
-    else { setAmounts(splitAmounts(confirmAction.value, count)); setMode("auto"); }
-    setConfirmAction(null);
-  };
-
-  const cancelRecalculate = () => {
-    if (confirmAction?.type === "total" && previousTotal.current !== "") set("total_amount", previousTotal.current);
-    setConfirmAction(null);
-  };
-
-  const clearSplit = () => {
-    setAmounts(Array(count).fill("0.00"));
-    setMode("manual");
   };
 
   const commitAmount = (index, value, move = 0) => {
     const numeric = value === "" ? "0.00" : String(Math.max(0, Number(value) || 0));
     setAmounts(current => { const next = [...current]; next[index] = numeric; return next; });
-    if (numeric !== String(amounts[index] ?? "0.00")) setMode("manual");
     const target = index + move;
     if (move && target >= 0 && target < rows.length) focusAmount(target);
   };
@@ -190,25 +144,29 @@ export default function ChitGroupForm({ api, auth, go, id }) {
 
   const reset = () => {
     setForm(current => ({ ...current, name: "", duration: 1, duration_type: "DAY", collection_day: 1, collection_month: 1, total_amount: "" }));
-    setAmounts([]); setMode("auto"); setPage(1); setError("");
+    setStartDate(""); setAmounts([]); setPage(1); setError("");
   };
+
+  const collectionDateControl = form.duration_type === "YEAR"
+    ? <div className={styles.collectionDateGroup}><select value={form.collection_month || 1} onChange={e => set("collection_month", e.target.value)}>{Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{new Date(2024, i, 1).toLocaleString("en", { month: "short" })}</option>)}</select><select value={form.collection_day || 1} onChange={e => set("collection_day", e.target.value)}>{Array.from({ length: 31 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></div>
+    : form.duration_type === "MONTH"
+      ? <select value={form.collection_day || 1} onChange={e => set("collection_day", e.target.value)}>{Array.from({ length: 31 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select>
+      : <input value="Daily" readOnly />;
 
   return <div className={`${styles.page} chit-form-page`}>
     <header><PageBreadcrumb root="Masters" current={id ? "Edit Chit Group" : "Add Chit Group"} onBack={() => go("/masters")} /><span className={styles.active}>● Active</span></header>
     {error && <div className={styles.error}>{error}</div>}
     <form data-chit-group-form onSubmit={save} className={styles.surface}>
-      <section><h2>GROUP INFORMATION</h2><div className={styles.grid}>
-        <label>Group Code<input value={form.code || ""} readOnly /></label>
-        <label>Chit Group Name *<input required value={form.name || ""} onChange={e => set("name", e.target.value)} /></label>
+      <section><h2>GROUP INFORMATION</h2><div className={`${styles.grid} ${styles.groupInfoRow}`}>
+        <label>Chit Name *<input required value={form.name || ""} onChange={e => set("name", e.target.value)} /></label>
+        <label>No. of Installments *<input type="number" min="1" max="3650" required value={form.duration} onChange={e => changeDuration(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); focusAmount(0); } }} /></label>
+        <label>Chit Amount *<div className={styles.moneyInput}><span>₹</span><input type="text" inputMode="decimal" required value={totalFocused ? (form.total_amount || "") : (form.total_amount ? formatMoney(form.total_amount) : "")} onFocus={() => setTotalFocused(true)} onChange={e => changeTotal(e.target.value)} onBlur={() => setTotalFocused(false)} /></div></label>
         <label>Duration Type *<div className={styles.radios}>{[["DAY", "Days"], ["MONTH", "Months"], ["YEAR", "Years"]].map(([value, text]) => <label key={value}><input type="radio" checked={form.duration_type === value} onChange={() => set("duration_type", value)} />{text}</label>)}</div></label>
-        <label>Duration *<input type="number" min="1" max="3650" required value={form.duration} onChange={e => changeDuration(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); focusAmount(0); } }} /></label>
-        <label>Total Amount *<div className={styles.moneyInput}><span>₹</span><input type="text" inputMode="decimal" required value={totalFocused ? (form.total_amount || "") : (form.total_amount ? formatMoney(form.total_amount) : "")} onFocus={() => setTotalFocused(true)} onChange={e => changeTotal(e.target.value)} onBlur={() => { finishTotalChange(); setTotalFocused(false); }} /></div></label>
-        {form.duration_type === "MONTH" && <label>Collection Date<select value={form.collection_day || 1} onChange={e => set("collection_day", e.target.value)}>{Array.from({ length: 31 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>}
-        {form.duration_type === "YEAR" && <><label>Collection Month<select value={form.collection_month || 1} onChange={e => set("collection_month", e.target.value)}>{Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{new Date(2024, i, 1).toLocaleString("en", { month: "long" })}</option>)}</select></label><label>Collection Date<select value={form.collection_day || 1} onChange={e => set("collection_day", e.target.value)}>{Array.from({ length: 31 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label></>}
+        <label>Start Date<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></label>
+        <label>Collection Date{collectionDateControl}</label>
       </div></section>
-      <section className={styles.scheduleSection}><div className={styles.sectionHead}><h2>INSTALLMENT SCHEDULE</h2><div><small>{mode === "auto" ? "Auto Split" : "Manual"}</small><button type="button" onClick={clearSplit} title="Clear installment amounts">✓ Clear Split</button></div></div><div className={styles.tableWrap}><table><thead><tr><th>S.No</th><th>Template Date / Schedule</th><th>Installment Amount</th></tr></thead><tbody>{pageRows.map(row => { const index = row.number - 1; return <tr key={row.number}><td>{row.number}</td><td>{row.schedule}</td><td className="installment-amount-cell" onClick={() => activateAmount(index)}><input className="installment-amount-input" ref={element => { amountRefs.current[index] = element; }} type="number" min="0" step="0.01" value={row.amount} readOnly={mode === "auto"} onFocus={event => event.currentTarget.select()} onChange={e => setAmounts(current => { const next = [...current]; next[index] = e.target.value; return next; })} onBlur={e => commitAmount(index, e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitAmount(index, e.target.value, e.shiftKey ? -1 : 1); } else if (e.key === "Escape") { e.preventDefault(); setAmounts(current => { const next = [...current]; next[index] = originalAmount; return next; }); setActiveAmount(null); } }} /></td></tr>; })}</tbody></table></div><div className={styles.meta}><span>Showing {rows.length ? (page - 1) * pageSize + 1 : 0}-{Math.min(page * pageSize, rows.length)} of {rows.length}</span><span className={styles.pagination}><button type="button" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</button>{Array.from({ length: pages }, (_, i) => <button type="button" className={page === i + 1 ? styles.current : ""} key={i} onClick={() => setPage(i + 1)}>{i + 1}</button>)}<button type="button" disabled={page === pages} onClick={() => setPage(value => value + 1)}>Next</button></span><div>Page Total <b>₹{pageTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b><br />Grand Total <b>₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b>{targetTotal > 0 && Math.abs(difference) > 0.005 && <><br /><small>Difference: ₹{Math.abs(difference).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</small></>}</div></div></section>
+      <section className={styles.scheduleSection}><div className={styles.sectionHead}><h2>CHIT PLAN TABLE</h2></div><div className={styles.tableWrap}><table><thead><tr><th>S.No</th><th>Installment</th><th>Installment Amount</th></tr></thead><tbody>{pageRows.map(row => { const index = row.number - 1; return <tr key={row.number}><td>{row.number}</td><td>{row.schedule}</td><td className="installment-amount-cell" onClick={() => activateAmount(index)}><input className="installment-amount-input" ref={element => { amountRefs.current[index] = element; }} type="number" min="0" step="0.01" value={row.amount} onFocus={event => event.currentTarget.select()} onChange={e => setAmounts(current => { const next = [...current]; next[index] = e.target.value; return next; })} onBlur={e => commitAmount(index, e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitAmount(index, e.target.value, e.shiftKey ? -1 : 1); } else if (e.key === "Escape") { e.preventDefault(); setAmounts(current => { const next = [...current]; next[index] = originalAmount; return next; }); setActiveAmount(null); } }} /></td></tr>; })}</tbody></table></div><div className={styles.meta}><span>Showing {rows.length ? (page - 1) * pageSize + 1 : 0}-{Math.min(page * pageSize, rows.length)} of {rows.length}</span><span className={styles.pagination}><button type="button" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</button>{Array.from({ length: pages }, (_, i) => <button type="button" className={page === i + 1 ? styles.current : ""} key={i} onClick={() => setPage(i + 1)}>{i + 1}</button>)}<button type="button" disabled={page === pages} onClick={() => setPage(value => value + 1)}>Next</button></span><div>Page Total <b>₹{pageTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b><br />Grand Total <b>₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b>{targetTotal > 0 && Math.abs(difference) > 0.005 && <><br /><small>Difference: ₹{Math.abs(difference).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</small></>}</div></div></section>
       <div className={styles.actions}><button type="button" onClick={() => go("/chit-groups")}>Cancel</button><button type="button" onClick={reset}>Reset</button><button className={styles.primary} disabled={saving}>{saving ? "Saving..." : "Save Chit Group"}</button></div>
     </form>
-    {confirmAction && <div className={styles.confirmBackdrop}><div className={styles.confirmDialog} role="dialog" aria-modal="true"><div className={styles.confirmIcon}>!</div><div><h2>Recalculate installments?</h2><p>{confirmAction.type === "total" ? `Recalculate installment amounts using ₹${Number(confirmAction.value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}?` : "Recalculate installment amounts for the new duration?"}</p><small>Existing manual values will be replaced.</small></div><div className={styles.confirmActions}><button type="button" onClick={cancelRecalculate}>Cancel</button><button type="button" className={styles.confirmPrimary} onClick={confirmRecalculate}>Recalculate</button></div></div></div>}
   </div>;
 }

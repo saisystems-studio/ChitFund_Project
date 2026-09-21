@@ -19,6 +19,7 @@ const getLocalToday = () => {
 };
 
 export default function ChitLoanForm({ api, auth, go, id = null }) {
+  const draftKey = `chitufund:draft:loan-application:${id || "new"}`;
   const [customers, setCustomers] = useState([]), [groups, setGroups] = useState([]), [holidays, setHolidays] = useState([]), [loanTypes, setLoanTypes] = useState([]), [installments, setInstallments] = useState([]);
   const [customer, setCustomer] = useState(""), [selectedLoanTypeId, setSelectedLoanTypeId] = useState(""), [groupId, setGroupId] = useState("");
   const [periodic, setPeriodic] = useState(null), [weekDays, setWeekDays] = useState([2]), [interestWeekday, setInterestWeekday] = useState(null), [interestDate, setInterestDate] = useState("1"), [interestMonth, setInterestMonth] = useState("1"), [selectedHolidays, setSelectedHolidays] = useState([]);
@@ -27,7 +28,43 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
   const [interestDuration, setInterestDuration] = useState("12");
   const [interestDurationUnit, setInterestDurationUnit] = useState("MONTH");
   const [schedule, setSchedule] = useState([]), [endDate, setEndDate] = useState(""), [showHolidays, setShowHolidays] = useState(false), [error, setError] = useState(""), [saving, setSaving] = useState(false), [loadingEdit, setLoadingEdit] = useState(Boolean(id)), [editPeriodicity, setEditPeriodicity] = useState("");
-  const [detailsOpen, setDetailsOpen] = useState(true), [schedulePreviewOpen, setSchedulePreviewOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(true), [accordionOpen, setAccordionOpen] = useState(null);
+  const draftRestored = useRef(false);
+  // The unselected loan-type view still uses this preview component. Keep its
+  // legacy boolean interface backed by the mutually-exclusive accordion state.
+  const schedulePreviewOpen = accordionOpen === "schedule";
+  const setSchedulePreviewOpen = value => setAccordionOpen(current => {
+    const next = typeof value === "function" ? value(current === "schedule") : value;
+    return next ? "schedule" : null;
+  });
+
+  useEffect(() => {
+    if (id) { draftRestored.current = true; return; }
+    try {
+      const saved = sessionStorage.getItem(draftKey), draft = saved ? JSON.parse(saved) : null;
+      if (draft && typeof draft === "object" && !Array.isArray(draft)) {
+        setCustomer(typeof draft.customer === "string" ? draft.customer : "");
+        setSelectedLoanTypeId(typeof draft.selectedLoanTypeId === "string" ? draft.selectedLoanTypeId : "");
+        setGroupId(typeof draft.groupId === "string" ? draft.groupId : "");
+        setPeriodic(draft.periodic ?? null);
+        setWeekDays(Array.isArray(draft.weekDays) ? draft.weekDays : [2]);
+        setInterestWeekday(draft.interestWeekday ?? null);
+        setInterestDate(typeof draft.interestDate === "string" ? draft.interestDate : "1");
+        setInterestMonth(typeof draft.interestMonth === "string" ? draft.interestMonth : "1");
+        setSelectedHolidays(Array.isArray(draft.selectedHolidays) ? draft.selectedHolidays : []);
+        setForm(draft.form && typeof draft.form === "object" && !Array.isArray(draft.form) ? { amount: "", startDate: getLocalToday(), includeSunday: false, ...draft.form } : { amount: "", startDate: getLocalToday(), includeSunday: false });
+        setInterestPercentage(typeof draft.interestPercentage === "string" ? draft.interestPercentage : "");
+        setInterestDuration(typeof draft.interestDuration === "string" ? draft.interestDuration : "12");
+        setInterestDurationUnit(typeof draft.interestDurationUnit === "string" ? draft.interestDurationUnit : "MONTH");
+      }
+    } catch {}
+    draftRestored.current = true;
+  }, [id, draftKey]);
+  useEffect(() => {
+    if (id || !draftRestored.current) return;
+    try { sessionStorage.setItem(draftKey, JSON.stringify({ customer, selectedLoanTypeId, groupId, periodic, weekDays, interestWeekday, interestDate, interestMonth, selectedHolidays, form, interestPercentage, interestDuration, interestDurationUnit })); } catch {}
+  }, [id, draftKey, customer, selectedLoanTypeId, groupId, periodic, weekDays, interestWeekday, interestDate, interestMonth, selectedHolidays, form, interestPercentage, interestDuration, interestDurationUnit]);
+  const clearLoanDraft = () => { try { sessionStorage.removeItem(draftKey); } catch {} };
 
   useEffect(() => {
     if (!detailsOpen) return undefined;
@@ -63,10 +100,9 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
   const isInterest = normalizedType === "interest";
   const selectedLoanTypeName = selectedType?.name || selectedType?.loan_type_name || "";
   const loanType = selectedLoanTypeName;
-  const fallbackIds = isChit ? [1, 2, 3] : isInterest ? [1, 2, 3, 6] : [];
   const activeType = selectedType;
-  const allowedIds = activeType?.allowed_installment_ids?.map(Number) || fallbackIds;
-  const allowed = selectedType ? installments.filter(item => allowedIds.includes(Number(item.id))) : installments;
+  const allowedIds = Array.isArray(activeType?.allowed_installment_ids) ? activeType.allowed_installment_ids.map(Number) : [];
+  const allowed = useMemo(() => selectedType ? installments.filter(item => allowedIds.includes(Number(item.id))) : [], [selectedType, installments, allowedIds.join(",")]);
   const selectedPeriodName = normalizePeriodName(allowed.find(item => Number(item.id) === Number(periodic))?.name || "");
   const periodicName = selectedPeriodName === "Others" ? "Annual" : selectedPeriodName;
   const periodicityValue = selectedPeriodName === "Others" ? "Other" : periodicName;
@@ -107,7 +143,7 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
       try {
         const payload = { customer_id: customer, loan_type_id: selectedLoanTypeId, amount: interestPrincipal, start_date: form.startDate, periodicity: periodicityValue, interest_percentage: interestPercentage, interest_duration: interestCount, interest_duration_type: interestDurationUnit, interest_collection_day: periodicName === "Weekly" ? interestWeekday : periodicName === "Monthly" || periodicName === "Annual" ? interestDate : null, interest_collection_month: periodicName === "Annual" ? interestMonth : null, include_sunday: form.includeSunday };
         if (id) await api.put(`/finance/loans/${id}/`, payload, auth); else await api.post("/finance/loans/", payload, auth);
-        go("/active-loans");
+        clearLoanDraft(); go("/active-loans");
       } catch (requestError) { const detail = requestError.response?.data?.detail; setError(typeof detail === "string" ? detail : "Unable to save the Interest loan."); } finally { setSaving(false); }
       return;
     }
@@ -132,7 +168,7 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
       };
       if (id) await api.put(`/finance/loans/${id}/`, payload, auth);
       else await api.post("/finance/loans/", payload, auth);
-      go("/active-loans");
+      clearLoanDraft(); go("/active-loans");
     } catch (requestError) {
       const detail = requestError.response?.data?.detail;
       setError(typeof detail === "string" ? detail : "Unable to save the loan. Please check the entered details and try again.");
@@ -149,16 +185,16 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
   };
   useEffect(() => { preview(); }, [customer, groupId, periodic, form.startDate, form.includeSunday, selectedHolidays.join(","), groups.length]);
   useEffect(() => { if (isInterest && periodic) { setInterestWeekday(null); setInterestDate("1"); setInterestMonth("1"); } }, [periodic, isInterest]);
-  useEffect(() => { setDetailsOpen(true); setSchedulePreviewOpen(false); }, [selectedLoanTypeId]);
-  useEffect(() => { if (editPeriodicity) { const match = installments.find(item => normalizePeriodName(item.name).toLowerCase() === normalizePeriodName(editPeriodicity).toLowerCase()); if (match) { setPeriodic(match.id); setEditPeriodicity(""); return; } } if (!allowed.some(item => Number(item.id) === Number(periodic))) setPeriodic(allowed[0]?.id || null); }, [selectedLoanTypeId, installments, loanTypes, editPeriodicity]);
+  useEffect(() => { setDetailsOpen(true); setAccordionOpen(null); }, [selectedLoanTypeId]);
+  useEffect(() => { if (editPeriodicity) { const match = allowed.find(item => normalizePeriodName(item.name).toLowerCase() === normalizePeriodName(editPeriodicity).toLowerCase()); if (match) { setPeriodic(match.id); setEditPeriodicity(""); return; } } if (!allowed.some(item => Number(item.id) === Number(periodic))) setPeriodic(null); }, [selectedLoanTypeId, installments, loanTypes, editPeriodicity, allowed, periodic]);
   useEffect(() => { if (isInterest && selectedPeriodName === "Others" && selectedType) { setInterestDurationUnit("YEAR"); setInterestMonth(String(selectedType.due_month || interestMonth || "1")); setInterestDate(String(selectedType.due_day || interestDate || "1")); } }, [selectedLoanTypeId, periodic, selectedType?.due_month, selectedType?.due_day]);
   useEffect(() => { if (periodicName === "Annual" && interestMonth) setInterestDate(value => String(Math.min(Number(value) || 1, validYearDay(interestMonth)))); }, [interestMonth, periodicName]);
   useEffect(() => { if (!id && (group?.grand_total || group?.total_amount)) update("amount", String(group.grand_total ?? group.total_amount)); }, [groupId, id]);
   const chitPreviewRows = schedule.map(row => ({ ...row, amount: Number(templateRows[Number(row.installment_number) - 1]?.installment_amount || row.amount || 0) }));
   const title = id ? "Edit Loan Application" : isChit ? "Chit Loan Application" : isInterest ? "Interest Loan Application" : "Loan Application";
   if (loadingEdit) return <div className="exact-loan-page"><div className="exact-empty">Loading existing loan details...</div></div>;
-  if (isChit) return <ChitLoanLayout {...{ go, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, groupId, setGroupId, groups, allowed, installments, periodic, choosePeriodic, form, update, totalInstallments, durationLabel, endDate, chitInstallmentAmount, chosen, setShowHolidays, showHolidays, visibleHolidays, selectedHolidays, setSelectedHolidays, schedulePreviewOpen, setSchedulePreviewOpen, chitPreviewRows, saving, saveLoan, error, id, group, templateRows }} />;
-  if (isInterest) return <InterestLoanLayout {...{ go, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, installments, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, schedulePreviewOpen, setSchedulePreviewOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }} />;
+  if (isChit) return <ChitLoanLayout {...{ go, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, groupId, setGroupId, groups, allowed, installments, periodic, choosePeriodic, form, update, totalInstallments, durationLabel, endDate, chitInstallmentAmount, chosen, setShowHolidays, showHolidays, visibleHolidays, selectedHolidays, setSelectedHolidays, accordionOpen, setAccordionOpen, chitPreviewRows, saving, saveLoan, error, id, group, templateRows }} />;
+  if (isInterest) return <InterestLoanLayout {...{ go, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, installments, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, accordionOpen, setAccordionOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }} />;
   return <div className={`exact-loan-page ${selectedType ? "has-loan-type" : "no-loan-type"} ${isInterest ? "is-interest" : "is-chit"}`}>
     <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /><strong>LOAN TYPE: {loanType.toUpperCase()}</strong></header>
     {error && <div className="exact-error">{error}</div>}
@@ -175,13 +211,11 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
     {showHolidays && <div className="exact-overlay" onMouseDown={event => event.target === event.currentTarget && setShowHolidays(false)}><div className="exact-holiday-modal"><div><h2>Manage Holidays</h2><button type="button" onClick={() => setShowHolidays(false)}>Ã—</button></div>{visibleHolidays.map(item => <label key={item.id} className={selectedHolidays.includes(item.id) ? "included" : ""}><input type="checkbox" checked={selectedHolidays.includes(item.id)} onChange={() => setSelectedHolidays(current => current.includes(item.id) ? current.filter(id => id !== item.id) : [...current, item.id])}/>{date(item.holiday_date)} <b>{item.holiday_name}</b></label>)}<button className="save" type="button" onClick={() => setShowHolidays(false)}>Apply</button></div></div>}
   </div>;
 }
-function PlanOptions({ allowed, allInstallments = [], periodic, choosePeriodic }) {
-  const options = [...allowed];
-  if (!options.some(item => normalizePeriodName(item.name) === "100 Days")) options.push({ ...(allInstallments.find(item => normalizePeriodName(item.name) === "100 Days") || {}), id: "100-days-display", name: "100 Days", unavailable: true });
-  return <div className="collection-plan-options">{options.map(item => { const label = periodicLetters[item.name] || item.name.slice(0, 1); return <button type="button" key={item.id} title={item.name} disabled={item.unavailable} className={`collection-plan-option ${label === "100" ? "option-100" : ""} ${Number(periodic) === Number(item.id) ? "selected" : ""}`} onClick={() => choosePeriodic(item.id)}>{label}</button>; })}</div>;
+function PlanOptions({ allowed, periodic, choosePeriodic }) {
+  return <div className="collection-plan-options">{allowed.map(item => { const label = periodicLetters[item.name] || item.name.slice(0, 1); return <button type="button" key={item.id} title={item.name} className={`collection-plan-option ${label === "100" ? "option-100" : ""} ${Number(periodic) === Number(item.id) ? "selected" : ""}`} onClick={() => choosePeriodic(item.id)}>{label}</button>; })}</div>;
 }
 
-function ChitLoanLayout({ go, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, groupId, setGroupId, groups, allowed, installments, periodic, choosePeriodic, form, update, totalInstallments, durationLabel, endDate, chitInstallmentAmount, chosen, setShowHolidays, showHolidays, visibleHolidays, selectedHolidays, setSelectedHolidays, schedulePreviewOpen, setSchedulePreviewOpen, chitPreviewRows, saving, saveLoan, error, id, group, templateRows }) {
+function ChitLoanLayout({ go, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, groupId, setGroupId, groups, allowed, installments, periodic, choosePeriodic, form, update, totalInstallments, durationLabel, endDate, chitInstallmentAmount, chosen, setShowHolidays, showHolidays, visibleHolidays, selectedHolidays, setSelectedHolidays, accordionOpen, setAccordionOpen, chitPreviewRows, saving, saveLoan, error, id, group, templateRows }) {
   return <div className="exact-loan-page clean-loan-page is-chit">
     <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /></header>
     {error && <div className="exact-error">{error}</div>}
@@ -191,10 +225,11 @@ function ChitLoanLayout({ go, customer, setCustomer, customers, selectedLoanType
         <div className="chit-plan-row"><Field label="Chit Group" required><select value={groupId} onChange={event => setGroupId(event.target.value)}><option value="">Search Chit Group...</option>{groups.map(item => <option key={item.id} value={item.id}>{item.name || item.chit_group_name} - {item.duration} {item.duration_type === "DAY" ? "Days" : "Months"}</option>)}</select></Field><div className="collection-plan-field"><span className="collection-plan-label">Collection Plan <i>*</i></span><PlanOptions {...{ allowed, allInstallments: installments, periodic, choosePeriodic }}/></div></div>
         <div className="loan-schedule-section"><h3>Loan Schedule Details</h3><div className="loan-schedule-grid"><Field label="Loan Amount" required><input type="number" placeholder="0.00" value={form.amount} onChange={event => update("amount", event.target.value)}/></Field><Field label="Loan Start Date" required><input type="date" value={form.startDate} onChange={event => update("startDate", event.target.value)}/></Field><Field label="Total Installments"><input value={totalInstallments || ""} readOnly/></Field><Field label="Duration"><input value={durationLabel} readOnly/></Field><Field label="Loan End Date"><input value={endDate ? formatDate(endDate) : ""} readOnly/></Field><Field label="Installment Amount"><input value={chitInstallmentAmount || ""} readOnly/></Field></div></div>
         {group && !templateRows.length && <div className="template-warning">This Chit Group does not have an installment template. Edit the Chit Group and save its installment schedule first.</div>}
-        <HolidayRules form={form} update={update} chosen={chosen} setShowHolidays={setShowHolidays}/>
+        <div className="loan-accordion-row"><AccordionControl label="Holiday" open={accordionOpen === "holiday"} onToggle={() => setAccordionOpen(value => value === "holiday" ? null : "holiday")}/><AccordionControl label="Schedule Preview" open={accordionOpen === "schedule"} onToggle={() => setAccordionOpen(value => value === "schedule" ? null : "schedule")}/></div>
+        {accordionOpen === "holiday" && <HolidayRules form={form} update={update} chosen={chosen} setShowHolidays={setShowHolidays} contentOnly/>}
+        {accordionOpen === "schedule" && <SchedulePreview rows={chitPreviewRows} isChit money={formatINR} contentOnly emptyMessage={group && !templateRows.length ? "Save the Chit Group installment template first." : "Select a Chit Group and Start Date"} totalAmount={Number(group?.grand_total ?? group?.total_amount ?? 0)} />}
       </section>
-      <SchedulePreview rows={chitPreviewRows} isChit money={formatINR} open={schedulePreviewOpen} onToggle={() => setSchedulePreviewOpen(value => !value)} emptyMessage={group && !templateRows.length ? "Save the Chit Group installment template first." : "Select a Chit Group and Start Date"} totalAmount={Number(group?.grand_total ?? group?.total_amount ?? 0)} />
-      <footer className="clean-actions"><button type="button" onClick={() => go("/active-loans")}>Cancel</button><button type="button" onClick={() => go("/loan-application")}>Reset</button><button type="submit" className="save" disabled={saving}>{saving ? "Saving..." : id ? "Update Loan" : "Save Loan"}</button></footer>
+      <footer className="clean-actions"><button type="button" onClick={() => { clearLoanDraft(); go("/active-loans"); }}>Cancel</button><button type="button" onClick={() => { clearLoanDraft(); go("/loan-application"); }}>Reset</button><button type="submit" className="save" disabled={saving}>{saving ? "Saving..." : id ? "Update Loan" : "Save Loan"}</button></footer>
     </form>
     {showHolidays && <HolidayModal visibleHolidays={visibleHolidays} selectedHolidays={selectedHolidays} setSelectedHolidays={setSelectedHolidays} setShowHolidays={setShowHolidays}/>}
   </div>;
@@ -203,7 +238,7 @@ function ChitLoanLayout({ go, customer, setCustomer, customers, selectedLoanType
 function PanelTitle({ icon, title }) { return <div className="exact-panel-title"><i>{icon}</i><h2>{title}</h2></div>; }
 function Field({ label, required, children }) { return <label className="exact-field"><span>{label}{required && <i> *</i>}</span>{children}</label>; }
 
-function InterestLoanLayout({ go, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, installments, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, schedulePreviewOpen, setSchedulePreviewOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }) {
+function InterestLoanLayout({ go, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, installments, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, accordionOpen, setAccordionOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }) {
   return <div className="exact-loan-page clean-loan-page is-interest">
     <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /></header>
     {error && <div className="exact-error">{error}</div>}
@@ -213,10 +248,11 @@ function InterestLoanLayout({ go, customer, setCustomer, customers, selectedLoan
         <div className="interest-top-row"><Field label="Principal Amount" required><input type="number" min="0" step="0.01" value={form.amount} onChange={event => update("amount", event.target.value)}/></Field><Field label="Interest Percentage" required><div className="percent-input"><input type="number" min="0" step="0.01" value={interestPercentage} onChange={event => setInterestPercentage(event.target.value)}/><b>%</b></div></Field><div className="collection-plan-field"><span className="collection-plan-label">Collection Plan <i>*</i></span><PlanOptions {...{ allowed, allInstallments: installments, periodic, choosePeriodic }}/></div></div>
         <div className="loan-schedule-section"><h3>Loan Schedule Details</h3><div className="interest-schedule-grid"><Field label="Duration Type"><select value={interestDurationUnit} onChange={event => setInterestDurationUnit(event.target.value)}><option value="DAY">Days</option><option value="WEEK">Weeks</option><option value="MONTH">Months</option><option value="YEAR">Years</option></select></Field><Field label="Duration" required><input type="number" min="1" value={interestDuration} onChange={event => setInterestDuration(event.target.value)}/></Field><Field label="Start Date" required><input type="date" value={form.startDate} onChange={event => update("startDate", event.target.value)}/></Field><Calculated label="Interest Amount" value={money(interestValue)}/><Calculated label="Total Payable" value={money(interestTotal)}/><Calculated label="Total Installments" value={interestCount || "-"}/><Calculated label="Unit Installment Amount" value={money(interestInstallment)}/><Calculated label="Round-off Date" value={interestEndDate ? formatDate(interestEndDate) : "-"}/></div></div>
         {(periodicName === "Weekly" || periodicName === "Monthly" || periodicName === "Annual") && <div className="clean-conditional-fields">{periodicName === "Weekly" && <div className="interest-schedule-field"><b>Collection Day <i>*</i></b><div className="interest-weekdays">{weekdays.map(([letter, name], index) => <button type="button" title={name} className={interestWeekday === index ? "selected" : ""} onClick={() => setInterestWeekday(index)} key={`${name}-${index}`}>{letter}</button>)}</div></div>}{periodicName === "Monthly" && <Field label="Collection Date" required><select value={interestDate} onChange={event => setInterestDate(event.target.value)}>{Array.from({ length: 31 }, (_, index) => <option value={index + 1} key={index + 1}>{index + 1}</option>)}</select></Field>}{periodicName === "Annual" && <><Field label="Collection Month" required><select value={interestMonth} onChange={event => setInterestMonth(event.target.value)}>{Array.from({ length: 12 }, (_, index) => <option value={index + 1} key={index + 1}>{new Date(2000, index, 1).toLocaleString("en-IN", { month: "long" })}</option>)}</select></Field><Field label="Collection Date" required><select value={interestDate} onChange={event => setInterestDate(event.target.value)}>{Array.from({ length: 31 }, (_, index) => <option value={index + 1} key={index + 1}>{index + 1}</option>)}</select></Field></>}</div>}
-        <HolidayRules form={form} update={update} chosen={chosen} setShowHolidays={setShowHolidays}/>
+        <div className="loan-accordion-row"><AccordionControl label="Holiday" open={accordionOpen === "holiday"} onToggle={() => setAccordionOpen(value => value === "holiday" ? null : "holiday")}/><AccordionControl label="Schedule Preview" open={accordionOpen === "schedule"} onToggle={() => setAccordionOpen(value => value === "schedule" ? null : "schedule")}/></div>
+        {accordionOpen === "holiday" && <HolidayRules form={form} update={update} chosen={chosen} setShowHolidays={setShowHolidays} contentOnly/>}
+        {accordionOpen === "schedule" && <SchedulePreview rows={interestRows} money={money} contentOnly principal={Number(form.amount || 0)} interestTotal={interestTotal} emptyMessage="Enter the flat interest details to generate the schedule."/>}
       </section>
-      <SchedulePreview rows={interestRows} money={money} open={schedulePreviewOpen} onToggle={() => setSchedulePreviewOpen(value => !value)} principal={Number(form.amount || 0)} interestTotal={interestTotal} emptyMessage="Enter the flat interest details to generate the schedule."/>
-      <footer className="clean-actions"><button type="button" onClick={() => go("/active-loans")}>Cancel</button><button type="button" onClick={() => go("/loan-application")}>Reset</button><button type="submit" className="save" disabled={saving}>{saving ? "Saving..." : id ? "Update Loan" : "Save Loan"}</button></footer>
+      <footer className="clean-actions"><button type="button" onClick={() => { clearLoanDraft(); go("/active-loans"); }}>Cancel</button><button type="button" onClick={() => { clearLoanDraft(); go("/loan-application"); }}>Reset</button><button type="submit" className="save" disabled={saving}>{saving ? "Saving..." : id ? "Update Loan" : "Save Loan"}</button></footer>
     </form>
     {showHolidays && <HolidayModal visibleHolidays={visibleHolidays} selectedHolidays={selectedHolidays} setSelectedHolidays={setSelectedHolidays} setShowHolidays={setShowHolidays}/>} 
   </div>;
@@ -253,7 +289,9 @@ function FlatInterestLoanForm({ go, customer, setCustomer, customers, selectedLo
   </div>;
 }
 
-function SchedulePreview({ rows, isChit = false, money, principal = 0, interestTotal = 0, totalAmount = 0, emptyMessage, open, onToggle }) {
+function AccordionControl({ label, open, onToggle }) { return <button type="button" className={`loan-accordion-toggle ${open ? "active" : ""}`} onClick={onToggle} aria-expanded={open}><span>{label}</span><span aria-hidden="true">{open ? "▴" : "▾"}</span></button>; }
+
+function SchedulePreview({ rows, isChit = false, money, principal = 0, interestTotal = 0, totalAmount = 0, emptyMessage, open = true, onToggle, contentOnly = false }) {
   const [activeIndex, setActiveIndex] = useState(-1);
   const rowRefs = useRef([]);
   useEffect(() => { setActiveIndex(-1); rowRefs.current = []; }, [rows.length, isChit]);
@@ -284,7 +322,7 @@ function SchedulePreview({ rows, isChit = false, money, principal = 0, interestT
     else if (event.key === "PageDown") move(event, 5);
     else if (event.key === "PageUp") move(event, -5);
   };
-  return <section className="exact-panel exact-right schedule-preview"><button type="button" className="schedule-section-header schedule-preview-toggle" onClick={onToggle} aria-expanded={open}><span>Schedule Preview</span><span aria-hidden="true">{open ? "▲" : "▼"}</span></button>{open && <div className="schedule-preview-body" tabIndex={0} onKeyDown={onKeyDown} aria-label="Schedule Preview"><table className={`exact-table schedule-table schedule-preview-table ${isChit ? "chit" : "interest"}`}><thead><tr>{isChit ? <><th>S.NO</th><th>SCHEDULE DATE</th><th>INSTALLMENT AMOUNT</th><th>TOTAL PAID</th><th>BALANCE</th></> : <><th>S.NO</th><th>INSTALLMENT DATE</th><th>PRINCIPAL</th><th>INTEREST</th><th>INSTALLMENT AMOUNT</th><th>BALANCE</th></>}</tr></thead><tbody>{tableRows.map((row, index) => <tr ref={node => { rowRefs.current[index] = node; }} className={index === activeIndex ? "active-row" : ""} onClick={() => { setActiveIndex(index); rowRefs.current[index]?.focus(); }} tabIndex={-1} key={`${row.number}-${row.date}`}><td>{row.number}</td><td>{formatDate(row.date)}</td>{isChit ? <><td className="currency">{money(row.amount)}</td><td className="currency">{money(row.paid)}</td><td className="currency">{money(row.balance)}</td></> : <><td className="currency">{money(row.principal)}</td><td className="currency">{money(row.interest)}</td><td className="currency">{money(row.amount)}</td><td className="currency">{money(row.balance)}</td></>}</tr>)}</tbody></table>{!tableRows.length && <div className="exact-empty schedule-empty-state">{emptyMessage}</div>}</div>}</section>;
+  return <section className={`exact-panel exact-right schedule-preview ${contentOnly ? "accordion-content-panel" : ""}`}>{!contentOnly && <button type="button" className="schedule-section-header schedule-preview-toggle" onClick={onToggle} aria-expanded={open}><span>Schedule Preview</span><span aria-hidden="true">{open ? "▲" : "▼"}</span></button>}{open && <div className="schedule-preview-body" tabIndex={0} onKeyDown={onKeyDown} aria-label="Schedule Preview"><table className={`exact-table schedule-table schedule-preview-table ${isChit ? "chit" : "interest"}`}><thead><tr>{isChit ? <><th>S.NO</th><th>SCHEDULE DATE</th><th>INSTALLMENT AMOUNT</th><th>TOTAL PAID</th><th>BALANCE</th></> : <><th>S.NO</th><th>INSTALLMENT DATE</th><th>PRINCIPAL</th><th>INTEREST</th><th>INSTALLMENT AMOUNT</th><th>BALANCE</th></>}</tr></thead><tbody>{tableRows.map((row, index) => <tr ref={node => { rowRefs.current[index] = node; }} className={index === activeIndex ? "active-row" : ""} onClick={() => { setActiveIndex(index); rowRefs.current[index]?.focus(); }} tabIndex={-1} key={`${row.number}-${row.date}`}><td>{row.number}</td><td>{formatDate(row.date)}</td>{isChit ? <><td className="currency">{money(row.amount)}</td><td className="currency">{money(row.paid)}</td><td className="currency">{money(row.balance)}</td></> : <><td className="currency">{money(row.principal)}</td><td className="currency">{money(row.interest)}</td><td className="currency">{money(row.amount)}</td><td className="currency">{money(row.balance)}</td></>}</tr>)}</tbody></table>{!tableRows.length && <div className="exact-empty schedule-empty-state">{emptyMessage}</div>}</div>}</section>;
 }
 
 function LegacyFlatInterestLoanForm({ go, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, detailsOpen, setDetailsOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, interestDurationLabel, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }) {
@@ -316,8 +354,8 @@ function LegacyFlatInterestLoanForm({ go, customer, setCustomer, customers, sele
   </div>;
 }
 
-function HolidayRules({ form, update, chosen, setShowHolidays }) {
-  return <section className="holiday-rules-section"><div className="exact-holiday-title clean-holiday-title">Holiday Rules</div><div className="exact-holiday-row"><div><b>Sunday Collection</b><label className="exact-toggle"><input type="checkbox" checked={form.includeSunday} onChange={event => update("includeSunday", event.target.checked)}/><span/></label><small>{form.includeSunday ? "Include Sunday in schedule" : "Exclude Sunday in schedule"}</small></div><div><b>Holiday Handling</b><select defaultValue="skip"><option value="skip">Skip Holiday &amp; Move to Next Working Day</option></select></div><div><b>Manage Holidays</b><strong className="exact-green">Selected Holidays: {chosen.length}</strong><button type="button" className="exact-manage" onClick={() => setShowHolidays(true)}>Manage Holidays</button></div></div></section>;
+function HolidayRules({ form, update, chosen, setShowHolidays, contentOnly = false }) {
+  return <section className={`holiday-rules-section loan-accordion ${contentOnly ? "accordion-content-panel" : ""}`}><div className="loan-accordion-content"><div className="exact-holiday-row"><div><b>Sunday Collection</b><label className="exact-toggle"><input type="checkbox" checked={form.includeSunday} onChange={event => update("includeSunday", event.target.checked)}/><span/></label><small>{form.includeSunday ? "Include Sunday in schedule" : "Exclude Sunday in schedule"}</small></div><div><b>Holiday Handling</b><select defaultValue="skip"><option value="skip">Skip Holiday &amp; Move to Next Working Day</option></select></div><div><b>Manage Holidays</b><strong className="exact-green">Selected Holidays: {chosen.length}</strong><button type="button" className="exact-manage" onClick={() => setShowHolidays(true)}>Manage Holidays</button></div></div></div></section>;
 }
 
 function HolidayModal({ visibleHolidays, selectedHolidays, setSelectedHolidays, setShowHolidays }) {

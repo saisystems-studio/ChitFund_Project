@@ -35,3 +35,12 @@
 .actions{position:static;display:flex;justify-content:center;align-items:center;gap:10px;margin:0;padding:14px 22px 16px}
 @media(max-width:1050px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px}.meta{grid-template-columns:1fr auto}.meta>div{grid-column:1/-1;text-align:right}}
 @media(max-width:600px){.page{width:100%;height:auto}.surface>section{padding:14px 16px}.grid{grid-template-columns:1fr}.radios{gap:10px}.tableWrap{max-height:360px}.meta{display:block}.meta>span,.meta>div{display:block;margin-top:8px}.meta>div{text-align:left}.actions{justify-content:center;padding:14px 16px}}
+.groupInfoRow{grid-template-columns:minmax(160px,1.25fr) minmax(120px,.82fr) minmax(135px,.95fr) minmax(190px,1.28fr) minmax(130px,.9fr) minmax(140px,.95fr);gap:12px;align-items:end}
+.groupInfoRow>label{margin:0}
+.groupInfoRow input,.groupInfoRow select,.groupInfoRow .moneyInput,.groupInfoRow .radios,.collectionDateGroup{height:34px;margin-top:5px}
+.groupInfoRow .radios{gap:8px}
+.groupInfoRow .radios label{font-size:11px}
+.collectionDateGroup{display:grid;grid-template-columns:1fr 64px;gap:7px}
+.collectionDateGroup select{margin-top:0}
+@media(max-width:900px){.groupInfoRow{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px}}
+@media(max-width:600px){.groupInfoRow{grid-template-columns:1fr}}

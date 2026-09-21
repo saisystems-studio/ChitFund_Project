@@ -1,4 +1,11 @@
 .clean-loan-page{min-height:100%;height:auto;padding:18px 22px 28px;overflow:visible;background:#f5f9fd}
+.clean-loan-page .loan-accordion-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%;max-width:none;margin:20px 0 0}
+.clean-loan-page .loan-accordion-row .loan-accordion-toggle{height:42px;margin:0;border:1px solid #dce8f5;border-radius:9px}
+.clean-loan-page .accordion-content-panel{max-width:none;margin:10px 0 0;border:1px solid #dce8f5;border-radius:9px;background:#fff;overflow:hidden}
+.clean-loan-page .accordion-content-panel .schedule-preview-toggle{display:none}
+.clean-loan-page .accordion-content-panel .schedule-preview-body{border-top:0}
+.clean-loan-page .exact-header{margin-left:auto!important;margin-right:auto!important;text-align:left!important}
+@media(max-width:650px){.clean-loan-page .loan-accordion-row{grid-template-columns:1fr;gap:8px}}
 .clean-loan-page .exact-header{max-width:1240px;margin:0 auto 12px;padding:0 0 8px!important}
 .clean-loan-page .clean-panel{max-width:1240px;margin:0 auto;background:#fff;border:1px solid #d9e6f1;border-radius:10px;padding:18px 20px}
 .clean-loan-page .clean-top-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
@@ -149,3 +156,16 @@
     min-width: 58px;
   }
 }
+
+/* Compact, mutually exclusive Holiday / Schedule accordions. */
+.clean-loan-page .holiday-rules-section.loan-accordion{margin-top:16px;border:1px solid #dce8f5;border-radius:9px;background:#fff;overflow:hidden}
+.clean-loan-page .loan-accordion-toggle,.clean-loan-page .schedule-preview-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:42px;padding:10px 13px;border:0;background:#f8fbff;color:#173f65;font:800 13px/1.2 inherit;text-align:left;cursor:pointer}
+.clean-loan-page .loan-accordion-toggle:hover,.clean-loan-page .schedule-preview-toggle:hover{background:#edf6ff}
+.clean-loan-page .loan-accordion-toggle.active{border-color:#91c4ef!important;background:#eaf4ff!important;color:#176db3!important}
+.clean-loan-page .loan-accordion-toggle span:last-child,.clean-loan-page .schedule-preview-toggle span:last-child{color:#176db3;font-size:15px}
+.clean-loan-page .loan-accordion-content{padding:12px 13px;border-top:1px solid #dce8f5}
+.clean-loan-page .holiday-rules-section .exact-holiday-row{margin:0}
+.clean-loan-page .schedule-preview{margin-top:12px;min-height:0;border:1px solid #dce8f5;border-radius:9px;background:#fff;overflow:hidden}
+.clean-loan-page .schedule-preview-body{padding:0 13px 12px;border-top:1px solid #dce8f5}
+.clean-loan-page .clean-actions{display:flex;justify-content:center;gap:10px;margin-top:16px;padding:16px 0 8px}
+@media(max-width:650px){.clean-loan-page .clean-actions{flex-wrap:wrap}.clean-loan-page .clean-actions button{flex:1 1 110px}}
