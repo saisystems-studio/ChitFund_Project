@@ -1,0 +1,19 @@
+.holidayList label.includedHoliday {
+  background: #ecfaf1;
+  border: 1px solid #b9e8c9;
+  border-radius: 8px;
+  padding: 10px 8px;
+  margin: 5px 0;
+}
+
+.holidayList label strong {
+  flex: 1;
+  color: #385975;
+}
+
+.holidayList label em {
+  color: #2b8a5a;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}

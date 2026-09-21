@@ -1,0 +1,257 @@
+.flat-interest-expanded {
+  min-width: 0;
+}
+
+/* Keep Collection Plan compact and inline without changing option values. */
+.exact-left .exact-field-label {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  margin: 12px 10px 0 0 !important;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.exact-left .exact-periodics {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0 !important;
+  vertical-align: middle;
+  flex-wrap: nowrap !important;
+}
+
+.exact-left .exact-periodics button {
+  min-width: 48px;
+  width: auto;
+  height: 38px;
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  box-sizing: border-box;
+}
+
+.exact-left .exact-periodics button[title="100 Days"] {
+  min-width: 58px;
+}
+
+.exact-left .exact-periodics button small {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .exact-left .exact-field-label {
+    display: flex;
+    margin-right: 0 !important;
+  }
+
+  .exact-left .exact-periodics {
+    display: flex !important;
+    margin-top: 8px !important;
+  }
+}
+
+.schedule-section-header {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.loan-details-toggle.schedule-section-header,
+.loan-schedule-details-toggle.schedule-section-header {
+  height: auto !important;
+  margin: 12px 0 0 !important;
+  padding: 11px 0 !important;
+  border: 0 !important;
+  border-top: 1px solid #e3edf6 !important;
+  border-bottom: 1px solid #e3edf6 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #173f65 !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  text-align: left;
+  box-shadow: none !important;
+}
+
+.loan-details-toggle.schedule-section-header:before {
+  content: none !important;
+}
+
+.loan-details-toggle.schedule-section-header > span:last-child,
+.loan-schedule-details-toggle.schedule-section-header > span:last-child {
+  display: none;
+}
+
+.loan-details-toggle.schedule-section-header,
+.loan-schedule-details-toggle.schedule-section-header {
+  pointer-events: none;
+}
+
+.schedule-preview {
+  min-width: 0;
+  overflow: hidden !important;
+}
+
+.schedule-preview-toggle {
+  height: auto;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid #e3edf6;
+  background: #fff;
+  color: #173f65;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.schedule-preview-toggle > span:last-child {
+  flex: 0 0 auto;
+  color: #1471e8;
+}
+
+.flat-interest-expanded .schedule-summary {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin: 0 0 14px !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.flat-interest-expanded .loan-schedule-fields {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1.2fr 1.5fr 1.2fr !important;
+  gap: 16px !important;
+  align-items: end !important;
+  margin: 0 !important;
+  min-width: 0;
+}
+
+.loan-schedule-fields > * {
+  min-width: 0 !important;
+}
+
+.loan-schedule-fields input,
+.loan-schedule-fields select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.schedule-preview-body {
+  max-height: 320px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  outline: none;
+}
+
+.schedule-preview-body:focus {
+  outline: 2px solid #1471e855;
+  outline-offset: 2px;
+}
+
+.schedule-preview .schedule-table {
+  display: table !important;
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.schedule-preview .schedule-table thead,
+.schedule-preview .schedule-table tbody,
+.schedule-preview .schedule-table tr {
+  display: table-row !important;
+  width: auto !important;
+}
+
+.schedule-preview .schedule-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fbfe;
+  white-space: nowrap;
+}
+
+.schedule-preview .schedule-table td,
+.schedule-preview .schedule-table th {
+  padding: 10px 9px;
+  white-space: nowrap;
+  max-width: none !important;
+  overflow: visible !important;
+}
+
+.schedule-preview .schedule-table td.currency {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-preview-table.interest th:nth-child(1) { width: 6%; }
+.schedule-preview-table.interest th:nth-child(2) { width: 16%; }
+.schedule-preview-table.interest th:nth-child(3) { width: 15%; }
+.schedule-preview-table.interest th:nth-child(4) { width: 15%; }
+.schedule-preview-table.interest th:nth-child(5) { width: 24%; }
+.schedule-preview-table.interest th:nth-child(6) { width: 24%; }
+.schedule-preview-table.chit th { width: 20%; }
+.schedule-preview-table.chit th:first-child { width: 8%; }
+.schedule-preview-table.chit th:nth-child(2) { width: 25%; }
+
+.schedule-preview-table th {
+  white-space: nowrap;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.schedule-preview-table td {
+  padding: 10px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.schedule-empty-state {
+  min-height: 120px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.schedule-preview .schedule-table tbody tr {
+  cursor: pointer;
+}
+
+.schedule-preview .schedule-table tbody tr:hover td,
+.schedule-preview .schedule-table tbody tr.active-row td {
+  background: #eaf3ff;
+  color: #123f70;
+}
+
+@media (max-width: 900px) {
+  .flat-interest-expanded .loan-schedule-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .flat-interest-expanded .schedule-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .flat-interest-expanded .loan-schedule-fields {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .schedule-preview .schedule-table {
+    min-width: 680px;
+  }
+}

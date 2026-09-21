@@ -1,0 +1,162 @@
+*{box-sizing:border-box}.exact-loan-page{height:100%;min-height:680px;padding:24px 18px 12px;background:#f8fbff;color:#142b4a;overflow:hidden}.exact-header{display:flex;justify-content:space-between;align-items:flex-start;padding:0 32px 18px}.exact-header p{margin:0 0 13px;color:#1470ca;font-size:11px;font-weight:800;letter-spacing:.1em}.exact-header p span{margin:0 8px;color:#91a5bd}.exact-header h1{margin:0 0 8px;font-size:31px;line-height:1.1;color:#122c4e}.exact-header small{font-size:15px;color:#607491}.exact-header>strong{margin-top:14px;padding:14px 18px;border-radius:12px;background:#e9f2ff;color:#0862c9;font-size:13px}.exact-error{margin:0 32px 10px;padding:10px 13px;border-radius:8px;background:#fff0f0;color:#aa3440;font-size:12px}.exact-workspace{height:calc(100% - 104px);display:grid;grid-template-columns:1.03fr .97fr;grid-template-rows:minmax(0,1fr) auto;gap:0 12px}.exact-panel{min-height:0;border:1px solid #dce7f3;border-radius:12px;background:#fff;overflow:hidden}.exact-left{padding:18px 15px;overflow:auto}.exact-right{padding:18px 16px;display:flex;flex-direction:column}.exact-panel-title{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:11px;border-bottom:2px solid #e8f0fa}.exact-panel-title i{font-style:normal;color:#1471e8;font-size:20px}.exact-panel-title h2{margin:0;font-size:15px}.exact-two,.exact-fields.three{display:grid;grid-template-columns:1fr 1fr;gap:13px}.exact-fields.three{grid-template-columns:repeat(3,1fr);margin-top:14px}.exact-field{display:grid;gap:7px;min-width:0}.exact-field>span,.exact-field-label{font-size:12px;font-weight:700;color:#2a4260}.exact-field i,.exact-field-label i{color:#df4252;font-style:normal}.exact-field input,.exact-field select,.exact-select-plus select,.exact-holiday-row select{width:100%;height:41px;padding:8px 11px;border:1px solid #cad8e7;border-radius:7px;background:#fff;color:#182c47;font-size:13px}.exact-field input:focus,.exact-field select:focus,.exact-select-plus select:focus{outline:2px solid #1471e833;border-color:#1471e8}.exact-select-plus{display:flex;gap:8px}.exact-select-plus select{flex:1}.exact-select-plus button{width:42px;border:0;border-radius:8px;background:#1471e8;color:#fff;font-size:25px;line-height:1;cursor:pointer}.exact-field .readonly{background:#f2f6fa;color:#637892}.exact-plan-note{display:flex;align-items:center;gap:10px;height:41px;padding:0 12px;border:1px solid #cddbea;border-radius:7px;background:#f4f8fc}.exact-plan-note span{font-size:11px;color:#71849b}.exact-field-label{margin-top:15px;margin-bottom:8px}.exact-periodics{display:flex;gap:8px}.exact-periodics button{width:58px;height:55px;border:1px solid #d1dfed;border-radius:9px;background:#fff;color:#142b4a;cursor:pointer}.exact-periodics button b{display:block;font-size:17px}.exact-periodics button small{display:block;margin-top:4px;font-size:9px}.exact-periodics button.selected{border-color:#1471e8;background:#1471e8;color:#fff;box-shadow:0 5px 12px #1471e844}.exact-weekdays{display:flex;align-items:center;gap:13px;margin-top:8px;font-size:11px;font-weight:700}.exact-weekdays>div{display:flex;gap:5px}.exact-weekdays button{width:25px;height:25px;border:1px solid #c7d7e8;border-radius:50%;background:#fff;color:#193552}.exact-weekdays button.selected{background:#1471e8;color:#fff}.exact-holiday-title{margin:15px -15px 10px;padding:11px 15px;border-top:1px solid #e3edf6;color:#0c62bb;font-size:13px;font-weight:800}.exact-holiday-row{display:grid;grid-template-columns:1fr 1.4fr 1.2fr;gap:10px}.exact-holiday-row>div{min-height:88px;padding:10px;border:1px solid #e0eaf3;border-radius:8px}.exact-holiday-row b{display:block;margin-bottom:8px;font-size:11px}.exact-holiday-row small{margin-left:7px;color:#72849a;font-size:10px}.exact-toggle input{display:none}.exact-toggle span{display:inline-block;width:34px;height:19px;padding:2px;border-radius:20px;background:#bdc9d6;vertical-align:middle}.exact-toggle span:after{content:"";display:block;width:15px;height:15px;border-radius:50%;background:#fff;transition:.2s}.exact-toggle input:checked+span{background:#1471e8}.exact-toggle input:checked+span:after{transform:translateX(15px)}.exact-green{display:block;margin:0 0 7px;color:#16884e;font-size:10px}.exact-manage{padding:6px 9px;border:1px solid #1471e8;border-radius:6px;background:#fff;color:#1471e8;font-size:10px;font-weight:700}.exact-chips{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}.exact-chips span{padding:4px 6px;border-radius:10px;background:#e5f8eb;color:#19834c;font-size:9px}.exact-panel-head{display:flex;align-items:flex-start;justify-content:space-between}.exact-panel-head .exact-panel-title{flex:1}.exact-panel-head em{padding:7px 10px;border-radius:15px;background:#eaf3ff;color:#0868d2;font-size:10px;font-style:normal;font-weight:700}.exact-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #dce7f3;border-radius:9px;overflow:hidden;font-size:11px}.exact-table th{padding:11px 8px;text-align:left;color:#5c718e;font-size:10px;white-space:nowrap}.exact-table td{padding:13px 8px;border-top:1px solid #e4edf5;white-space:nowrap}.exact-status{padding:6px 9px;border-radius:8px;background:#e8f2ff;color:#0868d2;font-size:10px;font-weight:700}.exact-empty{display:grid;place-items:center;min-height:160px;text-align:center;color:#6f8198;font-size:13px;line-height:1.7}.exact-pagination{display:flex;justify-content:space-between;align-items:center;margin-top:14px;color:#6f8198;font-size:11px}.exact-pagination div{display:flex;gap:5px}.exact-pagination button{width:32px;height:32px;border:1px solid #d4e0ed;border-radius:7px;background:#fff;color:#27415f}.exact-pagination button.current{background:#1471e8;color:#fff;border-color:#1471e8}.exact-grand{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:18px;border:1px solid #dce9f6;border-radius:9px;background:#f5f9ff}.exact-grand strong{color:#0665da;font-size:24px}.exact-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:14px;padding:12px 25px;border:1px solid #dce7f3;border-top:0;background:#fff}.exact-actions button{min-width:130px;height:43px;border:1px solid #c8d8e8;border-radius:8px;background:#fff;color:#1c3654;font-size:13px;font-weight:700}.exact-actions button.save{border-color:#1471e8;background:#1471e8;color:#fff;box-shadow:0 6px 15px #1471e844}.exact-overlay{position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:#081d3d88}.exact-holiday-modal{width:min(450px,92vw);max-height:80vh;overflow:auto;padding:20px;border-radius:12px;background:#fff}.exact-holiday-modal>div{display:flex;justify-content:space-between}.exact-holiday-modal h2{margin:0 0 14px}.exact-holiday-modal>div button{border:0;background:none;font-size:22px}.exact-holiday-modal label{display:block;padding:10px;border-bottom:1px solid #e5edf5;font-size:12px}.exact-holiday-modal label.included{background:#e8f8ed}.exact-holiday-modal .save{margin-top:14px;padding:10px 18px;border:0;border-radius:7px;background:#1471e8;color:#fff}@media(max-width:1050px){.exact-loan-page{height:auto;overflow:visible}.exact-workspace{height:auto;grid-template-columns:1fr}.exact-right{min-height:520px}.exact-actions{position:sticky;bottom:0;z-index:5}}@media(max-width:700px){.exact-loan-page{padding:14px 10px}.exact-header{padding:0 8px 14px;display:block}.exact-header>strong{display:inline-block;margin-top:10px}.exact-two,.exact-fields.three{grid-template-columns:1fr}.exact-holiday-row{grid-template-columns:1fr}.exact-actions{padding:10px;gap:7px}.exact-actions button{min-width:0;flex:1}.exact-table{font-size:10px}.exact-panel{border-radius:9px}}
+.exact-header p{font-size:0!important;font-weight:500!important}.exact-header p:before{content:"LOANS / APPLICATION  ›  ";font-size:11px;font-weight:500}.exact-header p:after{content:"LOAN APPLICATION";font-size:11px;font-weight:800}.exact-header p span{display:none}
+.exact-header h1,.exact-header small{display:none!important}.exact-header p:before{content:"LOANS /  ";font-weight:500}.exact-header p:after{content:"LOAN APPLICATION";font-weight:800}
+.exact-header p:before{content:"LOANS /  "!important;font-weight:500!important}.exact-header p:after{content:"LOAN APPLICATION"!important;font-weight:800!important}
+
+/* Remove legacy mojibake icon glyphs from this page. */
+.exact-header p span,.exact-header>strong,.exact-panel-title i{font-size:0!important}
+.exact-panel-title i:before{content:""}
+.exact-holiday-title{font-size:0!important}
+.exact-holiday-title:after{content:"Holiday Rules";font-size:13px}
+.exact-actions button{font-size:0}
+.exact-actions button:first-child:after{content:"Cancel";font-size:13px}
+.exact-actions button:nth-child(2):after{content:"Reset";font-size:13px}
+.exact-actions button.save:after{content:"Save Loan";font-size:13px}
+.exact-pagination button{font-size:0}
+.exact-pagination button:first-child:after{content:"‹";font-size:16px}
+.exact-pagination button:last-child:after{content:"›";font-size:16px}
+.exact-field input::placeholder{font-size:0}
+.exact-header{align-items:flex-start!important}.exact-header>strong{margin-top:0!important;padding:8px 12px!important;border-radius:9px!important;font-size:10px!important;line-height:1.2}.exact-header{padding-bottom:14px!important}.exact-workspace{align-items:stretch}.exact-left,.exact-right{align-self:stretch}
+.template-warning{margin-top:10px;padding:9px 11px;border:1px solid #f0d69b;border-radius:7px;background:#fff8e7;color:#956619;font-size:11px;line-height:1.45}
+
+.exact-header>strong{display:none!important}.exact-header{padding-bottom:6px!important}.exact-select-plus select{font-weight:600}
+.no-loan-type .exact-plan-note,.no-loan-type .exact-periodics,.no-loan-type .exact-field-label,.no-loan-type .exact-weekdays,.no-loan-type .exact-fields,.no-loan-type .exact-holiday-title,.no-loan-type .exact-holiday-row{display:none!important}.no-loan-type .exact-left{min-height:160px}
+.no-loan-type .exact-left{align-self:start!important;height:max-content!important;min-height:0!important}.no-loan-type .exact-workspace{align-items:start}.no-loan-type .exact-right{min-height:420px}
+.no-loan-type .exact-left{align-self:stretch!important;height:auto!important;min-height:0!important}.no-loan-type .exact-workspace{align-items:stretch}.no-loan-type .exact-right{min-height:0}
+.no-loan-type .exact-periodics{display:flex!important;opacity:.45}.no-loan-type .exact-periodics button{pointer-events:none;cursor:not-allowed}.no-loan-type .exact-fields{display:grid!important}.no-loan-type .exact-holiday-title,.no-loan-type .exact-holiday-row{display:block!important}.no-loan-type .exact-holiday-row{display:grid!important}.no-loan-type .exact-left{align-self:stretch!important;height:auto!important;min-height:0!important}.exact-field input::placeholder{color:#7b8da3;opacity:1}
+.interest-schedule-field{margin-top:14px;padding:10px 12px;border:1px solid #d8e6f3;border-radius:8px;background:#f8fbff}.interest-schedule-field>b{display:block;margin-bottom:8px;color:#17324d;font-size:12px}.interest-schedule-field i{color:#e43f4f;font-style:normal}.interest-weekdays{display:flex;gap:7px}.interest-weekdays button{width:34px;height:34px;border:1px solid #cfe0ef;border-radius:50%;background:#fff;color:#17324d;cursor:pointer}.interest-weekdays button.selected{border-color:#1976e8;background:#1976e8;color:#fff;box-shadow:0 3px 8px #1976e844}.interest-annual-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.flat-interest-card .interest-input-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:12px}
+.flat-interest-card .interest-input-row .exact-field{min-width:0}
+.flat-interest-card .percent-input{display:flex;align-items:center;gap:8px}
+.flat-interest-card .percent-input input{min-width:0;flex:1}
+.flat-interest-card .percent-input>b{color:#294967;font-size:14px}
+.flat-interest-card .interest-input-row .exact-field>small{margin-top:-2px;color:#71849b;font-size:10px;line-height:1.2}
+@media(max-width:600px){.flat-interest-card .interest-input-row{grid-template-columns:1fr}}
+.flat-interest-page .exact-header p:before{content:"← LOANS /  "!important;font-weight:500!important}
+.flat-interest-page .exact-header p:after{content:"LOAN APPLICATION"!important;font-weight:800!important}
+.flat-interest-card .duration-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px}
+.flat-interest-card>.exact-field{margin-top:14px}
+.flat-interest-card .flat-calculated-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid #e3edf6}
+.flat-interest-card .calculated-value{background:#f1f6fb!important;color:#173f65!important;font-weight:700}
+@media(max-width:600px){.flat-interest-card .duration-row,.flat-interest-card .flat-calculated-grid{grid-template-columns:1fr}}
+
+.interest-loan-details{display:flex;flex-direction:column;min-height:fit-content;overflow:visible}
+.flat-interest-card{margin-top:12px;padding-top:12px;border-top:1px solid #e3edf6}
+.flat-interest-card h3{margin:0 0 10px;color:#123458;font-size:13px}
+.flat-interest-card .flat-interest-primary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:0}
+.flat-interest-primary input,.flat-interest-primary .percent-input input{font-variant-numeric:tabular-nums;text-align:right}
+.loan-schedule-details-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:auto;min-width:145px;height:33px;margin:10px 0 0 auto;padding:0 12px;border:1px solid #1471e8;border-radius:8px;background:#fff;color:#1471e8;font-size:12px;font-weight:600;line-height:1;white-space:nowrap;cursor:pointer}
+.loan-schedule-details-toggle span{font-size:10px}
+.flat-interest-expanded{margin-top:12px;padding-top:12px;border-top:1px solid #e3edf6}
+.flat-interest-expanded .duration-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:0}
+.flat-interest-expanded .duration-input{display:grid;grid-template-columns:minmax(0,1fr) 1.2fr;gap:7px}
+.flat-interest-expanded .duration-input input{font-variant-numeric:tabular-nums;text-align:right}
+.flat-interest-expanded .flat-calculated-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid #e3edf6}
+.flat-interest-expanded .calculated-value{background:#f1f6fb!important;color:#173f65!important;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:767px){.flat-interest-card .flat-interest-primary,.flat-interest-expanded .duration-row,.flat-interest-expanded .flat-calculated-grid{grid-template-columns:1fr}}
+.flat-interest-card{margin-top:12px;padding:14px 16px;border:1px solid #d7e3ef;border-radius:9px;background:#fff;color:#173a5e}.flat-interest-card h3{margin:0 0 10px;color:#123b63;font-size:13px;font-weight:700}.flat-interest-card .flat-interest-primary,.flat-interest-card .interest-input-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;margin-top:0}.flat-interest-card .exact-field{min-width:0;color:#173a5e;font-size:12px;font-weight:600}.flat-interest-card .exact-field>input,.flat-interest-card .percent-input input{height:40px;width:100%;box-sizing:border-box;border:1px solid #c8d7e6;border-radius:7px;background:#fff;color:#17324d;padding:0 12px;font-size:13px;font-weight:500}.flat-interest-card .exact-field>input{text-align:right}.flat-interest-card .exact-field>input:focus,.flat-interest-card .percent-input input:focus{border-color:#174d7c;box-shadow:0 0 0 2px rgba(23,77,124,.08);outline:0}.flat-interest-card .percent-input{position:relative;display:block}.flat-interest-card .percent-input input{padding-right:38px;text-align:right}.flat-interest-card .percent-input>b{position:absolute;right:12px;top:50%;transform:translateY(-50%);margin:0;color:#557391;font-size:12px;font-weight:600;pointer-events:none}.flat-interest-card .loan-details-toggle{margin-top:10px}.flat-interest-card .flat-interest-expanded{margin-top:12px}.flat-interest-card .flat-interest-primary input,.flat-interest-card .interest-input-row input{font-variant-numeric:tabular-nums}@media(max-width:600px){.flat-interest-card .flat-interest-primary,.flat-interest-card .interest-input-row{grid-template-columns:1fr}}
+
+/* Loan application details panel: compact, readable controls with an internal footer. */
+.exact-left.loan-details-container,.is-chit .exact-left{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.exact-left.loan-details-container>.exact-panel-title{flex:0 0 auto}
+.loan-details-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:138px;height:34px;margin:12px 0 0 auto;padding:0 11px;border:1px solid #1471e8;border-radius:8px;background:#1471e8;color:#fff;cursor:pointer;font-size:0;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden}
+.loan-details-toggle:before{content:"Loan Details";font-size:12px}
+.loan-details-toggle span{display:inline-flex;align-items:center;justify-content:center;width:12px;height:14px;font-size:0;flex:0 0 12px}
+.loan-details-toggle span:after{content:"▼";font-size:10px;line-height:1}
+.loan-details-toggle[aria-expanded="true"] span:after{content:"▲"}
+.loan-details-toggle:hover{background:#0b5fc5;border-color:#0b5fc5}
+.loan-details-expanded{min-width:0}
+.exact-fields.three{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:10px}
+.exact-fields.three .exact-field input{height:37px;padding:7px 9px;font-size:12px}
+.exact-holiday-title{margin-top:auto;margin-bottom:8px;padding:10px 0 8px;border-top:1px solid #e3edf6;font-size:0!important}
+.exact-holiday-title:after{font-size:13px}
+.exact-holiday-row{grid-template-columns:1fr 1.6fr 1.2fr;gap:10px}
+.exact-holiday-row>div{min-height:76px;height:76px;padding:9px;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden}
+.exact-holiday-row b{margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exact-holiday-row select{height:31px;padding:5px 7px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exact-holiday-row small{margin-top:5px;margin-left:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exact-green{margin-bottom:5px}
+.exact-chips{display:none}
+.exact-panel.exact-right{margin-top:0}
+.is-chit .exact-left>.exact-panel-title{flex:0 0 auto}
+@media (max-width:1199px){.exact-fields.three{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:767px){.loan-details-toggle{width:138px}.exact-fields.three{grid-template-columns:1fr}.exact-holiday-row>div{height:auto;min-height:76px}.exact-holiday-row small{white-space:normal}}
+
+/* Schedule Preview stays within its card; only the rendered rows scroll. */
+.exact-right{min-height:0;overflow:hidden}
+.exact-right .exact-table{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;overflow:visible}
+.exact-right .exact-table thead{display:table;width:100%;table-layout:fixed;flex:0 0 auto;background:#fff;position:sticky;top:0;z-index:2}
+.exact-right .exact-table tbody{display:block;min-height:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.exact-right .exact-table tbody::-webkit-scrollbar{width:0;height:0}
+.exact-right .exact-table tbody tr{display:table;width:100%;table-layout:fixed}
+.exact-right .exact-table tbody tr.active-row td{background:#eaf3ff;color:#123f70}
+.exact-right .exact-table tbody tr{cursor:pointer}
+.exact-right .exact-table:focus{outline:2px solid #1471e855;outline-offset:2px}
+.exact-right .exact-pagination{flex:0 0 auto;margin-top:10px;padding-top:2px;background:#fff}
+.exact-right .exact-pagination button{display:inline-flex;align-items:center;justify-content:center;color:#27415f;font-size:11px;line-height:1}
+.exact-right .exact-pagination button:not(:first-child):not(:last-child){font-size:11px!important}
+.exact-right .exact-pagination button.current{color:#fff}
+@media(max-width:767px){
+  .exact-right .exact-table{display:block;overflow:visible}
+  .exact-right .exact-table thead{display:none}
+  .exact-right .exact-table tbody{display:block;max-height:none;overflow-y:auto}
+  .exact-right .exact-table tbody tr{display:block;width:100%}
+  .exact-right .exact-pagination{margin-top:10px}
+}
+
+/* Keep the loan details control readable at every breakpoint. */
+.loan-details-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:auto;
+  min-width:135px;
+  height:34px;
+  flex-shrink:0;
+  margin:8px 0 8px auto;
+  padding:0 14px;
+  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+  border:1px solid #1471e8;
+  border-radius:8px;
+  background:#fff;
+  color:#1471e8;
+  font-size:0;
+  font-weight:600;
+  line-height:1;
+}
+.loan-details-toggle:before{content:"Loan Details";font-size:12px}
+.loan-details-toggle span{width:12px;flex:0 0 12px;color:#1471e8}
+.loan-details-toggle span:after{font-size:10px}
+.loan-details-toggle:hover,.loan-details-toggle:focus-visible{background:#fff;color:#1471e8;border-color:#1471e8}
+
+/* Flat interest inputs use the same light form treatment as the rest of Loan Application. */
+.flat-interest-page .flat-interest-card{background:#fff!important;border:1px solid #d8e4ef!important;border-radius:8px;padding:12px 14px;color:#0b3157}
+.flat-interest-page .flat-interest-card h3{color:#0b3157!important}
+.flat-interest-page .flat-interest-card .exact-field>span{color:#0b3157!important;font-size:12px;font-weight:600}
+.flat-interest-page .flat-interest-card .exact-field i{color:#df4252!important}
+.flat-interest-page .flat-interest-card .flat-interest-primary,.flat-interest-page .flat-interest-card .interest-input-row{background:#fff!important}
+.flat-interest-page .flat-interest-card .flat-interest-primary input,.flat-interest-page .flat-interest-card .percent-input input{background:#fff!important;color:#0b3157!important;border:1px solid #c9d9e8!important;border-radius:7px;height:40px}
+.flat-interest-page .flat-interest-card .flat-interest-primary input:focus,.flat-interest-page .flat-interest-card .percent-input input:focus{border-color:#174d7c!important;outline:none;box-shadow:0 0 0 2px rgba(23,77,124,.08)!important}
+.flat-interest-page .flat-interest-card .percent-input{position:relative;display:block}
+.flat-interest-page .flat-interest-card .percent-input input{padding-right:38px}
+.flat-interest-page .flat-interest-card .percent-input>b{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#294967!important;font-size:12px;pointer-events:none}
+.flat-interest-page .flat-interest-expanded .duration-row{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;min-width:0}
+.flat-interest-page .flat-interest-expanded .flat-calculated-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;min-width:0}
+.flat-interest-page .flat-interest-expanded .exact-field,.flat-interest-page .flat-interest-expanded .calculated-value{min-width:0;max-width:100%}
+.flat-interest-page .flat-interest-expanded .calculated-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:767px){.flat-interest-page .flat-interest-expanded .duration-row,.flat-interest-page .flat-interest-expanded .flat-calculated-grid{grid-template-columns:1fr!important}}
+
+/* Before a loan type is chosen, keep only Customer and Loan Type visible. */
+.no-loan-type .exact-left>.exact-field,
+.no-loan-type .exact-left>.exact-field-label,
+.no-loan-type .exact-left>.exact-periodics,
+.no-loan-type .exact-left>.interest-schedule-field,
+.no-loan-type .exact-left>.interest-annual-fields,
+.no-loan-type .exact-left>.toggle-row,
+.no-loan-type .exact-left>.loan-details-expanded,
+.no-loan-type .exact-left>.exact-holiday-title,
+.no-loan-type .exact-left>.exact-holiday-row,
+.no-loan-type .exact-right{display:none!important}

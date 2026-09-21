@@ -1,0 +1,5 @@
+/* Native scrolling: the app shell owns normal page scrolling, while the sidebar stays independent. */
+.app-shell{height:100vh;min-height:100vh;overflow:hidden}
+.main-content{min-width:0;min-height:0;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:auto}
+.sidebarMenu{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+@media(max-width:600px){.main-content{height:auto!important;min-height:100vh;overflow-y:auto!important}}

@@ -1,0 +1,9 @@
+.detailTable{max-height:none!important;overflow:visible!important;min-height:220px}
+.detailTable tbody tr{height:40px}
+.detailPagination{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 22px 0;color:#708da5;font-size:12px}
+.detailPagination>div{display:flex;gap:4px}
+.detailPagination button{border:1px solid #cfe0ef;background:#fff;color:#176db3;border-radius:6px;padding:6px 9px;font-size:11px;cursor:pointer}
+.detailPagination button:disabled{opacity:.45;cursor:not-allowed}
+.detailPagination .currentPage{background:#176db3;color:#fff;border-color:#176db3}
+.noInstallments{text-align:center!important;color:#7892a8!important}
+@media(max-width:600px){.detailPagination{display:block;margin-left:12px;margin-right:12px}.detailPagination>div{margin-top:8px}}

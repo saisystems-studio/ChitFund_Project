@@ -1,0 +1,141 @@
+/* One responsive system for Loan Application. Kept page-scoped so other
+   pages and the existing finance theme are unaffected. */
+.exact-loan-page{width:100%;max-width:1600px;min-width:0;min-height:100%;height:auto;overflow:visible;margin:0 auto;padding:14px 18px 18px;box-sizing:border-box}.exact-header{display:flex!important;align-items:flex-start!important;justify-content:space-between;gap:20px;padding:0 16px 14px!important}.exact-header p{font-size:11px!important;font-weight:600!important;margin:0 0 8px!important;letter-spacing:.08em}.exact-header p:before,.exact-header p:after{content:none!important}.exact-header p span{display:inline!important;margin:0 8px!important;color:#91a5bd}.exact-header h1,.exact-header small{display:block!important}.exact-header h1{margin:0 0 6px!important;font-size:28px!important}.exact-header small{font-size:14px!important}.exact-header>strong{display:block!important;margin:0!important;padding:9px 13px!important;font-size:11px!important;white-space:nowrap}.exact-workspace{height:auto!important;min-height:0;display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);grid-template-rows:auto auto;gap:0 16px;align-items:stretch}.exact-panel{min-width:0;max-width:100%;overflow:visible}.exact-left{grid-column:1;grid-row:1;overflow:visible!important;height:auto!important;align-self:stretch!important}.exact-right{grid-column:2;grid-row:1;min-width:0;overflow:hidden}.exact-actions{grid-column:1/-1;grid-row:2;position:static!important;min-width:0;flex-wrap:wrap}.exact-two{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.exact-fields.three{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.exact-periodics{display:flex!important;flex-wrap:wrap;gap:8px;min-width:0}.exact-periodics button{flex:0 0 58px}.exact-holiday-row{grid-template-columns:repeat(3,minmax(0,1fr));min-width:0}.exact-holiday-row>div{min-width:0}.exact-table{width:100%;table-layout:auto}.exact-table th,.exact-table td{max-width:0;overflow:hidden;text-overflow:ellipsis}.no-loan-type .exact-periodics{display:flex!important;opacity:.45}.no-loan-type .exact-fields{display:grid!important}.no-loan-type .exact-holiday-title,.no-loan-type .exact-holiday-row{display:block!important}.no-loan-type .exact-holiday-row{display:grid!important}.no-loan-type .exact-left{height:auto!important;min-height:0!important}.no-loan-type .exact-plan-note{display:none!important}.no-loan-type .exact-periodics button{pointer-events:none}.exact-panel-title{margin-bottom:12px}.exact-field input,.exact-field select,.exact-select-plus select{max-width:100%;min-width:0}
+@media (min-width:1200px){.exact-loan-page{padding-left:24px;padding-right:24px}.exact-workspace{grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:0 18px}.exact-left,.exact-right{padding:20px}.exact-fields.three{gap:14px}}
+@media (min-width:768px) and (max-width:1199px){.exact-loan-page{padding:12px 14px 16px}.exact-header{padding-left:8px!important;padding-right:8px!important}.exact-two,.exact-fields.three{grid-template-columns:repeat(2,minmax(0,1fr))}.exact-fields.three .exact-field:last-child{grid-column:1}.exact-holiday-row{grid-template-columns:repeat(2,minmax(0,1fr))}.exact-holiday-row>div:last-child{grid-column:1/-1}.exact-periodics button{flex-basis:56px}}
+@media (max-width:1023px){.exact-workspace{grid-template-columns:minmax(0,1fr);gap:14px 0}.exact-left{grid-column:1;grid-row:1}.exact-right{grid-column:1;grid-row:2}.exact-actions{grid-column:1;grid-row:3}.exact-right{min-height:420px}.exact-table{font-size:11px}}
+@media (max-width:767px){.exact-loan-page{padding:12px 12px 16px}.exact-header{display:block!important;padding:0 2px 12px!important}.exact-header h1{font-size:24px!important}.exact-header>strong{display:inline-block!important;margin-top:9px!important}.exact-two,.exact-fields.three{grid-template-columns:1fr;gap:10px}.exact-holiday-row{grid-template-columns:1fr;gap:8px}.exact-holiday-row>div:last-child{grid-column:auto}.exact-periodics{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.exact-periodics button{width:100%;flex-basis:auto}.exact-left,.exact-right{padding:13px}.exact-right{min-height:0}.exact-table{display:block;border:0;overflow:visible}.exact-table thead{display:none}.exact-table tbody,.exact-table tr,.exact-table td{display:block;width:100%;max-width:none}.exact-table tr{margin-bottom:10px;padding:10px;border:1px solid #dce7f3;border-radius:8px;background:#fff}.exact-table td{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border:0;white-space:normal;overflow:visible;text-align:right}.exact-table td:before{color:#6b7f98;font-weight:700;text-align:left}.exact-table td:nth-child(1):before{content:"S.No"}.exact-table td:nth-child(2):before{content:"Due Date"}.exact-table td:nth-child(3):before{content:"Day"}.exact-table td:nth-child(4):before{content:"Installment"}.exact-table td:nth-child(5):before{content:"Status"}.exact-table td:nth-child(6):before{content:"Note"}.exact-empty{min-height:100px}.exact-pagination{gap:8px;flex-wrap:wrap}.exact-grand{margin-top:12px;padding:14px}.exact-grand strong{font-size:20px}.exact-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px!important}.exact-actions .save{grid-column:1/-1;grid-row:1}.exact-actions button{width:100%;min-width:0}.exact-actions button:not(.save){grid-row:2}.exact-actions button:first-child{grid-column:1}.exact-actions button:nth-child(2){grid-column:2}}
+@media (max-width:479px){.exact-header p{font-size:10px!important}.exact-header h1{font-size:22px!important}.exact-panel-title h2{font-size:14px}.exact-periodics button{min-height:50px}.exact-actions{position:static!important}}
+@media (max-width:767px){}
+@media (max-width:767px){.exact-actions button{font-size:0!important;line-height:1}.exact-actions button:first-child:after{content:"Cancel";font-size:13px}.exact-actions button:nth-child(2):after{content:"Reset";font-size:13px}.exact-actions button.save:after{content:"Save Loan";font-size:13px}}
+@media (max-width:767px){.exact-pagination{display:block;width:100%;min-width:0;line-height:1.3}.exact-pagination>span{display:block;width:100%;margin-bottom:7px;white-space:nowrap;font-size:10px}.exact-pagination>div{display:grid;grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr);gap:5px;width:100%;min-width:0}.exact-pagination>div button{width:100%;min-width:0;height:30px;padding:0 4px;font-size:10px;white-space:nowrap}.exact-pagination>div button:first-child,.exact-pagination>div button:last-child{font-size:0}.exact-pagination>div button:first-child:after{content:"Previous";font-size:10px}.exact-pagination>div button:last-child:after{content:"Next";font-size:10px}}
+
+/* Bounded ERP-style Loan Application workspace. */
+.exact-loan-page{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.exact-header{flex:0 0 auto}
+.exact-workspace{flex:1 1 auto;min-height:0;height:auto!important;display:flex!important;flex-direction:column;gap:10px;overflow:hidden}
+.exact-left{flex:0 0 auto;width:100%;min-height:0;overflow:hidden!important}
+.exact-right{flex:1 1 auto;width:100%;min-height:0!important;overflow:hidden!important}
+.exact-actions{flex:0 0 auto;width:100%;min-height:0;justify-content:center;grid-column:auto;grid-row:auto;position:static!important}
+.is-chit .exact-holiday-title{margin-top:10px}
+.toggle-row{display:flex;justify-content:flex-end;width:100%;margin-top:8px;margin-bottom:8px}
+.is-chit .toggle-row .loan-details-toggle{margin:0}
+.is-chit .loan-details-toggle:before{content:none}
+.is-chit .loan-details-toggle>span:first-child{display:inline;font-size:12px;width:auto;height:auto;flex:0 0 auto}
+.is-chit .loan-details-toggle>span:nth-child(2){display:inline-flex;font-size:10px;width:12px;height:14px;flex:0 0 12px}
+.is-chit .loan-details-toggle>span:nth-child(2):after{content:none}
+.exact-right .exact-panel-head,.exact-right .exact-pagination{flex-shrink:0}
+@media(max-width:767px){.exact-loan-page{height:100%;min-height:0;overflow:hidden}.exact-workspace{gap:8px}.exact-right{min-height:0!important}.exact-actions{padding:8px!important}}
+@media(max-width:767px){.exact-right .exact-table{display:flex;flex-direction:column;flex:1;min-height:0}.exact-right .exact-table tbody{flex:1;min-height:0;overflow-y:auto}}
+
+/* Explicit stacked rows prevent Schedule Preview from covering Loan Details. */
+.exact-workspace{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(320px,min(48vh,430px)) minmax(180px,1fr) auto;
+  align-items:stretch;
+}
+.exact-left{grid-column:1;grid-row:1;height:100%;max-height:none}
+.exact-right{grid-column:1;grid-row:2;height:100%}
+.exact-actions{grid-column:1;grid-row:3}
+@media(max-width:767px){
+  .exact-workspace{grid-template-rows:minmax(260px,42vh) minmax(160px,1fr) auto}
+}
+
+/* Final normal-flow layout: every section owns its space and cannot overlap. */
+.exact-loan-page{
+  height:auto;
+  min-height:0;
+  overflow:visible;
+}
+.exact-workspace{
+  display:flex!important;
+  flex:0 0 auto;
+  flex-direction:column;
+  height:auto!important;
+  min-height:0;
+  gap:12px;
+  overflow:visible;
+}
+.exact-left{
+  flex:0 0 auto;
+  width:100%;
+  height:auto;
+  max-height:none;
+  min-height:fit-content;
+  overflow:visible!important;
+}
+.exact-right{
+  flex:0 0 360px;
+  width:100%;
+  height:360px;
+  min-height:240px!important;
+  max-height:360px;
+  margin-top:0!important;
+  overflow:hidden!important;
+}
+.exact-actions{
+  flex:0 0 auto;
+  width:100%;
+  height:auto;
+  margin-top:0!important;
+  position:static!important;
+  grid-column:auto;
+  grid-row:auto;
+}
+.toggle-row{margin-top:8px;margin-bottom:8px}
+@media(max-width:767px){
+  .exact-loan-page{overflow:visible}
+  .exact-right{flex-basis:300px;height:300px;max-height:300px;min-height:220px!important}
+}
+
+/* Loan Details gets its own functional, visually hidden scroll area. */
+.exact-left{
+  flex:0 1 auto;
+  max-height:55%;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.exact-left::-webkit-scrollbar{width:0;height:0}
+.exact-left .loan-details-expanded{scroll-margin-block:12px}
+@media(max-width:767px){.exact-left{max-height:54%}}
+
+/* Compact one-row calculation layouts. */
+.loan-details-expanded .exact-fields.three{
+  grid-template-columns:minmax(120px,1.2fr) minmax(135px,1.2fr) minmax(90px,.75fr) minmax(90px,.75fr) minmax(130px,1.1fr) minmax(130px,1.1fr);
+  gap:10px;
+  margin-top:10px;
+}
+.loan-details-expanded .exact-fields.three .exact-field input{height:36px;text-align:right;font-variant-numeric:tabular-nums}
+.flat-interest-expanded{display:grid;grid-template-columns:minmax(65px,.55fr) minmax(90px,.8fr) minmax(130px,1.1fr) minmax(120px,1fr) minmax(125px,1fr) minmax(95px,.8fr) minmax(125px,1fr) minmax(130px,1.1fr);gap:10px;align-items:end}
+.flat-interest-expanded .duration-row,.flat-interest-expanded .flat-calculated-grid{display:contents}
+.flat-interest-expanded .exact-field{min-width:0}
+.flat-interest-expanded .exact-field input,.flat-interest-expanded .exact-field select{height:36px;min-width:0;padding:6px 8px;font-size:11px}
+.flat-interest-expanded .exact-field input{font-variant-numeric:tabular-nums;text-align:right}
+.flat-interest-expanded .flat-calculated-grid .exact-field{margin-top:0;padding-top:0;border-top:0}
+@media (min-width:768px) and (max-width:1199px){
+  .loan-details-expanded .exact-fields.three{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .flat-interest-expanded{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (max-width:767px){
+  .loan-details-expanded .exact-fields.three{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .flat-interest-expanded{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:479px){
+  .loan-details-expanded .exact-fields.three{grid-template-columns:1fr}
+  .flat-interest-expanded{grid-template-columns:1fr}
+}
+
+/* Chit details and Holiday Rules must grow together in normal flow. */
+.is-chit .exact-left{
+  max-height:none;
+  height:auto;
+  overflow:visible!important;
+}
+.is-chit .exact-holiday-title{margin-top:12px!important;margin-bottom:8px}
+.is-chit .exact-holiday-row{grid-template-columns:1fr 1.4fr 1fr;gap:12px;align-items:stretch}
+.is-chit .exact-holiday-row>div{height:auto;min-height:82px;overflow:visible}
+.holiday-rules-section{position:relative;width:100%;margin-top:12px;flex:0 0 auto}
+.holiday-rules-section .exact-holiday-title{margin-top:0!important}

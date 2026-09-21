@@ -1,0 +1,98 @@
+/* Chit Group list: one breadcrumb row, compact toolbar, content-sized table. */
+.chit-group-list-page{max-width:1280px!important;min-height:0!important;height:auto!important;gap:10px!important;margin:0 auto!important;overflow:visible!important}
+.chit-group-list-page .list-toolbar-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;margin:0!important;padding:0!important;min-height:40px}
+.chit-group-list-page .list-toolbar-title{min-width:0}
+.chit-group-list-page .list-toolbar-controls{display:flex;align-items:center;gap:10px;min-width:0}
+.chit-group-list-page .list-toolbar-controls input{width:min(520px,42vw);height:38px;box-sizing:border-box}
+.chit-group-list-page .list-toolbar-controls .primary{height:38px;white-space:nowrap}
+.chit-group-list-page>.list-container{flex:none!important;min-height:0!important;overflow:visible!important;padding:0!important}
+.chit-group-list-page .tableWrap{flex:none!important;max-height:calc(100vh - 220px);overflow:auto!important}
+.chit-group-list-page .tableWrap table{min-width:760px}
+.chit-group-list-page .footer{margin:0!important;min-height:42px;height:42px;box-sizing:border-box;padding:0 12px!important}
+
+/* Chit Group details modal: five primary values, three secondary values. */
+.chit-group-list-page .modalBackdrop{padding:18px;overflow:auto}
+.chit-group-list-page .detailModal{width:min(820px,94vw);max-height:88vh;overflow:hidden}
+.chit-group-list-page .detailModal header{flex:0 0 auto;padding:17px 22px}
+.chit-group-list-page .detailGrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;padding:18px 22px 16px;flex:0 0 auto}
+.chit-group-list-page .detailGrid>span{min-width:0}
+.chit-group-list-page .detailGrid>span:nth-child(n+6){padding-top:12px;border-top:1px solid #edf3f8}
+.chit-group-list-page .detailGrid strong{overflow-wrap:anywhere}
+.chit-group-list-page .detailModal h3{flex:0 0 auto;padding:0 22px 10px;margin:0}
+.chit-group-list-page .detailTable{flex:0 1 auto;min-height:0;max-height:280px;margin:0 22px;overflow:auto}
+.chit-group-list-page .detailTable table{min-width:0}
+.chit-group-list-page .detailTable th{position:sticky;top:0;z-index:1;background:#f8fbfe}
+.chit-group-list-page .detailTable td{height:38px;padding:9px 12px}
+.chit-group-list-page .detailPagination{display:flex;align-items:center;justify-content:space-between;gap:14px;flex:0 0 auto;margin:0 22px;padding:14px 0;border-top:1px solid #e5eef7;color:#708da5;font-size:12px}
+.chit-group-list-page .detailPagination>div{display:flex;align-items:center;gap:4px}
+.chit-group-list-page .detailPagination button{height:28px;padding:0 9px;border:1px solid #cfe0ef;border-radius:6px;background:#fff;color:#176db3;cursor:pointer}
+.chit-group-list-page .detailPagination button:disabled{opacity:.45;cursor:not-allowed}
+.chit-group-list-page .detailPagination .currentPage{background:#176db3;color:#fff;border-color:#176db3}
+.chit-group-list-page .detailModal>footer{flex:0 0 auto;margin:0;padding:15px 22px;border-top:1px solid #e5eef7}
+
+/* Add/Edit form: keep the five primary inputs in one desktop row. */
+.chit-form-page{width:100%!important;max-width:1280px!important;height:auto!important;min-height:0!important;margin:0 auto!important;display:block!important;overflow:visible!important}
+.chit-form-page>header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px;margin:0 0 12px!important;min-height:34px!important}
+.chit-form-page>header .page-breadcrumb{margin:0!important;line-height:34px!important}
+.chit-form-page>.surface{height:auto!important;min-height:0!important;display:block!important;overflow:visible!important}
+.chit-form-page>.surface>section{padding:16px 22px!important}
+.chit-form-page .grid{grid-template-columns:1fr 1.4fr 1.7fr .7fr 1fr!important;gap:0 16px!important;align-items:end!important}
+.chit-form-page .radios{gap:10px!important;white-space:nowrap}
+.chit-form-page .scheduleSection{height:auto!important;min-height:0!important;display:block!important;overflow:visible!important}
+.chit-form-page .scheduleSection .sectionHead{margin-bottom:8px}
+.chit-form-page .scheduleSection .tableWrap{height:auto!important;min-height:0!important;max-height:320px;overflow:auto!important}
+.chit-form-page .scheduleSection .tableWrap table{min-width:0}
+.chit-form-page .scheduleSection .tableWrap td{height:36px;padding:8px 10px}
+.chit-form-page .scheduleSection .meta{display:grid!important;grid-template-columns:minmax(150px,1fr) auto minmax(190px,auto)!important;align-items:center!important;margin:0!important;padding:12px 0 0!important}
+.chit-form-page>.surface>.actions{position:static!important;margin:14px 0 0!important;padding:15px 22px 17px!important;border-top:1px solid #e5f0f8!important}
+@media(max-width:1050px){.chit-form-page .grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px 14px!important}.chit-form-page .grid label:nth-child(3){grid-column:span 1}.chit-group-list-page .list-toolbar-controls input{width:min(420px,36vw)}}
+@media(max-width:700px){.chit-group-list-page .list-toolbar-row{grid-template-columns:1fr;gap:8px}.chit-group-list-page .list-toolbar-controls{width:100%}.chit-group-list-page .list-toolbar-controls input{width:100%;flex:1}.chit-group-list-page .tableWrap{max-height:none}.chit-group-list-page .detailGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px}.chit-group-list-page .detailGrid>span:nth-child(n+6){padding-top:0;border-top:0}.chit-group-list-page .detailPagination{align-items:flex-start;flex-direction:column}.chit-group-list-page .detailModal>footer{gap:12px}.chit-form-page>header{align-items:flex-start!important}.chit-form-page .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.chit-form-page .scheduleSection .meta{display:block!important}.chit-form-page .scheduleSection .meta>span,.chit-form-page .scheduleSection .meta>div{display:block;margin-top:7px}.chit-form-page>.surface>.actions{justify-content:center!important}}
+@media(max-width:520px){.chit-form-page .grid{grid-template-columns:1fr!important}.chit-form-page>.surface>section{padding:14px 16px!important}.chit-group-list-page .detailGrid{grid-template-columns:1fr}.chit-group-list-page .detailModal>footer{align-items:flex-start;flex-direction:column}.chit-group-list-page .detailModal>footer .primary{align-self:flex-end}}
+.chit-group-list-page .detailModal header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px}
+.chit-group-list-page .detailModal .detail-modal-actions{gap:0}
+.chit-group-list-page .detailModal .detail-table-toggle{display:none}
+.chit-group-list-page .detailGrid,.chit-group-list-page .details-table-open .detailGrid{grid-template-columns:repeat(15,minmax(0,1fr));column-gap:5.333px;row-gap:12px;padding:14px 20px 16px}
+.chit-group-list-page .detailGrid>span{grid-column:span 3}
+.chit-group-list-page .detailGrid>span:nth-child(n+6){grid-column:span 5;padding-top:10px;border-top:1px solid #edf3f8}
+@media(max-width:700px){.chit-group-list-page .detailGrid,.chit-group-list-page .details-table-open .detailGrid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px;row-gap:12px;padding:12px 16px}.chit-group-list-page .detailGrid>span{grid-column:auto}.chit-group-list-page .detailGrid>span:nth-child(n+6){grid-column:auto;padding-top:0;border-top:0}}
+.detail-modal-actions{display:flex;align-items:center;gap:8px}
+.detail-table-toggle{display:grid;place-items:center;width:28px;height:28px;border:1px solid #cfe0ef;border-radius:6px;background:#edf6ff;color:#176db3;font-size:18px;line-height:1;cursor:pointer}
+.details-table-open .detailGrid{display:none}
+.chit-group-list-page .detailTable th,
+.chit-group-list-page .detailTable td,
+.chit-group-list-page .tableWrap th,
+.chit-group-list-page .tableWrap td{padding-top:6px!important;padding-bottom:6px!important}
+.chit-group-list-page .detailTable td{height:30px!important}
+.chit-form-page .scheduleSection .tableWrap{max-height:460px!important}
+.chit-form-page .scheduleSection .tableWrap th{padding:6px 8px!important}
+.chit-form-page .scheduleSection .tableWrap td{height:30px!important;padding:5px 8px!important}
+
+/* Details modal: compact information block and a real full-width table. */
+.chit-group-list-page .detailModal{width:min(760px,94vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.chit-group-list-page .detailModal header{padding:14px 20px}
+.chit-group-list-page .detailModal h2{font-size:18px}
+.chit-group-list-page .detail-modal-actions{gap:0}
+.chit-group-list-page .detail-table-toggle{display:none}
+.chit-group-list-page .detailGrid,.chit-group-list-page .details-table-open .detailGrid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 16px;padding:14px 20px;overflow:visible}
+.chit-group-list-page .detailGrid>span{min-width:0}
+.chit-group-list-page .detailGrid>span:nth-child(n+6){padding-top:10px;border-top:1px solid #edf3f8}
+.chit-group-list-page .detailGrid strong{display:block;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chit-group-list-page .detailModal h3{padding:0 20px 9px;margin:0;font-size:11px}
+.chit-group-list-page .detailTable{width:auto;max-height:300px;min-height:0;margin:0 20px;overflow:auto;border:1px solid #e1eaf3;border-radius:7px}
+.chit-group-list-page .detailTable table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:0}
+.chit-group-list-page .detailTable th,.chit-group-list-page .detailTable td{padding:10px 12px;vertical-align:middle;text-align:left;border-bottom:1px solid #e7edf4}
+.chit-group-list-page .detailTable th:nth-child(1),.chit-group-list-page .detailTable td:nth-child(1){width:12%}
+.chit-group-list-page .detailTable th:nth-child(2),.chit-group-list-page .detailTable td:nth-child(2){width:48%}
+.chit-group-list-page .detailTable th:nth-child(3),.chit-group-list-page .detailTable td:nth-child(3){width:40%}
+.chit-group-list-page .detailTable th{position:sticky;top:0;z-index:1;background:#174d78;color:#fff;white-space:nowrap}
+.chit-group-list-page .detailTable td:last-child{text-align:right;color:#174d78;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chit-group-list-page .detailPagination{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 20px;padding:12px 0;color:#708da5;font-size:12px}
+.chit-group-list-page .detailPagination>div{display:flex;align-items:center;gap:4px}
+.chit-group-list-page .detailPagination button{width:30px;height:28px;padding:0;border:1px solid #cfe0ef;border-radius:6px;background:#fff;color:#176db3;font-size:12px;cursor:pointer}
+.chit-group-list-page .detailPagination button:first-child,.chit-group-list-page .detailPagination button:last-child{font-size:0}
+.chit-group-list-page .detailPagination button:first-child:after{content:"‹";font-size:17px}
+.chit-group-list-page .detailPagination button:last-child:after{content:"›";font-size:17px}
+.chit-group-list-page .detailPagination button:disabled{opacity:.45;cursor:not-allowed}
+.chit-group-list-page .detailPagination .currentPage{background:#176db3;color:#fff;border-color:#176db3}
+.chit-group-list-page .detailModal>footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0;padding:16px 20px;border-top:1px solid #e5e7eb}
+@media(max-width:700px){.chit-group-list-page .detailGrid,.chit-group-list-page .details-table-open .detailGrid{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px 16px}.chit-group-list-page .detailTable{margin:0 16px}.chit-group-list-page .detailPagination{margin:0 16px}.chit-group-list-page .detailModal>footer{padding:14px 16px}}

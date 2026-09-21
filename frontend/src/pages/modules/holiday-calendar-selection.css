@@ -1,0 +1,20 @@
+.calendarDay.includedDay {
+  border: 2px solid #2e9a67;
+  background: #e8f8ef;
+  color: #267d5d;
+  cursor: pointer;
+}
+
+.calendarDay.sunday,
+.calendarDay.holidayDay {
+  cursor: pointer;
+}
+
+.calendarDay.includedDay small {
+  color: #267d5d;
+}
+
+.legend small {
+  flex-basis: 100%;
+  color: #9a6b2d;
+}

@@ -1,0 +1,28 @@
+:root{
+  --theme-start:#123a63;
+  --theme-middle:#174d7c;
+  --theme-end:#1d5f91;
+  --theme-gradient:linear-gradient(135deg,var(--theme-start) 0%,var(--theme-middle) 55%,var(--theme-end) 100%);
+  --theme-primary:#174d7c;
+  --theme-border:#1d5f91;
+  --theme-soft:#f3f8fc;
+  --theme-white:#fff;
+}
+
+.btn-primary,.primary,.save,.submit,.create,.add,.primary-action,[class*="primary"]{
+  background:var(--theme-gradient)!important;
+  color:#fff!important;
+  border-color:transparent!important;
+  border-radius:7px;
+  font-weight:600;
+}
+.btn-primary:hover,.primary:hover,.save:hover,.submit:hover,.create:hover,.add:hover,.primary-action:hover,[class*="primary"]:hover{filter:brightness(.94);box-shadow:0 3px 8px rgba(18,58,99,.18)}
+.btn-secondary,.btn-outline,.secondary,.outline,.loan-type-actions button:not(.primary),.list-heading button{
+  background:#fff!important;
+  color:var(--theme-primary)!important;
+  border:1px solid var(--theme-border)!important;
+  border-radius:7px;
+}
+.btn-secondary:hover,.btn-outline:hover,.secondary:hover,.outline:hover,.loan-type-actions button:not(.primary):hover,.list-heading button:hover{background:var(--theme-soft)!important;border-color:var(--theme-start)!important;color:var(--theme-start)!important}
+.pagination-active,.active-footer button.current,.footer .current,.currentPage{background:var(--theme-gradient)!important;color:#fff!important;border-color:var(--theme-start)!important}
+.active-footer button:not(:disabled):not(.current),.footer button:not(:disabled):not(.current){border-color:var(--theme-border);color:var(--theme-primary)}

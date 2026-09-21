@@ -1,0 +1,101 @@
+/* Shared dropdown indicator: one compact SVG chevron, no text glyphs or native duplicate arrow. */
+:root {
+  --dropdown-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23174d7c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: var(--dropdown-chevron) !important;
+  background-position: right 9px center !important;
+  background-repeat: no-repeat !important;
+  background-size: 15px 15px !important;
+  padding-right: 32px !important;
+}
+
+select:focus,
+select:hover {
+  background-image: var(--dropdown-chevron) !important;
+}
+
+/* Custom dropdown/toggle controls that previously used ▲/▼/⌃/⌄ glyphs. */
+.performance-button > span,
+.loan-details-toggle > span:last-child,
+.loan-schedule-details-toggle > span[aria-hidden="true"],
+.picker-field > b:last-child {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-left: 8px;
+  overflow: hidden;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 15px;
+  flex: 0 0 15px;
+  background: var(--dropdown-chevron) center / 15px 15px no-repeat;
+  transition: transform .18s ease;
+}
+
+.performance-button[aria-expanded="true"] > span,
+.loan-details-toggle[aria-expanded="true"] > span:last-child,
+.loan-schedule-details-toggle[aria-expanded="true"] > span[aria-hidden="true"],
+.picker-field[aria-expanded="true"] > b:last-child {
+  transform: rotate(180deg);
+}
+
+.loan-details-toggle > span:last-child::after,
+.loan-schedule-details-toggle > span[aria-hidden="true"]::after {
+  content: none !important;
+}
+
+/* Compact mobile expand controls use the same icon without changing their labels. */
+.customer-mobile-actions button:first-child,
+.mobile-card-actions button:first-child {
+  position: relative;
+  padding-right: 28px;
+}
+.customer-mobile-actions button:first-child::after,
+.mobile-card-actions button:first-child::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  background: var(--dropdown-chevron) center / 14px 14px no-repeat;
+}
+
+.customer-mobile-actions button:first-child,
+.mobile-card-actions button:first-child {
+  font-size: 0 !important;
+}
+.customer-mobile-actions button:first-child::before,
+.mobile-card-actions button:first-child::before {
+  content: "View More";
+  font-size: 10px;
+}
+.customer-mobile-card:has(.customer-mobile-details) .customer-mobile-actions button:first-child::before,
+.mobileCard:has(.mobileDetails) .mobile-card-actions button:first-child::before {
+  content: "View Less";
+}
+
+.mobile-history-details summary > em {
+  font-size: 0 !important;
+  position: relative;
+  min-width: 76px;
+  min-height: 15px;
+}
+.mobile-history-details summary > em::after {
+  content: "View More";
+  display: inline-block;
+  padding-right: 18px;
+  font-size: 10px;
+  background: var(--dropdown-chevron) right center / 14px 14px no-repeat;
+}
+.mobile-history-details[open] summary > em::after {
+  content: "View Less";
+  transform: none;
+  background-image: var(--dropdown-chevron);
+  background-position: right center;
+}

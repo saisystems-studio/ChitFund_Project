@@ -1,0 +1,41 @@
+/* Last-loaded Active Loans layout rules: toolbar stays at the top and the
+   table fills only the remaining viewport space. */
+@media (min-width: 1000px) {
+  .active-loans-page:not(.performance-open) {
+    grid-template-rows: 30px 42px minmax(0, 1fr) !important;
+  }
+  .active-loans-page:not(.performance-open) .active-table-card {
+    grid-row: 3 !important;
+    margin-top: 2px !important;
+  }
+  .active-loans-page {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    grid-template-rows: 30px 42px 0 minmax(0, 1fr) !important;
+    row-gap: 6px !important;
+    align-content: start;
+    padding-top: 8px;
+  }
+  .active-loans-page > .page-breadcrumb { grid-row: 1; margin: 0 0 6px; }
+  .active-search, .active-controls select, .active-filter, .performance-toggle { grid-row: 2; }
+  .active-summary { grid-row: 3; margin: 0; }
+  .active-loans-page:not(.performance-open) .active-summary { display: none !important; height: 0; }
+  .active-loans-page.performance-open { grid-template-rows: 30px 42px auto minmax(0, 1fr) !important; }
+  .active-loans-page.performance-open .active-summary { display: grid !important; height: auto; }
+  .active-table-card {
+    grid-row: 4 !important;
+    margin: 2px 0 0 !important;
+    min-height: 0;
+    height: 100%;
+    align-self: stretch;
+  }
+  .active-table-wrap { min-height: 0; flex: 1 1 auto; }
+  .active-loans-page:not(.performance-open) {
+    grid-template-rows: 30px 42px minmax(0, 1fr) !important;
+  }
+  .active-loans-page:not(.performance-open) .active-table-card {
+    grid-row: 3 !important;
+    margin-top: 2px !important;
+  }
+}

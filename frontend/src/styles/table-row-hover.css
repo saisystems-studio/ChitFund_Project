@@ -1,0 +1,15 @@
+/* Shared data-row hover treatment: top/bottom theme lines only, no layout shift. */
+.app-data-table tbody tr,
+table tbody tr{
+  transition:background-color .15s ease,box-shadow .15s ease;
+}
+.app-data-table tbody tr:hover,
+table tbody tr:hover{
+  background:#f4f8fc !important;
+  box-shadow:inset 0 1px 0 var(--theme-primary,#174d7c),inset 0 -1px 0 var(--theme-primary,#174d7c);
+}
+.app-data-table tbody tr:hover>td,
+table tbody tr:hover>td{
+  background:#f4f8fc !important;
+  box-shadow:inset 0 1px 0 var(--theme-primary,#174d7c),inset 0 -1px 0 var(--theme-primary,#174d7c);
+}

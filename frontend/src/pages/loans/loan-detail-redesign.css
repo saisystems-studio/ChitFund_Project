@@ -1,0 +1,28 @@
+.loan-modal-backdrop{display:flex;align-items:stretch;justify-content:flex-end;padding:0;background:rgba(16,42,67,.42)}
+.loan-detail{box-sizing:border-box;width:min(760px,96vw);height:100%;max-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto auto auto auto auto;grid-template-areas:"header header" "info info" "finance finance" "title title" "table table" "tablefooter tablefooter" "status action";gap:0 18px;padding:26px 30px 24px;overflow-y:auto;overflow-x:hidden}
+.loan-detail header{grid-area:header;min-width:0;margin-bottom:20px;padding-bottom:16px}
+.loan-detail header h2{margin:6px 0 0;font-size:18px;font-weight:700;overflow-wrap:anywhere}
+.loan-detail header button{flex:0 0 auto}
+.loan-detail .detail-grid{grid-area:info;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:0;padding:17px}
+.loan-detail .detail-grid section{min-width:0;gap:5px}
+.loan-detail .detail-grid section b,.loan-detail .detail-grid section span{overflow-wrap:anywhere}
+.loan-detail .detail-finance{grid-area:finance;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0 20px}
+.loan-detail .detail-finance div{min-width:0;padding:13px 12px}
+.loan-detail h3{grid-area:title;margin:0 0 10px;padding-top:0}
+.loan-detail .detail-table{grid-area:table;min-height:0;max-height:320px;overflow:auto;border:1px solid #e2ebf3;border-radius:8px}
+.loan-detail .detail-table table{min-width:680px}
+.loan-detail .detail-table th{position:sticky;top:0;z-index:1;background:#f5f8fb}
+.loan-detail .detail-table td,.loan-detail .detail-table th{white-space:nowrap}
+.loan-detail .detail-table .loan-status{display:inline-block;padding:4px 8px;border-radius:5px;font-size:10px;line-height:1.2}
+.loan-detail .detail-table .loan-status.active,.loan-detail .detail-table .loan-status.paid{background:#e5f7ed;color:#147a50}
+.loan-detail .detail-table .loan-status.overdue{background:#ffeaec;color:#b33d4c}
+.loan-detail .detail-table .loan-status.pending{background:#fff5dc;color:#986812}
+.loan-detail .detail-table .loan-status.upcoming{background:#e9f3ff;color:#1d6aa7}
+.loan-detail .detail-table .loan-status.partial{background:#fff0d7;color:#a66a12}
+.loan-detail .detail-footer{grid-area:tablefooter;margin:0;padding:16px 0;border-top:1px solid #e5e7eb;align-items:center}
+.loan-detail-status{grid-area:status;align-self:center;margin:16px 0 0;padding:0}
+.modal-action-footer{display:contents}
+.loan-detail .detail-collect{grid-area:action;align-self:center;width:auto;min-width:205px;height:40px;margin:16px 0 0;padding:0 18px;white-space:nowrap}
+.detail-empty-row td{height:90px;text-align:center!important;color:#607b95;font-weight:600}
+@media(max-width:700px){.loan-detail{width:100%;max-width:none;grid-template-columns:1fr;grid-template-rows:auto auto auto auto minmax(0,1fr) auto auto;grid-template-areas:"header" "info" "finance" "title" "table" "tablefooter" "status" "action";padding:20px 16px 18px}.loan-detail .detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px}.loan-detail .detail-finance{grid-template-columns:repeat(2,minmax(0,1fr));margin:14px 0 18px}.loan-detail .detail-collect{width:100%;margin-top:8px}.loan-detail-status{margin-top:12px}.loan-detail .detail-table{max-height:none}.loan-detail .detail-footer{padding:13px 0}}
+@media(max-width:420px){.loan-detail .detail-grid{grid-template-columns:1fr}.loan-detail .detail-finance{grid-template-columns:1fr 1fr}.loan-detail .detail-footer{font-size:10px}.loan-detail .detail-footer>div{display:flex;align-items:center}.loan-detail .detail-footer button{padding:7px 9px}}

@@ -1,0 +1,114 @@
+/* Compact, shared row for the Loan Application breadcrumb and type indicator. */
+.exact-loan-page {
+  padding: 0 18px 12px !important;
+  min-height: 0 !important;
+}
+
+.exact-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px;
+  min-height: 32px;
+  padding: 0 0 8px !important;
+}
+
+.exact-header .page-breadcrumb {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.exact-header > strong {
+  flex: 0 0 auto;
+  margin: 0 !important;
+  padding: 7px 11px !important;
+  font-size: 11px !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .exact-header {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 2px 8px !important;
+  }
+
+  .exact-header > strong {
+    display: block !important;
+    margin: 0 !important;
+  }
+}
+
+/* Loan Application is one vertical work area: details first, schedule second. */
+.exact-workspace,
+.flat-interest-workspace {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.exact-workspace > .exact-panel,
+.flat-interest-workspace > .exact-panel {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.exact-left,
+.exact-right {
+  overflow: visible !important;
+}
+
+.loan-details-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 120px;
+  max-width: 150px;
+  height: 32px;
+  min-height: 32px;
+  margin: 8px 0 0 auto;
+  padding: 5px 10px;
+  gap: 7px;
+  border: 1px solid #cddbea;
+  border-radius: 7px;
+  background: #f5f9fd;
+  color: #173c61;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.loan-details-toggle:hover,
+.loan-details-toggle:focus-visible {
+  border-color: #1471e8;
+  background: #edf6ff;
+}
+
+.loan-details-expanded {
+  display: block;
+  margin-top: 7px;
+  padding-top: 8px;
+  border-top: 1px solid #e1ebf4;
+}
+
+.flat-interest-workspace .loan-details-expanded {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.exact-right {
+  min-height: 260px;
+}
+
+.exact-right .exact-table {
+  width: 100%;
+}

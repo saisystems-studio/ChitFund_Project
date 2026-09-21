@@ -1,0 +1,67 @@
+/* Keep the action bar visible; only the installment rows should consume scroll. */
+.chit-form-page {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chit-form-page > form.surface {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chit-form-page > form.surface > section:first-child {
+  flex: 0 0 auto;
+}
+
+.chit-form-page .scheduleSection {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chit-form-page .scheduleSection .tableWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.chit-form-page .scheduleSection .meta,
+.chit-form-page .actions {
+  flex: 0 0 auto;
+}
+
+.chit-form-page .actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin-top: 0;
+  background: #fff;
+  border-top: 1px solid #dceaf6;
+}
+
+@media (max-width: 600px) {
+  .chit-form-page {
+    height: auto;
+    overflow: visible;
+  }
+
+  .chit-form-page > form.surface {
+    overflow: visible;
+  }
+
+  .chit-form-page .scheduleSection {
+    overflow: visible;
+  }
+
+  .chit-form-page .scheduleSection .tableWrap {
+    max-height: 360px;
+  }
+}

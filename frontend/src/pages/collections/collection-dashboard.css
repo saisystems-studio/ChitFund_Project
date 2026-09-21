@@ -1,0 +1,66 @@
+.collection-entry-modal{width:min(920px,calc(100vw - 40px))!important;max-height:90vh;height:auto!important;top:50%!important;right:auto!important;left:50%!important;transform:translate(-50%,-50%);border-radius:13px!important;padding:24px!important;overflow:auto!important}.collection-entry-modal header{position:sticky;top:-24px;z-index:2;background:#fff;padding:0 0 14px}.collection-entry-modal header h2{font-size:20px;color:#123a63}.collection-entry-modal .collection-entry-eyebrow{margin:0 0 3px;color:#174d7c;font-size:10px;font-weight:800;letter-spacing:.12em}.collection-entry-modal .collection-entry-date{margin-left:auto;margin-right:12px;display:grid;gap:3px;text-align:right}.collection-entry-modal .collection-entry-date small{color:#7891aa;font-size:10px}.collection-entry-modal .collection-entry-date strong{color:#17324d;font-size:13px}.collection-entry-summary{display:grid;gap:14px;margin:16px 0;padding:15px;border:1px solid #dce8f5;border-radius:10px;background:#f8fbfe}.collection-entry-party,.collection-entry-installment{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.collection-entry-party>div,.collection-entry-installment>div{display:grid;gap:3px}.collection-entry-party small,.collection-entry-installment small{color:#7891aa;font-size:10px;text-transform:uppercase;letter-spacing:.04em}.collection-entry-party strong,.collection-entry-installment strong{color:#173f65;font-size:13px}.collection-entry-party span{color:#607b95;font-size:11px}.collection-entry-installment{grid-template-columns:repeat(5,minmax(0,1fr));padding-top:12px;border-top:1px solid #e1ebf4}.collection-entry-status{align-self:end;padding:5px 8px;border-radius:5px;font-size:10px;font-weight:800}.collection-entry-status.paid{background:#dcf7e8;color:#087d4d}.collection-entry-status.partial{background:#eaf4ff;color:#176db3}.collection-entry-status.pending{background:#fff0d7;color:#9a6414}.collection-entry-status.overdue{background:#ffe3e5;color:#b83950}.collection-entry-modal form{display:grid;gap:14px}.collection-entry-fields,.collection-entry-mode-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.collection-entry-modal label{display:grid;gap:5px}.collection-entry-modal label small{color:#607b95;font-size:10px;font-weight:500}.collection-entry-allocation{padding:13px;border:1px solid #dce8f5;border-radius:9px;background:#fbfdff}.collection-entry-allocation h3{margin:0 0 9px;color:#174d7c;font-size:11px;text-transform:uppercase;letter-spacing:.06em}.collection-entry-allocation div{display:flex;justify-content:space-between;padding:5px 0;color:#385975;font-size:12px}.collection-entry-allocation strong{color:#173f65}.collection-entry-allocation small{display:block;margin-top:7px;color:#9a6414;font-size:11px}.collection-entry-note textarea{min-height:54px!important}.collection-entry-modal footer{position:sticky;bottom:-24px;margin:0 -24px -24px;padding:14px 24px;background:#fff;border-top:1px solid #e1ebf4}.collection-entry-modal .collect-save{background:linear-gradient(135deg,#123a63 0%,#174d7c 55%,#1d5f91 100%);border-color:#174d7c}.collection-entry-modal .collect-save:disabled{opacity:.5;cursor:not-allowed}@media(max-width:700px){.collection-entry-modal{width:calc(100vw - 20px)!important;padding:16px!important}.collection-entry-modal header{top:-16px}.collection-entry-party,.collection-entry-fields,.collection-entry-mode-fields,.collection-entry-installment{grid-template-columns:1fr 1fr}.collection-entry-installment{grid-template-columns:repeat(2,minmax(0,1fr))}.collection-entry-modal footer{bottom:-16px;margin:0 -16px -16px;padding:12px 16px}}
+.collection-drawer{width:min(920px,calc(100vw - 40px))!important;max-height:90vh!important;height:auto!important;top:50%!important;right:auto!important;left:50%!important;transform:translate(-50%,-50%);border-radius:13px!important;padding:24px!important}.collection-drawer form{gap:14px}.collection-drawer dl{grid-template-columns:repeat(2,minmax(0,1fr));background:#f8fbfe}.collection-drawer footer{position:sticky;bottom:-20px;margin:0 -20px -20px;padding:14px 20px;background:#fff;border-top:1px solid #e1ebf4}.collection-drawer .collect-save{background:linear-gradient(135deg,#123a63 0%,#174d7c 55%,#1d5f91 100%);border-color:#174d7c}@media(max-width:700px){.collection-drawer{width:calc(100vw - 20px)!important;padding:16px!important}.collection-drawer footer{bottom:-12px;margin:0 -12px -12px;padding:12px 16px}}
+.collection-drawer-backdrop{position:fixed!important;inset:0!important;z-index:9999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px!important;box-sizing:border-box!important;background:rgba(15,23,42,.45)!important;backdrop-filter:blur(1px)}
+.collection-drawer{position:relative!important;inset:auto!important;transform:none!important;width:min(920px,calc(100vw - 48px))!important;max-width:100%!important;max-height:calc(100vh - 48px)!important;height:auto!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;border-radius:14px!important;padding:24px!important}
+.collection-drawer *{box-sizing:border-box}
+.collection-drawer input,.collection-drawer select,.collection-drawer textarea{max-width:100%}
+@media(max-width:600px){.collection-drawer-backdrop{padding:10px!important}.collection-drawer{width:calc(100vw - 20px)!important;max-height:calc(100vh - 20px)!important;padding:16px!important}}
+
+/* Collection Entry modal UI polish. Logic and field order remain unchanged. */
+.collection-drawer{background:#fff!important;color:#17324d!important;border-top:3px solid #174d7c;box-shadow:0 20px 50px rgba(15,23,42,.2)!important}
+.collection-drawer header{display:flex;align-items:center;gap:12px;padding:0 0 14px;border-bottom:1px solid #e1e8f0;background:#fff!important}
+.collection-drawer header h2{margin:0;color:#123a63!important;font-size:20px;font-weight:650}
+.collection-drawer header button{width:30px;height:30px;margin-left:auto;padding:0;border:0;border-radius:6px;background:transparent;color:#174d7c;font-size:20px;line-height:1;cursor:pointer}
+.collection-drawer header button:hover{background:#f1f6fa}
+.collection-drawer dl{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 18px;margin:16px 0;padding:14px;border:1px solid #d7e3ef;border-radius:9px;background:#f8fbfe!important}
+.collection-drawer dt{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6b849a}
+.collection-drawer dd{font-size:13px;font-weight:600;color:#173f65}
+.collection-drawer form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.collection-drawer form>label{min-width:0;gap:5px;color:#385975;font-size:12px;font-weight:650}
+.collection-drawer form>label:nth-of-type(3){grid-column:1/-1}
+.collection-drawer input,.collection-drawer select,.collection-drawer textarea{height:40px;padding:0 12px;border:1px solid #c8d7e6;border-radius:7px;background:#fff;color:#17324d;font-size:13px;outline:0}
+.collection-drawer textarea{height:auto;min-height:70px;max-height:100px;padding:9px 12px;resize:vertical}
+.collection-drawer input:focus,.collection-drawer select:focus,.collection-drawer textarea:focus{border-color:#174d7c;box-shadow:0 0 0 3px rgba(23,77,124,.1)}
+.collection-drawer form>.collection-error{grid-column:1/-1;margin:0}
+.collection-drawer footer{grid-column:1/-1;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 0 0;border-top:1px solid #e1e8f0;background:#fff!important}
+.collection-drawer footer button{height:38px;padding:0 16px;border:1px solid #174d7c;border-radius:7px;background:#fff;color:#174d7c;font-size:12px;font-weight:600;cursor:pointer}
+.collection-drawer footer button:hover{background:#f3f8fc}
+.collection-drawer footer .collect-save{height:38px;padding:0 18px;border-color:#174d7c;background:linear-gradient(135deg,#123a63 0%,#174d7c 55%,#1d5f91 100%);color:#fff}
+.collection-drawer footer .collect-save:hover{box-shadow:0 3px 8px rgba(18,58,99,.2)}
+@media(max-width:700px){.collection-drawer form{grid-template-columns:1fr}.collection-drawer form>label:nth-of-type(3),.collection-drawer form>.collection-error,.collection-drawer footer{grid-column:1}.collection-drawer dl{gap:10px}.collection-drawer header h2{font-size:18px}}
+
+/* Final compact summary/form proportions for the Collection Entry modal. */
+.collection-drawer{width:min(900px,96vw)!important;max-height:90vh!important;overflow:hidden!important;display:flex!important;flex-direction:column!important}
+.collection-drawer header{flex:0 0 auto!important;padding:20px 24px 14px!important}
+.collection-drawer dl{flex:0 0 auto!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px 24px!important;margin:16px 24px 20px!important;padding:16px 18px!important}
+.collection-drawer form{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px!important;padding:0 24px!important}
+.collection-drawer form>label:nth-of-type(3){grid-column:1/-1!important}
+.collection-drawer form>label:nth-of-type(3) textarea{min-height:90px!important;max-height:130px!important}
+.collection-drawer footer{flex:0 0 auto!important;position:relative!important;bottom:auto!important;margin:2px -24px -24px!important;padding:12px 24px!important}
+@media (min-width:768px) and (max-width:1199px){.collection-drawer{width:min(860px,95vw)!important}.collection-drawer dl{grid-template-columns:repeat(3,minmax(0,1fr))!important}.collection-drawer form{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:767px){.collection-drawer{width:100%!important;max-height:100vh!important;border-radius:0!important}.collection-drawer header{padding:16px!important}.collection-drawer dl{grid-template-columns:repeat(2,minmax(0,1fr))!important;margin:12px 16px 16px!important;padding:14px!important;gap:12px!important}.collection-drawer form{grid-template-columns:1fr!important;padding:0 16px!important}.collection-drawer form>label:nth-of-type(3),.collection-drawer form>.collection-error,.collection-drawer footer{grid-column:1!important}.collection-drawer footer{margin:2px -16px -16px!important;padding:12px 16px!important}}
+
+/* Exact compact 2-row × 3-column customer/loan summary. */
+.collection-drawer dl{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px 24px!important;padding:16px 18px!important;border:1px solid #d8e2ec!important;border-radius:10px!important;background:#f8fbff!important}
+.collection-drawer dt{display:block!important;margin:0 0 4px!important;font-size:11px!important;font-weight:700!important;text-transform:uppercase!important;letter-spacing:.04em!important;color:#6b7f95!important}
+.collection-drawer dd{display:block!important;min-width:0!important;margin:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:14px!important;font-weight:600!important;color:#123b63!important}
+.collection-drawer form{gap:16px!important}
+.collection-drawer form>label{min-width:0!important}
+.collection-drawer form>label:nth-of-type(3){margin-top:0!important}
+.collection-drawer form>label:nth-of-type(3) textarea{min-height:80px!important;max-height:110px!important}
+@media(max-width:767px){.collection-drawer dl{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;padding:14px!important}.collection-drawer dd{font-size:13px!important}.collection-drawer form{grid-template-columns:1fr!important}}
+
+/* Dynamic payment-mode fields share the same compact two-column form grid. */
+.collection-drawer form>.collection-mode-field{grid-column:auto!important;margin:0!important}
+.collection-drawer form>.collection-note-field{grid-column:1/-1!important;margin:0!important}
+.collection-drawer form>.collection-mode-field input{width:100%!important}
+.collection-mode-status{margin-right:auto;align-self:center;padding:5px 8px;border-radius:6px;background:#eaf3fb;color:#174d7c;font-size:10px;font-weight:700;text-transform:uppercase}
+@media(max-width:767px){.collection-drawer form>.collection-mode-field,.collection-drawer form>.collection-note-field{grid-column:1!important}}
+
+/* Viewport-safe modal: header and footer stay visible; only form content scrolls. */
+.collection-drawer{display:flex!important;flex-direction:column!important;width:min(900px,96vw)!important;max-height:92vh!important;overflow:hidden!important}
+.collection-drawer header{flex:0 0 auto!important}
+.collection-drawer dl{flex:0 0 auto!important}
+.collection-drawer form{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;padding-bottom:4px!important;scrollbar-gutter:stable}
+.collection-drawer footer{flex:0 0 auto!important;position:sticky!important;bottom:0!important;z-index:2!important;margin-top:18px!important;padding:12px 0!important;background:#fff!important}
+@media(max-width:767px){.collection-drawer{width:100%!important;max-height:100dvh!important;border-radius:0!important}.collection-drawer form{padding-bottom:0!important}}

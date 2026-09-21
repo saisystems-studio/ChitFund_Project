@@ -1,0 +1,15 @@
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import "./styles/global.css";
+import "./styles/list-page-overrides.css";
+import "./styles/responsive-layout.css";
+import "./styles/row-actions.css";
+import "./styles/compact-lists.css";
+import "./styles/table-headers.css";
+import "./styles/theme.css";
+import "./styles/customer-list-active-style.css";
+import "./styles/tooltips.css";
+import "./styles/table-row-hover.css";
+import "./styles/dropdown-chevrons.css";
+createRoot(document.getElementById("root")).render(<React.StrictMode><App /></React.StrictMode>);

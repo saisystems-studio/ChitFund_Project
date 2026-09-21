@@ -1,0 +1,65 @@
+/* Today Collection exposes one entry action in the top toolbar. */
+.collection-date-tools>.collect-primary{display:inline-flex!important;font-size:0!important}
+.collection-date-tools>.collect-primary::after{content:"+ Collection Entry";font-size:13px}
+
+/* The Today Collection grid keeps only the requested seven business columns. */
+.collection-dashboard .collection-table-wrap th:nth-child(4),
+.collection-dashboard .collection-table-wrap td:nth-child(4) {
+  display: none;
+}
+
+.collection-dashboard .collection-kpis,
+.today-summary-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.collection-dashboard .today-summary-card,
+.today-summary-card {
+  height: 42px !important;
+  min-height: 42px !important;
+  padding: 0 12px !important;
+  border: 1px solid #d8e3ee !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  box-sizing: border-box !important;
+}
+
+.today-summary-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.today-summary-value {
+  flex: 0 0 auto;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+  text-align: right;
+}
+
+@media (max-width: 767px) {
+  .collection-dashboard .collection-kpis,
+  .today-summary-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .collection-dashboard .collection-kpis,
+  .today-summary-row {
+    grid-template-columns: 1fr !important;
+  }
+}

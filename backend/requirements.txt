@@ -1,0 +1,10 @@
+# Direct backend dependencies; validated with Python 3.13.
+# Django version recorded in the existing migrations.
+Django==5.2.17
+djangorestframework==3.16.1
+django-cors-headers==4.9.0
+django-filter==25.2
+mssql-django==1.7.4
+pyodbc==5.3.0
+python-dotenv==1.2.3
+openpyxl==3.1.5

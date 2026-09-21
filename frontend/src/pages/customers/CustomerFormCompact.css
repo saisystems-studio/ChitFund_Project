@@ -1,0 +1,124 @@
+.singleForm .formGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+  padding: 10px 12px 12px;
+  align-items: end;
+}
+
+.singleForm .formGrid > * { min-width: 0; }
+.singleForm .field { margin: 0; min-width: 0; }
+.singleForm .field input,
+.singleForm .field select,
+.singleForm .field textarea,
+.singleForm .district-dropdown input {
+  height: 34px;
+  min-height: 34px;
+  margin-top: 3px;
+  padding: 6px 8px;
+}
+.singleForm .field textarea { height: 58px; }
+
+/* Existing JSX order is kept for save/mapping compatibility; grid placement
+   presents the requested Tally-style field order. */
+.singleForm .formGrid > :nth-child(1){grid-column:1;grid-row:1}
+.singleForm .formGrid > :nth-child(2){grid-column:2;grid-row:1}
+.singleForm .formGrid > :nth-child(3){grid-column:3;grid-row:1}
+.singleForm .formGrid > :nth-child(4){grid-column:1;grid-row:2}
+.singleForm .formGrid > :nth-child(5){grid-column:2;grid-row:2}
+.singleForm .formGrid > :nth-child(6){grid-column:3;grid-row:2}
+.singleForm .formGrid > :nth-child(7){grid-column:1;grid-row:4}
+.singleForm .formGrid > :nth-child(8){grid-column:1;grid-row:3}
+.singleForm .formGrid > :nth-child(9){grid-column:2;grid-row:4}
+.singleForm .formGrid > :nth-child(10){grid-column:2;grid-row:3}
+.singleForm .formGrid > :nth-child(11){grid-column:3;grid-row:3;align-self:center}
+.singleForm .formGrid > :nth-child(12){grid-column:1 / -1;grid-row:5}
+.singleForm .formGrid > :nth-child(13){grid-column:1;grid-row:6}
+.singleForm .formGrid > :nth-child(14){grid-column:2;grid-row:6}
+.singleForm .formGrid > :nth-child(15){grid-column:3;grid-row:6}
+.singleForm .formGrid > :nth-child(16){grid-column:1;grid-row:7}
+.singleForm .formGrid > :nth-child(17){grid-column:2;grid-row:7}
+.singleForm .formGrid > :nth-child(18){grid-column:3;grid-row:7}
+.singleForm .formGrid > :nth-child(19){grid-column:3;grid-row:4;align-self:end}
+.singleForm .formGrid > :nth-child(12).wide,
+.singleForm .formGrid > :nth-child(19).wide { grid-column: 1 / -1; }
+.singleForm .formGrid > :nth-child(19).wide { grid-column: 3; }
+.singleForm .inlineCheckbox { margin: 0; padding: 0; align-self: center; }
+.singleForm .roleField { margin: 0; padding: 0; border: 0; }
+.singleForm .roleField legend { padding: 0; }
+.singleForm .form-action-footer { min-height: 44px; padding: 4px 8px; }
+
+@media (max-width: 900px) {
+  .singleForm .formGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .singleForm .formGrid > * { grid-column: auto !important; grid-row: auto !important; }
+  .singleForm .formGrid > :nth-child(12) { grid-column: 1 / -1 !important; }
+}
+@media (max-width: 560px) {
+  .singleForm .formGrid { grid-template-columns: 1fr; padding: 8px 10px 10px; }
+  .singleForm .formGrid > * { grid-column: auto !important; }
+}
+
+/* Stable desktop business-form grid. Keep each control in a fixed grid cell so
+   validation text and changing numeric values never move neighbouring fields. */
+@media (min-width: 901px) {
+  .singleForm .formGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+  .singleForm .formGrid > * { grid-column: auto; grid-row: auto; }
+  .singleForm .formGrid > :nth-child(1) { grid-area: 1 / 1; }
+  .singleForm .formGrid > :nth-child(2) { grid-area: 1 / 2; }
+  .singleForm .formGrid > :nth-child(3) { grid-area: 3 / 2; }
+  .singleForm .formGrid > :nth-child(4) { grid-area: 2 / 1; }
+  .singleForm .formGrid > :nth-child(5) { grid-area: 2 / 2; }
+  .singleForm .formGrid > :nth-child(6) { grid-area: 2 / 3; align-self: end; padding-bottom: 8px; }
+  .singleForm .formGrid > :nth-child(7) { grid-area: 3 / 1; }
+  .singleForm .formGrid > :nth-child(8) { grid-area: 5 / 1 / 6 / 4; }
+  .singleForm .formGrid > :nth-child(9) { grid-area: 6 / 1; }
+  .singleForm .formGrid > :nth-child(10) { grid-area: 6 / 2; }
+  .singleForm .formGrid > :nth-child(11) { grid-area: 6 / 3; }
+  .singleForm .formGrid > :nth-child(12) { grid-area: 7 / 1; }
+  .singleForm .formGrid > :nth-child(13) { grid-area: 7 / 2; }
+  .singleForm .formGrid > :nth-child(14) { grid-area: 7 / 3; }
+  .singleForm .formGrid > :nth-child(15) { grid-area: 1 / 3; }
+  .singleForm .formGrid > :nth-child(16) { grid-area: 3 / 3; }
+  .singleForm .formGrid > :nth-child(17) { grid-area: 4 / 1; }
+  .singleForm .formGrid > :nth-child(18) { grid-area: 4 / 2; }
+  .singleForm .formGrid > :nth-child(19) { grid-area: 8 / 1 / 9 / 4; }
+}
+
+.singleForm .formGrid input[type="number"],
+.singleForm .formGrid input[inputmode="numeric"] { text-align: right; font-variant-numeric: tabular-nums; }
+.singleForm .formGrid input[readonly] { background: #f2f6fa; color: #637892; }
+
+.edit-form { padding: 10px 12px; }
+.edit-form .form-grid { gap: 8px 12px; }
+.edit-form .form-grid label { margin: 0; }
+.edit-form .form-grid input,
+.edit-form .form-grid textarea,
+.edit-form .form-grid select { height: 34px; margin-top: 3px; padding: 6px 8px; }
+.edit-form .form-grid textarea { height: 58px; }
+
+/* Final compact customer form order. The JSX field order stays untouched so
+   validation and payload mapping remain unchanged. */
+@media (min-width: 901px) {
+  .singleForm .formGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; align-items: start; }
+  .singleForm .formGrid > * { grid-column: auto; grid-row: auto; }
+  .singleForm .formGrid > :nth-child(1) { grid-area: 1 / 1; }
+  .singleForm .formGrid > :nth-child(2) { grid-area: 1 / 2; }
+  .singleForm .formGrid > :nth-child(3) { grid-area: 1 / 3; }
+  .singleForm .formGrid > :nth-child(4) { grid-area: 2 / 1; }
+  .singleForm .formGrid > :nth-child(5) { grid-area: 2 / 2; }
+  .singleForm .formGrid > :nth-child(6) { grid-area: 2 / 3; }
+  .singleForm .formGrid > :nth-child(7) { grid-area: 3 / 1 / 4 / 4; }
+  .singleForm .formGrid > :nth-child(15) { grid-area: 4 / 1; }
+  .singleForm .formGrid > :nth-child(16) { grid-area: 4 / 2; }
+  .singleForm .formGrid > :nth-child(17) { grid-area: 4 / 3; }
+  .singleForm .formGrid > :nth-child(8) { grid-area: 5 / 1; }
+  .singleForm .formGrid > :nth-child(9) { grid-area: 5 / 2; }
+  .singleForm .formGrid > :nth-child(10) { grid-area: 5 / 3; }
+  .singleForm .formGrid > :nth-child(11) { grid-area: 6 / 1; }
+  .singleForm .formGrid > :nth-child(12) { grid-area: 6 / 2; }
+  .singleForm .formGrid > :nth-child(13) { grid-area: 6 / 3; }
+  .singleForm .formGrid > :nth-child(14) { grid-area: 7 / 1; }
+  .singleForm .formGrid > :nth-child(18) { grid-area: 7 / 2 / 8 / 4; }
+  .singleForm .roles { gap: 14px; flex-wrap: nowrap; }
+  .singleForm .radio { gap: 5px; font-size: 12px; white-space: nowrap; }
+  .singleForm .radio input { width: 14px; height: 14px; }
+}

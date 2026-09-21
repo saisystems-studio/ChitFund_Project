@@ -1,0 +1,52 @@
+:root{--page-bg:#f4f8fc;--surface-bg:#fff;--text-primary:#17324d;--text-secondary:#5d7187;--border-color:#d8e4ef;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text-primary);background:var(--page-bg);font-synthesis:none;text-rendering:optimizeLegibility}*:where(*){box-sizing:border-box}body{margin:0;background:var(--page-bg);color:var(--text-primary)}button,input,select,textarea{font:inherit}[data-theme="dark"]{--page-bg:#0f1720;--surface-bg:#17212b;--text-primary:#f5f7fa;--text-secondary:#aebdca;--border-color:#31404d}[data-theme="dark"] body{background:var(--page-bg);color:var(--text-primary)}[data-theme="dark"] .main-content{background:var(--page-bg)}[data-theme="dark"] .panel,[data-theme="dark"] .surface,[data-theme="dark"] .card,[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea,[data-theme="dark"] table th,[data-theme="dark"] .popup{background:var(--surface-bg);color:var(--text-primary);border-color:var(--border-color)}[data-theme="dark"] p,[data-theme="dark"] label,[data-theme="dark"] td,[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3{color:var(--text-primary)}[data-theme="dark"] small{color:var(--text-secondary)}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #66bfff88;outline-offset:2px}
+[data-theme="dark"] .main-content{background:#0f1720;color:#f4f7fa}[data-theme="dark"] .main-content>*{color:#f4f7fa}[data-theme="dark"] .main-content .panel,[data-theme="dark"] .main-content .surface,[data-theme="dark"] .main-content .card,[data-theme="dark"] .main-content section,[data-theme="dark"] .main-content article{background:#171f29;border-color:#303d4a;box-shadow:none}[data-theme="dark"] .main-content input,[data-theme="dark"] .main-content select,[data-theme="dark"] .main-content textarea{background:#18222d;color:#f4f7fa;border-color:#3b4a59}[data-theme="dark"] .main-content input::placeholder{color:#9eacba}[data-theme="dark"] .main-content h1,[data-theme="dark"] .main-content h2,[data-theme="dark"] .main-content h3,[data-theme="dark"] .main-content p,[data-theme="dark"] .main-content label,[data-theme="dark"] .main-content span,[data-theme="dark"] .main-content td,[data-theme="dark"] .main-content th{color:#f4f7fa}[data-theme="dark"] .main-content th{color:#b7c3cf}[data-theme="dark"] .main-content td,[data-theme="dark"] .main-content th{border-color:#303d4a}[data-theme="dark"] .main-content button:not(.primary){background:#202c38;color:#f4f7fa;border-color:#435363}[data-theme="dark"] .main-content .primary{color:#fff}[data-theme="dark"] .main-content .holidayPage .surface,[data-theme="dark"] .main-content .holidayPage .monthCard,[data-theme="dark"] .main-content .holidayPage .statCard{background:#171f29;border-color:#303d4a}[data-theme="dark"] .main-content .holidayPage .holidayToolbar,[data-theme="dark"] .main-content .holidayPage .monthHead{background:#1d2834}[data-theme="dark"] .main-content .holidayPage .holidayRow:hover{background:#202d3a}[data-theme="dark"] .main-content .holidayPage .holidayTabs .selectedView,[data-theme="dark"] .main-content .holidayPage .holidayPagination .current{background:#176db3;color:#fff}[data-theme="dark"] .main-content .holidayPage .holidayModal,[data-theme="dark"] .main-content .holidayPage .confirmDialog{background:#171f29;color:#f4f7fa}[data-theme="dark"] .main-content .holidayPage .popup,[data-theme="dark"] .main-content .holidayPage .modal{background:#171f29;color:#f4f7fa}
+[data-theme="dark"] .main-content,[data-theme="dark"] .main-content>*{color:var(--text-primary)}
+
+/* Shared compact page shell. */
+.main-content{padding:12px 16px;max-width:none;width:100%;min-width:0}
+.app-shell{height:100vh;min-height:100vh;overflow:hidden}
+.main-content{height:100vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none}
+.main-content::-webkit-scrollbar,.table-wrap::-webkit-scrollbar,.tableWrap::-webkit-scrollbar{display:none}
+.table-wrap,.tableWrap{scrollbar-width:none;-ms-overflow-style:none}
+.main-content>header,.main-content>.page>header,.main-content>.list-toolbar-row{margin-bottom:10px}
+.main-content>header h1,.main-content>.page>header h1,.list-toolbar-title h1{font-size:19px;line-height:1.25;font-weight:700}
+.main-content>header p:not(.eyebrow),.main-content>.page>header p:not(.eyebrow),.list-toolbar-eyebrow{display:none}
+.main-content .panel,.main-content .surface,.main-content .card,.main-content .content-card{width:100%;max-width:none;margin:0;padding:14px 18px}
+.main-content .form-layout{gap:12px;margin-top:10px}
+.main-content .table-wrap{margin-top:12px}
+.main-content .sticky-actions,.main-content .form-action-footer,.main-content .exact-actions,.main-content .actions{position:sticky;bottom:0;z-index:20;justify-content:center;align-items:center;gap:10px;padding:8px 12px;margin-top:10px;background:var(--page-bg,#f4f8fc);border-top:1px solid var(--border-color,#d8e4ef)}
+.main-content .sticky-actions button,.main-content .form-action-footer button,.main-content .exact-actions button,.main-content .actions button{height:38px;min-width:88px;padding:0 14px}
+.main-content .form-content{padding-bottom:52px}
+.form-action-footer{position:sticky;bottom:0;display:flex;justify-content:center;align-items:center;gap:8px;padding:4px 8px;margin:0;min-height:44px;background:var(--page-bg,#f4f8fc);border-top:1px solid var(--border-color,#d8e4ef);z-index:50}.form-action-footer button{height:36px;min-width:82px}
+.global-action-toast{position:fixed;top:18px;right:18px;z-index:10000;min-width:250px;padding:11px 15px;border:1px solid #bde9ce;border-radius:8px;background:#edfbf3;color:#176b45;box-shadow:0 8px 24px rgba(12,45,78,.18);font-size:13px;font-weight:700}.global-action-toast.error{border-color:#f2c2ca;background:#fff0f2;color:#bc3c52}
+.main-content .form-action-footer,.main-content .sticky-actions,.main-content .exact-actions,.main-content .actions,.main-content .edit-actions,.main-content .collection-actions{position:relative!important;bottom:auto!important;top:auto!important;flex-shrink:0;min-height:48px;margin:0;padding:4px 8px;display:flex;justify-content:center;align-items:center;gap:10px;background:var(--page-bg,#f4f8fc);border-top:1px solid var(--border-color,#d8e4ef);z-index:20}
+.main-content .form-action-footer button,.main-content .sticky-actions button,.main-content .exact-actions button,.main-content .actions button,.main-content .edit-actions button,.main-content .collection-actions button{height:36px}
+.main-content .form-content,.main-content .singleForm .formGrid,.main-content .exact-workspace,.main-content .collection-workspace{padding-bottom:8px}
+.main-content .list-toolbar-controls{gap:9px}
+.main-content .list-toolbar-controls input{width:min(300px,35vw)}
+
+/* Reserve a real layout slot for the Chit Group form footer. The schedule table
+   is the only part that scrolls, so rows, totals, pagination, and actions remain visible. */
+.main-content:has(.chit-form-page){display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.main-content:has(.chit-form-page)>.chit-form-page{flex:1 1 auto;min-height:0;height:auto;margin:0!important;overflow:hidden}
+.chit-form-page>.surface{min-height:0;height:auto;overflow:hidden}
+.chit-form-page>.surface>.scheduleSection{min-height:0;overflow:hidden}
+.chit-form-page .scheduleSection .tableWrap{min-height:0;overflow-y:auto;overflow-x:hidden}
+.chit-form-page>.surface>.actions{min-height:48px;padding:5px 8px;margin:0;flex:0 0 auto}
+.chit-form-page .breadcrumb{font-size:14px;line-height:20px}
+.chit-form-page .breadcrumb strong{font-size:inherit;font-weight:700}
+.main-content:has(.exact-loan-page){display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.main-content:has(.exact-loan-page)>.exact-loan-page{flex:1 1 auto;min-height:0;height:auto;overflow:hidden}
+@media(max-width:600px){
+  .main-content:has(.chit-form-page){overflow-y:auto}
+  .main-content:has(.chit-form-page)>.chit-form-page{overflow:visible}
+}
+@media(max-width:700px){.main-content{padding:10px 12px}.main-content .panel,.main-content .surface,.main-content .card,.main-content .content-card{padding:12px 14px}.main-content .list-toolbar-controls input{width:100%}.main-content .sticky-actions,.main-content .form-action-footer,.main-content .exact-actions,.main-content .actions{flex-wrap:wrap}.main-content .sticky-actions button,.main-content .form-action-footer button,.main-content .exact-actions button,.main-content .actions button{flex:1;min-width:80px}}
+.main-content:has(.exact-loan-page){overflow-y:auto!important;overflow-x:hidden}
+.main-content:has(.exact-loan-page)>.exact-loan-page{overflow:visible!important}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield}
+.delete-confirm-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(12,45,78,.28)}
+.delete-confirm-dialog{width:min(390px,calc(100vw - 30px));padding:22px;border:1px solid #d8e4ef;border-radius:12px;background:#fff;box-shadow:0 18px 55px rgba(12,45,78,.22)}
+.delete-confirm-dialog h2{margin:0 0 8px;color:#173f64;font-size:18px}.delete-confirm-dialog p{margin:0;color:#385975;font-size:13px}.delete-confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}.delete-confirm-actions button{height:36px;min-width:74px;border:1px solid #cfe0ef;border-radius:7px;background:#fff;color:#176db3;font-weight:700;cursor:pointer}.delete-confirm-actions .delete-confirm-yes{border-color:#d94a57;background:#d94a57;color:#fff}.delete-confirm-actions .delete-confirm-yes:hover{background:#bd3543}
+html,body,#root{max-width:100%;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none}html::-webkit-scrollbar,body::-webkit-scrollbar,#root::-webkit-scrollbar,*::-webkit-scrollbar{width:0;height:0;display:none}*{scrollbar-width:none;-ms-overflow-style:none}

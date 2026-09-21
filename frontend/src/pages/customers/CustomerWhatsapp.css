@@ -1,0 +1,207 @@
+.whatsapp-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.whatsapp-field .whatsappLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 6px;
+  gap: 10px;
+  color: #38536f;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.whatsapp-field .whatsappLabelRow > b {
+  color: #df4f63;
+}
+
+.whatsapp-field .whatsappSame {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  margin: 0;
+  color: #45647f;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.whatsapp-field .whatsappSame input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 14px;
+  accent-color: #1876c8;
+}
+
+.singleForm .whatsapp-field > input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-top: 0;
+}
+
+.singleForm .whatsapp-field > input:read-only {
+  background: #f2f6fa;
+  color: #637892;
+}
+
+@media (max-width: 560px) {
+  .whatsapp-field .whatsappLabelRow {
+    gap: 6px;
+  }
+
+  .whatsapp-field .whatsappSame {
+    font-size: 10px;
+  }
+}
+
+@media (min-width: 901px) {
+  .singleForm .whatsapp-field { position: relative; padding-bottom: 22px; }
+  .singleForm .whatsapp-field .whatsappLabelRow { display: block; margin: 0; }
+  .singleForm .whatsapp-field .whatsappSame { position: absolute; left: 0; bottom: 0; display: inline-flex; width: fit-content; font-size: 11px; }
+}
+
+/* Final shared layout for Add and Edit Customer. */
+.singleForm .whatsapp-field,
+.edit-form .whatsapp-field {
+  position: static;
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 0;
+}
+
+.singleForm .whatsapp-field .whatsappLabelRow,
+.edit-form .whatsapp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.singleForm .whatsapp-field .whatsappSame,
+.edit-form .same-phone-option {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  margin: 0;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.singleForm .whatsapp-field .whatsappSame input[type="checkbox"],
+.edit-form .same-phone-option input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.edit-form .whatsapp-field {
+  display: block;
+  color: #385975;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.edit-form .whatsapp-header > label:first-child {
+  color: inherit;
+  font: inherit;
+}
+
+.edit-form .same-phone-option {
+  color: #45647f;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.edit-form .whatsapp-field > input {
+  display: block;
+  width: 100%;
+  height: 38px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px solid #c9d9e8;
+  border-radius: 7px;
+  background: #fff;
+  color: #17324d;
+  font: inherit;
+  font-size: 12px;
+}
+
+.edit-form .whatsapp-field > input:read-only {
+  background: #f2f6fa;
+  color: #637892;
+}
+
+/* Final contact-row alignment. Keep the checkbox out of the input sizing rules. */
+.singleForm .whatsapp-field .whatsappLabelRow,
+.edit-form .whatsapp-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-height: 20px !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
+}
+
+.singleForm .whatsapp-field .whatsappSame,
+.edit-form .same-phone-option {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-weight: 400 !important;
+  white-space: nowrap !important;
+  cursor: pointer;
+}
+
+.singleForm .whatsapp-field .whatsappSame input[type="checkbox"],
+.edit-form .same-phone-option input[type="checkbox"] {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  min-height: 15px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 15px !important;
+  cursor: pointer;
+}
+
+.singleForm .whatsapp-field > input,
+.edit-form .whatsapp-field > input {
+  width: 100% !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  box-sizing: border-box !important;
+  margin-top: 0 !important;
+}
+
+.edit-form .whatsapp-header > label:first-child {
+  margin: 0 !important;
+}

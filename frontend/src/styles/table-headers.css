@@ -1,0 +1,22 @@
+/* One shared sidebar-inspired header treatment for every data table. */
+.app-data-table thead,
+table thead{
+  background:var(--theme-gradient) !important;
+}
+.app-data-table thead th,
+table thead th{
+  height:38px;
+  padding:8px 10px;
+  background:transparent !important;
+  color:#fff !important;
+  border-bottom:none !important;
+  border-right:1px solid rgba(255,255,255,.08);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.app-data-table thead th:first-child,
+table thead th:first-child{border-top-left-radius:8px}
+.app-data-table thead th:last-child,
+table thead th:last-child{border-top-right-radius:8px;border-right:0}

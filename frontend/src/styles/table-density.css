@@ -1,0 +1,20 @@
+.tableWrap th,
+.tableWrap td,
+.detailTable th,
+.detailTable td,
+.report-table th,
+.report-table td,
+.collection-table-wrap th,
+.collection-table-wrap td,
+.installment-table-head,
+.installment-row {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.tableWrap td,
+.detailTable td,
+.report-table td,
+.collection-table-wrap td {
+  line-height: 1.25;
+}

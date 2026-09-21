@@ -1,0 +1,70 @@
+/* Stable geometry for every installment amount editor state. */
+.chit-form-page .scheduleSection .tableWrap td:last-child {
+  width: 220px;
+  min-width: 220px;
+  text-align: right;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.chit-form-page .scheduleSection .tableWrap .installment-amount-input,
+.chit-form-page .scheduleSection .tableWrap input[type="number"] {
+  width: 125px !important;
+  min-width: 125px !important;
+  max-width: 125px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  box-sizing: border-box !important;
+  border: 0 !important;
+  border-radius: 5px;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  translate: none !important;
+  transition: none !important;
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+}
+
+.chit-form-page .scheduleSection .tableWrap .installment-amount-input:hover,
+.chit-form-page .scheduleSection .tableWrap .installment-amount-input:focus,
+.chit-form-page .scheduleSection .tableWrap .installment-amount-input:focus-visible,
+.chit-form-page .scheduleSection .tableWrap .installment-amount-input:active,
+.chit-form-page .scheduleSection .tableWrap input[type="number"]:hover,
+.chit-form-page .scheduleSection .tableWrap input[type="number"]:focus,
+.chit-form-page .scheduleSection .tableWrap input[type="number"]:focus-visible,
+.chit-form-page .scheduleSection .tableWrap input[type="number"]:active {
+  width: 125px !important;
+  min-width: 125px !important;
+  max-width: 125px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  translate: none !important;
+  transition: none !important;
+  position: static !important;
+}
+
+.chit-form-page .scheduleSection .tableWrap input[type="number"]::-webkit-inner-spin-button,
+.chit-form-page .scheduleSection .tableWrap input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.chit-form-page .scheduleSection .tableWrap input[type="number"] {
+  -moz-appearance: textfield;
+}

@@ -1,0 +1,30 @@
+/* Add/Edit Chit Group uses the full available workspace without changing form behavior. */
+.chit-form-page{width:calc(100% + 36px);max-width:none!important;margin:-18px -18px 0!important;min-height:calc(100vh - 36px);height:calc(100vh - 36px);display:flex;flex-direction:column;overflow:hidden}
+.chit-form-page>.surface{width:100%;max-width:none;min-height:0;height:auto;flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chit-form-page>.surface>section:first-child{flex:0 0 auto}
+.chit-form-page>.surface>.scheduleSection{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.chit-form-page .scheduleSection .tableWrap{flex:1 1 auto;min-height:0;overflow:auto}
+.chit-form-page .scheduleSection .meta{flex:0 0 auto;margin-top:0}
+.chit-form-page>.surface>.actions{flex:0 0 auto;margin-top:0;padding:16px 20px 18px}
+@media(max-width:900px){.chit-form-page{width:calc(100% + 32px);margin:-16px -16px 0!important;min-height:calc(100vh - 32px);height:calc(100vh - 32px)}}
+@media(max-width:600px){.chit-form-page{width:100%;margin:0!important;height:auto;min-height:0;overflow:visible}.chit-form-page>.surface{height:auto;overflow:visible}.chit-form-page>.surface>.scheduleSection{overflow:visible}.chit-form-page .scheduleSection .tableWrap{max-height:360px;min-height:0}.chit-form-page>.surface>.actions{padding:16px 16px 18px}}
+
+/* Compact Add Chit Group spacing: keep the card and actions inside the page flow. */
+.chit-form-page{width:100%;max-width:none!important;margin:0!important;min-height:0;height:100%;}
+.chit-form-page>header{flex:0 0 34px;margin:0 0 8px;}
+.chit-form-page>.surface{height:auto;min-height:0;}
+.chit-form-page>.surface>.actions{margin:0;padding:10px 16px 12px;}
+.chit-form-page>.surface>.actions>button{min-width:84px;height:36px;box-sizing:border-box;}
+.chit-form-page>.surface>.actions>.primary{min-width:132px;}
+@media(max-width:900px){.chit-form-page{width:100%;margin:0!important;height:100%;min-height:0;}}
+@media(max-width:600px){.chit-form-page{height:auto;min-height:0;}.chit-form-page>.surface>.actions{padding:10px 16px 12px;}}
+
+/* Add Chit Group uses natural content height; the schedule must not stretch to fill the viewport. */
+.chit-form-page{height:auto;min-height:0;display:block;overflow:visible;}
+.chit-form-page>.surface{height:auto;min-height:0;display:block;overflow:visible;}
+.chit-form-page>.surface>section{flex:none;}
+.chit-form-page>.surface>.scheduleSection{height:auto;min-height:0;display:block;overflow:visible;}
+.chit-form-page .scheduleSection .tableWrap{height:auto;min-height:0;display:block;flex:none;overflow:visible;}
+.chit-form-page .scheduleSection .meta{position:static;margin:0;padding-top:10px;padding-bottom:0;}
+.chit-form-page>.surface>.actions{position:static;margin-top:10px;padding:0 16px 12px;}
+@media(max-width:600px){.chit-form-page>.surface>.actions{padding:0 16px 12px;}}

@@ -1,0 +1,151 @@
+.clean-loan-page{min-height:100%;height:auto;padding:18px 22px 28px;overflow:visible;background:#f5f9fd}
+.clean-loan-page .exact-header{max-width:1240px;margin:0 auto 12px;padding:0 0 8px!important}
+.clean-loan-page .clean-panel{max-width:1240px;margin:0 auto;background:#fff;border:1px solid #d9e6f1;border-radius:10px;padding:18px 20px}
+.clean-loan-page .clean-top-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.clean-loan-page .clean-panel h2{margin:0 0 14px;color:#123b63;font-size:15px}
+.clean-loan-page .clean-panel h3{margin:0 0 10px;color:#123b63;font-size:13px}
+.clean-loan-page .clean-field{min-width:0;color:#294967;font-size:12px;font-weight:700}
+.clean-loan-page .clean-field>span{display:block;margin-bottom:6px}
+.clean-loan-page .clean-field i{color:#df4252;font-style:normal}
+.clean-loan-page .clean-field input,.clean-loan-page .clean-field select{width:100%;height:37px;box-sizing:border-box;border:1px solid #c9dbe9;border-radius:6px;padding:0 10px;background:#fff;color:#294967;font:inherit;font-size:12px}
+.clean-loan-page .clean-field input:read-only{background:#f3f7fa}
+.clean-loan-page .exact-field{min-width:0;color:#294967;font-size:12px;font-weight:700}
+.clean-loan-page .exact-field>span{display:block;margin-bottom:6px;color:#294967}
+.clean-loan-page .exact-field input,.clean-loan-page .exact-field select{width:100%;height:37px;box-sizing:border-box;border:1px solid #c9dbe9;border-radius:6px;padding:0 10px;background:#fff;color:#294967;font:inherit;font-size:12px}
+.clean-loan-page .exact-field input:read-only{background:#f3f7fa}
+.clean-loan-page .percent-input{position:relative}
+.clean-loan-page .percent-input input{padding-right:28px}
+.clean-loan-page .percent-input>b{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#557391;pointer-events:none}
+.clean-loan-page .chit-plan-row,.clean-loan-page .interest-top-row{display:grid;gap:18px;align-items:end;margin-bottom:18px}
+.clean-loan-page .chit-plan-row{grid-template-columns:minmax(0,1.7fr) minmax(360px,1fr)}
+.clean-loan-page .interest-top-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.clean-loan-page .collection-plan-field{min-width:0}
+.clean-loan-page .collection-plan-label{display:block;margin-bottom:6px;color:#294967;font-size:12px;font-weight:700;white-space:nowrap}
+.clean-loan-page .collection-plan-options{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.clean-loan-page .collection-plan-option{min-width:46px;height:36px;padding:4px 10px;border:1px solid #bfd5e7;border-radius:6px;background:#fff;color:#176db3;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.clean-loan-page .collection-plan-option.option-100{min-width:58px}
+.clean-loan-page .collection-plan-option.selected{border-color:#176db3;background:#176db3;color:#fff}
+.clean-loan-page .loan-schedule-section{border-top:1px solid #e2edf5;padding-top:16px;margin-top:2px}
+.clean-loan-page .loan-schedule-grid{display:grid;grid-template-columns:1.1fr 1.1fr .75fr .75fr 1fr 1fr;gap:12px;align-items:end}
+.clean-loan-page .interest-schedule-grid{display:grid;grid-template-columns:.9fr .7fr 1fr 1fr 1fr .8fr 1.2fr 1fr;gap:12px;align-items:end}
+.clean-loan-page .holiday-rules-section{margin-top:18px;padding-top:16px;border-top:1px solid #e2edf5}
+.clean-loan-page .holiday-rules-section .exact-holiday-title{margin:0 0 10px;padding:0;border:0;font-size:13px!important;color:#123b63;font-weight:800}
+.clean-loan-page .holiday-rules-section .clean-holiday-title:after{content:none!important}
+.clean-loan-page .exact-holiday-row{display:grid;grid-template-columns:1fr 1.6fr 1.2fr;gap:12px}
+.clean-loan-page .exact-holiday-row>div{min-height:82px;height:auto;padding:11px;border:1px solid #dce8f2;border-radius:7px;background:#fbfdff}
+.clean-loan-page .schedule-preview{max-width:1240px;margin:12px auto 0;padding:0;background:#fff;border:1px solid #d9e6f1;border-radius:8px;overflow:hidden}
+.clean-loan-page .schedule-preview-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;padding:11px 14px;border:0;background:#fff;color:#123b63;font-size:13px;font-weight:800;cursor:pointer}
+.clean-loan-page .schedule-preview-body{max-height:300px;overflow-y:auto;overflow-x:auto;border-top:1px solid #e2edf5}
+.clean-loan-page .schedule-preview-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+.clean-loan-page .schedule-preview-table{display:table!important}
+.clean-loan-page .schedule-preview-table thead{display:table-header-group!important;position:static!important}
+.clean-loan-page .schedule-preview-table tbody{display:table-row-group!important;overflow:visible!important}
+.clean-loan-page .schedule-preview-table tr{display:table-row!important}
+.clean-loan-page .schedule-preview-table th{padding:10px 12px;text-align:left;white-space:nowrap;background:#174d78;color:#fff}
+.clean-loan-page .schedule-preview-table td{padding:10px 12px;border-bottom:1px solid #e5e7eb;vertical-align:middle;white-space:nowrap}
+.clean-loan-page .schedule-preview-table .currency{text-align:right;font-variant-numeric:tabular-nums}
+.clean-loan-page .schedule-preview-table.chit th:nth-child(1){width:7%}.clean-loan-page .schedule-preview-table.chit th:nth-child(2){width:20%}.clean-loan-page .schedule-preview-table.chit th:nth-child(3){width:24%}.clean-loan-page .schedule-preview-table.chit th:nth-child(4){width:24%}.clean-loan-page .schedule-preview-table.chit th:nth-child(5){width:25%}
+.clean-loan-page .schedule-preview-table.interest th:nth-child(1){width:6%}.clean-loan-page .schedule-preview-table.interest th:nth-child(2){width:17%}.clean-loan-page .schedule-preview-table.interest th:nth-child(3){width:17%}.clean-loan-page .schedule-preview-table.interest th:nth-child(4){width:15%}.clean-loan-page .schedule-preview-table.interest th:nth-child(5){width:23%}.clean-loan-page .schedule-preview-table.interest th:nth-child(6){width:22%}
+.clean-loan-page .clean-actions{display:flex;justify-content:center;gap:10px;margin:18px auto 0;max-width:1240px}
+.clean-loan-page .clean-actions button{min-width:110px;padding:9px 15px;border:1px solid #c9dbe9;border-radius:6px;background:#fff;color:#176db3;font-weight:700;cursor:pointer}.clean-loan-page .clean-actions .save{border-color:#176db3;background:#176db3;color:#fff}
+@media(max-width:1100px){.clean-loan-page .chit-plan-row{grid-template-columns:1.3fr 1fr}.clean-loan-page .loan-schedule-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.clean-loan-page .interest-schedule-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:700px){.clean-loan-page{padding:12px 10px}.clean-loan-page .clean-top-grid,.clean-loan-page .chit-plan-row,.clean-loan-page .interest-top-row,.clean-loan-page .loan-schedule-grid,.clean-loan-page .interest-schedule-grid{grid-template-columns:1fr}.clean-loan-page .exact-holiday-row{grid-template-columns:1fr}.clean-loan-page .collection-plan-options{flex-wrap:wrap}.clean-loan-page .schedule-preview-table{min-width:760px}}
+
+/* Keep Interest principal and percentage controls compact on desktop. */
+.clean-loan-page .interest-top-row{display:flex;grid-template-columns:none;align-items:flex-start;gap:24px;flex-wrap:nowrap}
+.clean-loan-page .interest-top-row>.exact-field:first-child{flex:0 0 220px;width:220px;max-width:220px}
+.clean-loan-page .interest-top-row>.exact-field:nth-child(2){flex:0 0 180px;width:180px;max-width:180px}
+.clean-loan-page .interest-top-row>.exact-field:first-child input,.clean-loan-page .interest-top-row>.exact-field:nth-child(2) input{width:100%;max-width:100%}
+.clean-loan-page .interest-top-row>.collection-plan-field{flex:0 0 auto;width:auto;max-width:none}
+@media(max-width:700px){.clean-loan-page .interest-top-row{display:grid;grid-template-columns:1fr;gap:14px}.clean-loan-page .interest-top-row>.exact-field:first-child,.clean-loan-page .interest-top-row>.exact-field:nth-child(2){width:100%;max-width:none}.clean-loan-page .interest-top-row>.collection-plan-field{width:100%}}
+
+/* Stable desktop rows for both loan types. */
+.clean-loan-page .chit-plan-row{grid-template-columns:minmax(420px,1fr) auto;gap:18px;align-items:end}
+.clean-loan-page .chit-plan-row>.exact-field{width:100%;min-width:0}
+.clean-loan-page .chit-plan-row>.collection-plan-field{flex:0 0 auto;min-width:280px}
+.clean-loan-page .interest-top-row>.collection-plan-field{min-width:280px}
+.clean-loan-page .collection-plan-options{flex-wrap:nowrap;min-width:0}
+.clean-loan-page .collection-plan-option:disabled{opacity:.55;cursor:not-allowed}
+.clean-loan-page .interest-top-row>.collection-plan-field{padding-top:13px}
+.clean-loan-page .interest-top-row>.collection-plan-field .collection-plan-options{margin-top:13px}
+@media(max-width:700px){.clean-loan-page .chit-plan-row{grid-template-columns:1fr}.clean-loan-page .chit-plan-row>.collection-plan-field{min-width:0}.clean-loan-page .interest-top-row>.collection-plan-field{min-width:0;padding-top:0}.clean-loan-page .interest-top-row>.collection-plan-field .collection-plan-options{margin-top:0}}
+
+/* Chit Group and Collection Plan share one stable label/control baseline. */
+@media (min-width: 701px) {
+  .clean-loan-page.is-chit .chit-plan-row,
+  .clean-loan-page.is-chit .chit-config-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 18px;
+    align-items: start;
+    margin-top: 0;
+  }
+
+  .clean-loan-page.is-chit .chit-plan-row > .exact-field,
+  .clean-loan-page.is-chit .chit-config-row > .exact-field {
+    display: grid;
+    grid-template-rows: 25px 38px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  .clean-loan-page.is-chit .chit-plan-row > .exact-field > span,
+  .clean-loan-page.is-chit .chit-plan-row .collection-plan-label,
+  .clean-loan-page.is-chit .chit-config-row > .exact-field > span,
+  .clean-loan-page.is-chit .chit-config-row .collection-plan-label {
+    display: block;
+    min-height: 18px;
+    height: 18px;
+    margin: 0 0 7px !important;
+    line-height: 18px;
+    white-space: nowrap;
+  }
+
+  .clean-loan-page.is-chit .chit-plan-row > .exact-field select,
+  .clean-loan-page.is-chit .chit-plan-row .collection-plan-options,
+  .clean-loan-page.is-chit .chit-config-row > .exact-field select,
+  .clean-loan-page.is-chit .chit-config-row .collection-plan-options {
+    height: 38px;
+    min-height: 38px;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .clean-loan-page.is-chit .chit-plan-row > .exact-field select,
+  .clean-loan-page.is-chit .chit-config-row > .exact-field select {
+    width: 100%;
+  }
+
+  .clean-loan-page.is-chit .chit-plan-row > .collection-plan-field,
+  .clean-loan-page.is-chit .chit-config-row > .collection-plan-field {
+    align-self: start;
+    display: grid;
+    grid-template-rows: 25px 38px;
+    min-width: 280px;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .clean-loan-page.is-chit .chit-plan-row .collection-plan-options,
+  .clean-loan-page.is-chit .chit-config-row .collection-plan-options {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .clean-loan-page.is-chit .chit-plan-row .collection-plan-option,
+  .clean-loan-page.is-chit .chit-config-row .collection-plan-option {
+    height: 38px;
+    min-width: 46px;
+    padding: 0 10px;
+    box-sizing: border-box;
+  }
+
+  .clean-loan-page.is-chit .chit-plan-row .collection-plan-option.option-100,
+  .clean-loan-page.is-chit .chit-config-row .collection-plan-option.option-100 {
+    min-width: 58px;
+  }
+}

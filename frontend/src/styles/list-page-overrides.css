@@ -1,0 +1,11 @@
+/* Final shared geometry overrides for module list/report pages. */
+.main-content{max-width:none!important;width:auto!important;padding:36px 42px!important}
+.main-content>.page{width:100%;max-width:none!important;margin:0!important}
+.main-content>.page>.header{margin-bottom:8px!important;min-height:58px}
+.main-content>.page>.surface{width:100%;min-height:260px;box-shadow:0 8px 28px #1e609614}
+.main-content>.page>.surface .empty{min-height:150px;display:flex;align-items:center;justify-content:center}
+.main-content>header{margin-bottom:8px;min-height:58px}
+.main-content>header+.panel{width:100%;min-height:260px;padding:26px 22px 20px}
+.main-content>header+.panel>.panel-head{padding:0 0 16px;border-bottom:1px solid #e8f1f8}.main-content>header+.panel>.table-wrap{margin-top:0;min-height:150px}.main-content>header+.panel>.table-wrap>.empty{min-height:150px;display:flex;align-items:center;justify-content:center}
+@media(max-width:760px){.main-content{margin-left:0!important;padding:16px!important}}
+@media(max-width:700px){.main-content>header{align-items:flex-start}.main-content>header+.panel{padding:20px 16px 16px}.main-content>.page>.header{align-items:flex-start}.main-content>.page>.surface{border-radius:9px}}
