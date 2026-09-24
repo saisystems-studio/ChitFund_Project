@@ -7,7 +7,7 @@ import "./CustomerWhatsapp.css";
 import "./CustomerFormGrid.css";
 import PageBreadcrumb from "../../components/PageBreadcrumb";
 
-const empty = { customer_code: "", full_name: "", dob: "", gender: "", occupation: "", monthly_income: "", role: "", email: "", primary_mobile: "", alternate_mobile: "", whatsapp_number: "", is_whatsapp_same_as_phone: false, aadhaar_number: "", pan_number: "", address: "", district: "", state: "", country: "", pincode: "", is_active: true };
+const empty = { customer_code: "", full_name: "", dob: "", gender: "", occupation: "", monthly_income: "", role: "", email: "", primary_mobile: "", alternate_mobile: "", whatsapp_number: "", is_whatsapp_same_as_phone: false, aadhaar_number: "", pan_number: "", address: "", district: "", state: "", country: "India", pincode: "", is_active: true };
 const CUSTOMER_DRAFT_KEY = "chitufund:draft:add-customer";
 const loadDraft = () => {
   try {
@@ -30,7 +30,7 @@ const validators = {
   address: value => value.trim().length < 5 ? "Enter a complete address." : "",
   pincode: value => value && !/^\d{6}$/.test(value) ? "Pincode must contain 6 digits." : ""
 };
-const required = new Set(["full_name", "primary_mobile", "address", "district", "state", "country", "role"]);
+const required = new Set(["full_name", "primary_mobile", "address", "district", "state", "role"]);
 
 export default function CustomerFormStepper({ api, auth, go }) {
   const [form, setForm] = useState(loadDraft);
@@ -52,7 +52,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
 
   const focus = key => refs.current[key]?.focus();
   const nextKey = key => {
-    const order = ["full_name", "email", "primary_mobile", "is_whatsapp_same_as_phone", "whatsapp_number", "alternate_mobile", "dob", "gender", "occupation", "monthly_income", "role", "address", "district", "state", "country", "pincode", "aadhaar_number", "pan_number"];
+    const order = ["full_name", "email", "primary_mobile", "is_whatsapp_same_as_phone", "whatsapp_number", "alternate_mobile", "dob", "gender", "occupation", "monthly_income", "role", "address", "district", "state", "pincode", "aadhaar_number", "pan_number"];
     const index = order.indexOf(key);
     return index >= 0 ? order[index + 1] : undefined;
   };
@@ -69,7 +69,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
     ["full_name", "email", "primary_mobile", "alternate_mobile", "whatsapp_number", "aadhaar_number", "pan_number", "dob", "monthly_income", "address", "pincode"].forEach(key => { const message = validators[key]?.(String(form[key] || "")); if (message) next[key] = message; });
     required.forEach(key => { if (!String(form[key] || "").trim()) next[key] = key === "district" ? "District is required." : key === "state" ? "State is required." : key === "country" ? "Country is required." : key === "role" ? "Customer Role is required." : `${key === "aadhaar_number" ? "Aadhar Number" : key === "pan_number" ? "PAN Number" : key === "dob" ? "Date of Birth" : key} is required.`; });
     setErrors(next);
-    const first = ["full_name", "email", "primary_mobile", "alternate_mobile", "whatsapp_number", "address", "district", "state", "country", "pincode", "aadhaar_number", "pan_number", "dob", "role"].find(key => next[key]);
+    const first = ["full_name", "email", "primary_mobile", "alternate_mobile", "whatsapp_number", "address", "district", "state", "pincode", "aadhaar_number", "pan_number", "dob", "role"].find(key => next[key]);
     if (first) setTimeout(() => focus(first), 0);
     return !Object.keys(next).length;
   };
@@ -79,7 +79,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
     if (saving || !validate()) { if (!saving) actionToast("Unable to save customer. Please check the highlighted fields.", false); return; }
     setSaving(true); setNotice(""); setSaveError("");
     try {
-      const { data } = await api.post("/customers/", form, auth);
+      const { data } = await api.post("/customers/", { ...form, dob: form.dob || null, monthly_income: form.monthly_income === "" ? null : form.monthly_income }, auth);
       actionToast("Customer saved successfully.");
       try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {}
       const next = await api.get("/customers/next-code/", auth);
@@ -105,7 +105,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
   const location = (key, label, kind, next, onSelect) => <label className={`${styles.field} ${errors[key] ? styles.invalid : ""}`} key={key}>{label} <b>*</b><DistrictDropdown kind={kind} value={form[key] || ""} inputRef={node => { refs.current[key] = node; }} nextRef={{ get current() { return refs.current[next]; } }} error={errors[key]} onChange={value => set(key, value)} onSelect={onSelect} /><FieldError message={errors[key]}/></label>;
 
   const cancel = () => { try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {} go("/customers"); };
-  return <div className={styles.page}><header className={styles.header}><PageBreadcrumb root="Masters" current="Add Customer" onBack={() => go("/masters")} /></header><form className={`${styles.form} ${styles.singleForm}`} onSubmit={save} onKeyDown={event => { if (event.altKey && event.key.toLowerCase() === "s") keyDown(event, ""); }} noValidate><div className={`${styles.formGrid} customer-form-grid`}>
+  return <div className={`${styles.page} add-customer-page`}><header className={styles.header}><PageBreadcrumb root="Masters" current="Add Customer" onBack={() => go("/masters")} /></header><form className={`${styles.form} ${styles.singleForm} add-customer-form`} onSubmit={save} onKeyDown={event => { if (event.altKey && event.key.toLowerCase() === "s") keyDown(event, ""); }} noValidate><div className={`${styles.formGrid} customer-form-grid`}>
     <Field label="Customer Code" value={form.customer_code} readOnly tabIndex={-1} aria-readonly="true" className={styles.generatedCode}/>
     {field("full_name", "Customer Name")}{field("email", "Email", { type: "email" })}
     {field("primary_mobile", "Phone Number", { inputMode: "numeric" })}{field("alternate_mobile", "Alternative Number", { inputMode: "numeric" })}
@@ -115,7 +115,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
     <fieldset className={`${styles.roleField} ${errors.role ? styles.invalid : ""}`}><legend>Customer Type <b>*</b></legend><div className={styles.roles}>{[["BORROWER", "Debtor"], ["LENDER", "Creditor"], ["BOTH", "Debtor & Creditor"]].map(([value, label]) => <label className={styles.radio} key={value}><input ref={node => { if (value === "BORROWER") refs.current.role = node; }} type="radio" name="customer-role" value={value} checked={form.role === value} onChange={event => set("role", event.target.value)} onKeyDown={event => keyDown(event, "role")}/>{label}</label>)}</div><FieldError message={errors.role}/></fieldset>
     {field("address", "Address", { type: "textarea" })}
     {location("district", "District", "district", "state", item => setForm(current => ({ ...current, district: item.name, state: item.state, country: item.country, pincode: item.pincode || "" })))}
-    {location("state", "State", "state", "country", item => set("state", item.name))}{location("country", "Country", "country", "pincode", item => set("country", item.name))}
+    {location("state", "State", "state", "pincode", item => set("state", item.name))}
     {field("pincode", "Pincode", { inputMode: "numeric" })}{field("aadhaar_number", "Aadhar Number", { inputMode: "numeric" })}{field("pan_number", "PAN Number")}
   </div><div className="form-action-footer customer-form-actions"><button type="button" className={styles.cancel} onClick={cancel}>Cancel</button><button type="button" className={styles.cancel} onClick={reset}>Reset</button><button type="submit" className={styles.primary} disabled={saving}>{saving ? "Saving..." : "Save Customer"}</button></div></form></div>;
 }

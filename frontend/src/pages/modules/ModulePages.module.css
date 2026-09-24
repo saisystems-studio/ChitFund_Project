@@ -44,3 +44,289 @@
 @media(max-width:767px){.holidayPage{width:100%;max-width:100%;min-width:0;padding:8px 10px;box-sizing:border-box;overflow-x:hidden}.holidayPage .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;width:100%;min-width:0}.holidayPage .holidayCrumb{min-width:0;flex:1 1 180px;font-size:0;overflow-wrap:anywhere}.holidayPage .holidayCrumb::before{font-size:18px}.holidayPage .holidayCrumb::after{font-size:10px;white-space:normal}.holidayPage .header::after{flex:0 1 auto;font-size:10px;white-space:nowrap}.holidayPage .surface{width:100%;max-width:100%;min-width:0;overflow:hidden}.holidayPage .holidayToolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;min-width:0;padding:10px}.holidayPage .holidayToolbar>label{display:grid;grid-template-columns:1fr;gap:4px;min-width:0;margin:0;font-size:10px}.holidayPage .holidayToolbar>label:nth-child(3){grid-column:1/-1}.holidayPage .holidayToolbar>label select,.holidayPage .holidayToolbar>select{width:100%;min-width:0;height:36px;box-sizing:border-box;padding:0 8px;font-size:11px}.holidayPage .holidayToolbar .searchField{grid-column:1/-1;display:grid;min-width:0;width:100%;font-size:10px}.holidayPage .holidayToolbar .searchField input{width:100%;min-width:0;height:36px;box-sizing:border-box;padding:0 8px;font-size:11px}.holidayPage .holidayTabs{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%;min-width:0;margin:0;height:34px}.holidayPage .holidayTabs button{min-width:0;width:100%;height:34px;padding:0 3px;font-size:10px;white-space:nowrap}.holidayPage .addCircle{grid-column:1/-1;width:44px;height:44px;justify-self:center;margin:0 auto}.holidayPage .statGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px}.holidayPage .statCard{width:100%;min-width:0;min-height:64px;padding:8px 10px;gap:7px}.holidayPage .statCard>i{width:28px;height:28px;flex:0 0 28px;font-size:15px}.holidayPage .statCard span{font-size:9px;line-height:1.2;overflow-wrap:anywhere}.holidayPage .statCard strong{font-size:16px}.holidayPage .monthList{width:100%;min-width:0;padding:4px 10px 12px}.holidayPage .monthCard{width:100%;min-width:0}.holidayPage .monthHead{min-width:0;padding:9px 10px;font-size:12px;gap:5px}.holidayPage .monthHead>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.holidayPage .monthBadges{min-width:0;flex-wrap:wrap;justify-content:flex-end;gap:3px}.holidayPage .monthBadges b{font-size:9px;padding:3px 5px;white-space:nowrap}.holidayPage .holidayRows{padding:0 8px}.holidayPage .holidayRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;width:100%;min-width:0;padding:9px 4px;font-size:11px}.holidayPage .holidayRow>span{min-width:0;overflow-wrap:anywhere}.holidayPage .holidayRow>span:nth-child(1){grid-column:1}.holidayPage .holidayRow>span:nth-child(2){grid-column:1}.holidayPage .holidayRow>span:nth-child(3){grid-column:1/-1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.holidayPage .holidayRow>span:nth-child(4){grid-column:1}.holidayPage .holidayRow>span:nth-child(5){grid-column:2;grid-row:1 / span 2;white-space:nowrap}.holidayPage .hoverActions{grid-column:2;grid-row:3;position:static;display:flex;opacity:1;justify-content:flex-end;background:transparent}.holidayPage .holidayPagination{display:flex;flex-wrap:wrap;gap:7px;padding:8px 4px}.holidayPage .holidayPagination>div{display:flex;flex-wrap:wrap;gap:3px;margin:0}.holidayPage .calendarView{width:100%;min-width:0;padding:12px 8px}.holidayPage .calendarHeader{gap:10px}.holidayPage .calendarHeader h2{min-width:0;font-size:15px;text-align:center}.holidayPage .weekdays,.holidayPage .calendarGrid{gap:3px}.holidayPage .calendarDay,.holidayPage .calendarGrid>span{min-width:0;min-height:54px;padding:5px}.holidayPage .calendarDay small{font-size:8px;overflow:hidden;display:block;white-space:nowrap;text-overflow:ellipsis}.holidayPage .legend{gap:6px;font-size:9px;overflow-wrap:anywhere}.holidayPage .yearSummary{width:100%;min-width:0;padding:10px;overflow:hidden}.holidayPage .summaryHead,.holidayPage .summaryRow{grid-template-columns:minmax(0,1.5fr) repeat(4,minmax(0,1fr));padding:8px 3px;font-size:9px}.holidayPage .summaryTotals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:10px 3px;font-size:10px}.holidayPage .holidayModal{left:8px;right:8px;width:auto;max-width:none;top:50px;padding:14px}}
 .holidayPage .statGrid > :last-child,.holidayPage .holidayRowHead span:nth-child(5),.holidayPage .holidayRow > span:nth-child(5){display:none}
 .summaryToggle{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:10px 14px 0;padding:8px 11px;border:1px solid #dce8f5;border-radius:7px;background:#f8fbff;color:#176db3;font:700 12px inherit;cursor:pointer}
+
+/* Holiday Master professional compact pass. */
+.holidayPage{
+  max-width:1280px;
+  min-height:0;
+}
+.holidayPage .header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  min-height:34px;
+  margin:0 0 8px;
+}
+.holidayPage .header::after{
+  content:none!important;
+}
+.holidayPage .header .page-breadcrumb{
+  margin:0;
+}
+.holidayPage .activeYear{
+  flex:0 0 auto;
+  color:#176db3;
+  font-size:12px;
+  font-weight:750;
+  line-height:1;
+  white-space:nowrap;
+}
+.holidayPage .surface{
+  border-radius:9px;
+  box-shadow:0 2px 10px rgba(15,39,66,.05);
+}
+.holidayPage .holidayToolbar{
+  display:grid!important;
+  grid-template-columns:108px 126px 138px minmax(180px,1fr) auto 72px!important;
+  align-items:end!important;
+  column-gap:8px!important;
+  row-gap:8px!important;
+  padding:10px 12px!important;
+  border-bottom:1px solid #e2ebf3;
+}
+.holidayPage .holidayToolbar label{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:3px!important;
+  min-width:0;
+  margin:0;
+  color:#58718a;
+  font-size:10px!important;
+  font-weight:700!important;
+  line-height:1.1;
+}
+.holidayPage .holidayToolbar label select,
+.holidayPage .holidayToolbar .searchField input{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0!important;
+  height:32px!important;
+  padding:0 9px!important;
+  border:1px solid #cfdeeb!important;
+  border-radius:6px!important;
+  color:#203b54;
+  font-size:12px!important;
+}
+.holidayPage .holidayToolbar .searchField{
+  display:grid!important;
+  min-width:0!important;
+}
+.holidayPage .holidayTabs{
+  display:flex;
+  height:32px!important;
+  min-width:max-content;
+  margin:0!important;
+  border:1px solid #cfdeeb!important;
+  border-radius:6px!important;
+  overflow:hidden;
+}
+.holidayPage .holidayTabs button{
+  height:30px!important;
+  padding:0 10px!important;
+  border-right:1px solid #cfdeeb!important;
+  background:#fff;
+  color:#58718a;
+  font-size:11px!important;
+  font-weight:700;
+  white-space:nowrap;
+}
+.holidayPage .holidayTabs button:last-child{
+  border-right:0!important;
+}
+.holidayPage .holidayTabs .selectedView{
+  background:#176db3!important;
+  color:#fff!important;
+}
+.holidayPage .addCircle{
+  width:72px!important;
+  height:32px!important;
+  border-radius:6px!important;
+  background:#176db3!important;
+  box-shadow:none!important;
+  color:#fff;
+  font-size:0!important;
+  font-weight:800;
+}
+.holidayPage .addCircle::before{
+  content:"+ Add";
+  font-size:12px;
+}
+.holidayPage .addCircle:hover{
+  background:#145f9d!important;
+  transform:none!important;
+}
+.holidayPage .summaryToggle{
+  width:calc(100% - 24px);
+  height:30px;
+  margin:8px 12px 0;
+  padding:0;
+  border:0;
+  border-bottom:1px solid #e4edf5;
+  border-radius:0;
+  background:transparent;
+  color:#174d78;
+  cursor:pointer;
+}
+.holidayPage .summaryToggle span{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.holidayPage .summaryToggle small{
+  color:#6e8da8;
+  font-size:10px;
+  font-weight:700;
+}
+.holidayPage .statGrid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+  padding:8px 12px 2px!important;
+}
+.holidayPage .statCard{
+  height:48px!important;
+  min-height:48px!important;
+  padding:7px 9px!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+}
+.holidayPage .statCard>i{
+  width:28px!important;
+  height:28px!important;
+  flex:0 0 28px;
+  font-size:14px!important;
+}
+.holidayPage .statCard span{
+  font-size:10px!important;
+}
+.holidayPage .statCard strong{
+  margin-top:1px!important;
+  font-size:17px!important;
+}
+.holidayPage .monthList{
+  padding:6px 12px 12px!important;
+}
+.holidayPage .monthCard{
+  margin-top:6px!important;
+  border:1px solid #dfeaf3!important;
+  border-radius:7px!important;
+  box-shadow:none!important;
+  overflow:hidden;
+}
+.holidayPage .monthHead{
+  min-height:34px;
+  padding:7px 10px!important;
+  border-bottom:0;
+  background:#fbfdff!important;
+  color:#173f65!important;
+  font-size:12px!important;
+  font-weight:800!important;
+}
+.holidayPage .monthHead:hover{
+  background:#f3f8fd!important;
+}
+.holidayPage .monthHead>span:first-child{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  gap:6px;
+}
+.holidayPage .monthBadges{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:5px!important;
+}
+.holidayPage .monthBadges b{
+  min-width:auto;
+  padding:2px 6px!important;
+  border:1px solid #dbe7f1;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#58718a!important;
+  font-size:10px!important;
+  font-weight:750;
+  line-height:17px;
+  white-space:nowrap;
+}
+.holidayPage .holidayRows{
+  padding:0 9px 4px!important;
+  border-top:1px solid #edf3f8;
+}
+.holidayPage .holidayRowHead,
+.holidayPage .holidayRow{
+  grid-template-columns:78px 104px minmax(180px,1.6fr) minmax(110px,.8fr) 76px;
+  gap:8px!important;
+}
+.holidayPage .holidayRowHead{
+  padding:6px 6px!important;
+  color:#7890a5!important;
+  font-size:9px!important;
+  letter-spacing:.04em;
+}
+.holidayPage .holidayRow{
+  min-height:30px!important;
+  padding:5px 6px!important;
+  color:#294967!important;
+  font-size:11px!important;
+}
+.holidayPage .holidayRow:hover{
+  background:#f6faff!important;
+}
+.holidayPage .holidayPagination{
+  padding:7px 6px!important;
+}
+
+@media(max-width:1100px){
+  .holidayPage .holidayToolbar{
+    grid-template-columns:108px 126px 138px minmax(160px,1fr) auto 72px!important;
+    gap:7px!important;
+  }
+  .holidayPage .holidayTabs button{
+    padding:0 8px!important;
+  }
+}
+@media(max-width:900px){
+  .holidayPage .holidayToolbar{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  .holidayPage .holidayToolbar .searchField{
+    grid-column:1 / span 2;
+  }
+  .holidayPage .holidayTabs{
+    justify-self:start;
+  }
+  .holidayPage .addCircle{
+    justify-self:start;
+  }
+}
+@media(max-width:767px){
+  .holidayPage .header{
+    flex-wrap:nowrap;
+  }
+  .holidayPage .holidayToolbar{
+    grid-template-columns:1fr 1fr!important;
+    padding:10px!important;
+  }
+  .holidayPage .holidayToolbar label:nth-child(3),
+  .holidayPage .holidayToolbar .searchField,
+  .holidayPage .holidayTabs{
+    grid-column:1 / -1;
+  }
+  .holidayPage .holidayTabs{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    width:100%;
+  }
+  .holidayPage .holidayTabs button{
+    width:100%;
+    padding:0 4px!important;
+  }
+  .holidayPage .addCircle{
+    grid-column:1 / -1;
+    justify-self:end;
+  }
+  .holidayPage .statGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}

@@ -30,8 +30,15 @@
 .chit-form-page .scheduleSection .tableWrap {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: scroll;
+  scrollbar-width: auto;
+  scrollbar-color: #8caec8 #edf4f9;
 }
+
+.chit-form-page .scheduleSection .tableWrap::-webkit-scrollbar { width: 12px; }
+.chit-form-page .scheduleSection .tableWrap::-webkit-scrollbar-track { background: #edf4f9; }
+.chit-form-page .scheduleSection .tableWrap::-webkit-scrollbar-thumb { background: #8caec8; border: 3px solid #edf4f9; border-radius: 8px; }
 
 .chit-form-page .scheduleSection .meta,
 .chit-form-page .actions {

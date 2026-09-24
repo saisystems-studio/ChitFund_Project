@@ -8,23 +8,37 @@ from django.db.models import Q, Sum
 from django.db.models import ProtectedError
 from django.utils import timezone
 from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from accounts.permissions import CanWriteFinanceData
 from .models import (LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
-    CustomerLoanDetails, InterestDetails, CustomerChitDetails,
+    Mortgage, MortgageUnit, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings, CollectionTransaction, AdjustmentTypeMaster)
 from .serializers import (LoanTypeSerializer, LoanInstallmentSerializer, ChitGroupSerializer,
-    ChitGroupInstallmentDetailSerializer, CustomerLoanDetailsSerializer, InterestDetailsSerializer,
+    ChitGroupInstallmentDetailSerializer, MortgageSerializer, CustomerLoanDetailsSerializer, InterestDetailsSerializer,
     CustomerChitDetailsSerializer, CustomerLoanInstallmentDetailsSerializer,
     HolidayMasterSerializer, LoanHolidaySettingsSerializer, AdjustmentTypeMasterSerializer)
-from .services import generate_chit_schedule, generate_customer_chit_installments, generate_customer_interest_installments
+from .services import generate_chit_schedule, generate_customer_chit_installments, generate_customer_interest_installments, generate_customer_mortgage_installment
 
 logger = logging.getLogger(__name__)
 
 
+class FinancePagination(PageNumberPagination):
+    page_size_query_param = "page_size"
+    max_page_size = 10000
+
+
 class FinanceViewSet(viewsets.ModelViewSet):
     permission_classes = [CanWriteFinanceData]
+    pagination_class = FinancePagination
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.get_object().delete()
+        except ProtectedError:
+            return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
+        return Response(status=204)
 
 
 @api_view(["GET", "POST"])
@@ -42,12 +56,13 @@ def adjustment_types(request):
 
 
 class LoanTypeViewSet(FinanceViewSet):
+    pagination_class = None
     queryset = LoanType.objects.all(); serializer_class = LoanTypeSerializer
 
     @staticmethod
     def _ensure_defaults():
         # Seed only the two protected defaults; existing custom types are untouched.
-        for name in ("Chit", "Interest"):
+        for name in ("Chit", "Interest", "Mortgage"):
             item = LoanType.objects.filter(name__iexact=name).order_by("id").first()
             if item is None:
                 LoanType.objects.create(name=name, is_active=True)
@@ -61,14 +76,14 @@ class LoanTypeViewSet(FinanceViewSet):
         # Selection requests expose usable master records; deletion removes records permanently.
         if self.request.query_params.get("include_inactive") == "true" or self.action != "list":
             return LoanType.objects.all()
-        return LoanType.objects.filter(is_active=True, name__in=("Chit", "Interest"))
+        return LoanType.objects.filter(is_active=True, name__in=("Chit", "Interest", "Mortgage"))
 
     def create(self, request, *args, **kwargs):
-        return Response({"detail": "Only the fixed Chit and Interest loan types are available."}, status=405)
+        return Response({"detail": "Only the fixed Chit, Interest and Mortgage loan types are available."}, status=405)
 
     def destroy(self, request, *args, **kwargs):
         item = self.get_object()
-        if item.name.strip().lower() in {"chit", "interest"}:
+        if item.name.strip().lower() in {"chit", "interest", "mortgage"}:
             return Response({"detail": "Default loan types cannot be deleted."}, status=400)
         try:
             item.delete()
@@ -77,15 +92,51 @@ class LoanTypeViewSet(FinanceViewSet):
         return Response(status=204)
 
 class LoanInstallmentViewSet(FinanceViewSet):
+    pagination_class = None
     queryset = LoanInstallment.objects.all(); serializer_class = LoanInstallmentSerializer
 
 
-class ChitGroupViewSet(FinanceViewSet):
-    queryset = ChitGroup.objects.prefetch_related("installments"); serializer_class = ChitGroupSerializer
+class MortgageViewSet(FinanceViewSet):
+    pagination_class = None
+    queryset = Mortgage.objects.all()
+    serializer_class = MortgageSerializer
+
+    @action(detail=False, methods=["get", "post"])
+    def units(self, request):
+        if request.method == "GET":
+            names = {"Gram", "No", "Pcs"}
+            names.update(MortgageUnit.objects.values_list("name", flat=True))
+            names.update(Mortgage.objects.exclude(unit="").values_list("unit", flat=True))
+            return Response(sorted(names, key=str.casefold))
+        name = str(request.data.get("name", "")).strip()
+        if not name or len(name) > 50 or name.casefold() == "other":
+            return Response({"detail": "Enter a unit name of 1–50 characters other than Other."}, status=400)
+        existing = MortgageUnit.objects.filter(name__iexact=name).first()
+        item = existing or MortgageUnit.objects.get_or_create(name=name)[0]
+        return Response({"name": item.name}, status=200 if existing else 201)
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        search = self.request.query_params.get("search", "").strip()
+        if search:
+            queryset = queryset.filter(Q(product_name__icontains=search) | Q(unit__icontains=search))
         return queryset.filter(is_active=True) if self.action == "list" else queryset
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.get_object().delete()
+        except ProtectedError:
+            return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
+        return Response(status=204)
+
+
+class ChitGroupViewSet(FinanceViewSet):
+    pagination_class = None
+    queryset = ChitGroup.objects.prefetch_related("installments"); serializer_class = ChitGroupSerializer
+
+    def get_queryset(self):
+        # Active groups first; deactivated groups stay listed at the bottom.
+        return super().get_queryset().order_by("-is_active", "id")
 
     def destroy(self, request, *args, **kwargs):
         try:
@@ -117,7 +168,6 @@ class ChitGroupViewSet(FinanceViewSet):
         if rows is not None: self._save_rows(group, rows)
 
     def _save_rows(self, group, rows):
-        target_total = group.grand_total
         if len(rows) != int(group.duration or 0):
             from rest_framework.exceptions import ValidationError
             raise ValidationError({"installments": [f"Expected {group.duration} installment rows, received {len(rows)}."]})
@@ -128,12 +178,11 @@ class ChitGroupViewSet(FinanceViewSet):
                 installment_amount=item.get("installment_amount", 0))
             for index, item in enumerate(rows)
         ])
-        from decimal import Decimal
-        group.grand_total = sum((row.installment_amount for row in created), Decimal("0.00"))
-        if target_total != group.grand_total:
-            from rest_framework.exceptions import ValidationError
-            raise ValidationError("Installment total must equal Total Amount.")
-        group.save(update_fields=("grand_total", "modified_date"))
+        # Keep the entered Chit Amount; only fall back to the schedule sum when none was given.
+        if not group.grand_total:
+            from decimal import Decimal
+            group.grand_total = sum((row.installment_amount for row in created), Decimal("0.00"))
+            group.save(update_fields=("grand_total", "modified_date"))
 
 
 class ChitGroupInstallmentDetailViewSet(FinanceViewSet):
@@ -141,7 +190,7 @@ class ChitGroupInstallmentDetailViewSet(FinanceViewSet):
 
 
 class CustomerLoanDetailsViewSet(FinanceViewSet):
-    queryset = CustomerLoanDetails.objects.select_related("customer", "loan_type", "chit_details__chit_group", "interest_details").prefetch_related("installment_details"); serializer_class = CustomerLoanDetailsSerializer
+    queryset = CustomerLoanDetails.objects.select_related("customer", "loan_type", "chit_details__chit_group", "interest_details", "mortgage_details__product").prefetch_related("installment_details"); serializer_class = CustomerLoanDetailsSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -156,20 +205,60 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
     def update(self, request, *args, **kwargs):
         loan = self.get_object()
         payload = request.data.copy()
+        if loan.loan_type.name.strip().lower() == "mortgage":
+            product_id = payload.get("mortgage_product_id", payload.get("product"))
+            customer_id = payload.get("customer_id", payload.get("customer", loan.customer_id))
+            try:
+                quantity = Decimal(str(payload.get("quantity", loan.mortgage_details.quantity) or 0))
+                amount = Decimal(str(payload.get("amount", payload.get("loan_amount", loan.loan_amount)) or 0))
+                percentage = Decimal(str(payload.get("interest_percentage", loan.mortgage_details.interest_percentage) or 0))
+            except Exception:
+                return Response({"detail": "Enter valid mortgage quantity, loan amount and interest rate."}, status=400)
+            start_value = payload.get("start_date", payload.get("loan_start_date", loan.loan_start_date))
+            try:
+                start_date = date.fromisoformat(str(start_value)) if not isinstance(start_value, date) else start_value
+            except (TypeError, ValueError):
+                return Response({"detail": "Invalid loan start date."}, status=400)
+            product = Mortgage.objects.filter(pk=product_id, is_active=True).first() if product_id else loan.mortgage_details.product
+            if not customer_id or not product or quantity <= 0 or amount <= 0 or percentage <= 0:
+                return Response({"detail": "Customer, product, quantity, loan amount and interest rate are required."}, status=400)
+            rate = loan.mortgage_details.current_rate if product.id == loan.mortgage_details.product_id else product.current_rate
+            market_value = (quantity * rate).quantize(Decimal("0.01"))
+            daily_interest = (amount * percentage / Decimal("100") / Decimal("365")).quantize(Decimal("0.01"))
+            loan.customer_id = customer_id
+            loan.loan_amount = amount
+            loan.loan_start_date = start_date
+            loan.save(update_fields=("customer", "loan_amount", "loan_start_date", "modified_date"))
+            mortgage = loan.mortgage_details
+            if mortgage.product_id != product.pk:
+                mortgage.product_name = product.product_name
+                mortgage.unit = product.unit
+            mortgage.product = product
+            mortgage.quantity = quantity
+            mortgage.current_rate = rate
+            mortgage.market_value = market_value
+            mortgage.loan_amount = amount
+            mortgage.interest_percentage = percentage
+            mortgage.daily_interest_amount = daily_interest
+            mortgage.save()
+            generate_customer_mortgage_installment(loan, mortgage)
+            return Response(self.get_serializer(loan).data)
         if loan.loan_type.name.strip().lower() == "interest":
-            from decimal import Decimal
             amount = Decimal(str(payload.get("amount", loan.loan_amount) or 0)); percentage = Decimal(str(payload.get("interest_percentage", loan.interest_details.interest_percentage) or 0)); duration = int(payload.get("interest_duration", loan.interest_details.duration_value) or 0)
             try: start_date = date.fromisoformat(str(payload.get("start_date", loan.loan_start_date)))
             except (TypeError, ValueError): return Response({"detail": "Invalid loan start date."}, status=400)
             periodicity = str(payload.get("periodicity", loan.interest_details.loan_installment.name)); master = LoanInstallment.objects.filter(name__iexact=periodicity, is_active=True).first()
             if amount <= 0 or percentage <= 0 or duration <= 0 or not master: return Response({"detail": "Enter valid principal, interest percentage, periodicity and duration."}, status=400)
             interest_amount = (amount * percentage / Decimal("100")).quantize(Decimal("0.01")); total_payable = amount + interest_amount; per_installment = (total_payable / duration).quantize(Decimal("0.01")); interest = loan.interest_details
-            loan.loan_amount = amount; loan.loan_start_date = start_date; loan.total_amount = total_payable; loan.outstanding_amount = max(Decimal("0.00"), total_payable - loan.paid_amount); loan.save(update_fields=("loan_amount", "loan_start_date", "total_amount", "outstanding_amount", "modified_date"))
-            yearly = periodicity in ("Annual", "Other", "Others"); interest.principal_amount = amount; interest.interest_percentage = percentage; interest.interest_amount = interest_amount; interest.total_payable_amount = total_payable; interest.loan_installment = master; interest.duration_value = duration; interest.start_date = start_date; interest.installment_count = duration; interest.installment_amount = per_installment; interest.collection_day = payload.get("interest_collection_day"); interest.collection_month = payload.get("interest_collection_month") or (interest.collection_month if yearly else None); collection_day = int(payload.get("interest_collection_day") or 1); interest.collection_date = date(start_date.year, int(interest.collection_month or start_date.month), min(collection_day, monthrange(start_date.year, int(interest.collection_month or start_date.month))[1])) if periodicity in ("Monthly", "Annual", "Other", "Others") else None; interest.save()
+            loan.customer_id = payload.get("customer_id", loan.customer_id)
+            loan.loan_amount = amount; loan.loan_start_date = start_date; loan.total_amount = total_payable; loan.outstanding_amount = max(Decimal("0.00"), total_payable - loan.paid_amount); loan.save(update_fields=("customer", "loan_amount", "loan_start_date", "total_amount", "outstanding_amount", "modified_date"))
+            yearly = periodicity in ("Annual", "Other", "Others"); interest.principal_amount = amount; interest.interest_percentage = percentage; interest.interest_amount = interest_amount; interest.total_payable_amount = total_payable; interest.loan_installment = master; interest.duration_value = duration; interest.duration_type = payload.get("interest_duration_type", interest.duration_type); interest.start_date = start_date; interest.installment_count = duration; interest.installment_amount = per_installment; interest.collection_day = payload.get("interest_collection_day", interest.collection_day); interest.collection_month = payload.get("interest_collection_month") or (interest.collection_month if yearly else None); collection_day = int(payload.get("interest_collection_day", interest.collection_date.day if interest.collection_date else 1) or 1); interest.collection_date = date(start_date.year, int(interest.collection_month or start_date.month), min(collection_day, monthrange(start_date.year, int(interest.collection_month or start_date.month))[1])) if periodicity in ("Monthly", "Annual", "Other", "Others") else None; interest.save()
             generate_customer_interest_installments(loan, interest, bool(payload.get("include_sunday", False)))
             return Response(self.get_serializer(loan).data)
-        group_id = payload.get("chit_group_id", payload.get("group"))
-        selected_ids = payload.get("selected_holidays", payload.get("selected_holiday_ids", []))
+        group_id = payload.get("chit_group_id", payload.get("group", loan.chit_details.chit_group_id))
+        if str(group_id) != str(loan.chit_details.chit_group_id) and not ChitGroup.objects.filter(pk=group_id, is_active=True).exists():
+            return Response({"detail": "The selected Chit Group is deactivated or does not exist."}, status=400)
+        selected_ids = payload.get("selected_holidays", payload.get("selected_holiday_ids", list(loan.holiday_settings.filter(include_in_schedule=True).values_list("holiday_id", flat=True))))
         if isinstance(selected_ids, str):
             selected_ids = [item for item in selected_ids.split(",") if item]
         customer_id = payload.get("customer_id", payload.get("customer", loan.customer_id))
@@ -228,7 +317,7 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             try: start_date = date.fromisoformat(str(start_value))
             except (TypeError, ValueError): return Response({"detail": "Invalid loan start date."}, status=400)
             if not customer_id or amount <= 0 or percentage <= 0 or duration <= 0: return Response({"detail": "Customer, principal, interest percentage and duration are required."}, status=400)
-            periodicity = str(payload.get("periodicity", "Monthly"))
+            periodicity = str(periodicity or "Monthly")
             installment_master = LoanInstallment.objects.filter(name__iexact=periodicity, is_active=True).first()
             if not installment_master: return Response({"detail": f"Unsupported interest periodicity: {periodicity}."}, status=400)
             interest_amount = (amount * percentage / Decimal("100")).quantize(Decimal("0.01"))
@@ -240,8 +329,35 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             collection_month = payload.get("interest_collection_month") or (start_date.month if yearly else None)
             collection_month_value = int(collection_month or start_date.month); collection_day = int(payload.get("interest_collection_day") or 1)
             collection_date = date(start_date.year, collection_month_value, min(collection_day, monthrange(start_date.year, collection_month_value)[1])) if periodicity in ("Monthly", "Annual", "Other", "Others") else None
-            interest = InterestDetails.objects.create(loan=loan, principal_amount=amount, interest_percentage=percentage, interest_amount=interest_amount, total_payable_amount=total_payable, loan_installment=installment_master, duration_value=duration, start_date=start_date, collection_day=payload.get("interest_collection_day"), collection_date=collection_date, collection_month=collection_month, installment_count=duration, installment_amount=per_installment, paid_amount=0, outstanding_amount=total_payable)
-            generate_customer_interest_installments(loan, interest, bool(payload.get("include_sunday", False)))
+            interest = InterestDetails.objects.create(loan=loan, principal_amount=amount, interest_percentage=percentage, interest_amount=interest_amount, total_payable_amount=total_payable, loan_installment=installment_master, duration_value=duration, duration_type=payload.get("interest_duration_type", ""), start_date=start_date, collection_day=payload.get("interest_collection_day"), collection_date=collection_date, collection_month=collection_month, installment_count=duration, installment_amount=per_installment, paid_amount=0, outstanding_amount=total_payable)
+            generate_customer_interest_installments(loan, interest, bool(include_sunday))
+            return Response(self.get_serializer(loan).data, status=201)
+        if loan_type and loan_type.name.strip().lower() == "mortgage":
+            from customers.models import Customer
+            customer_id = payload.get("customer_id", payload.get("customer"))
+            product_id = payload.get("mortgage_product_id", payload.get("product"))
+            try:
+                quantity = Decimal(str(payload.get("quantity", 0) or 0))
+                amount = Decimal(str(payload.get("amount", payload.get("loan_amount", 0)) or 0))
+                percentage = Decimal(str(payload.get("interest_percentage", 0) or 0))
+            except Exception:
+                return Response({"detail": "Enter valid mortgage quantity, loan amount and interest rate."}, status=400)
+            start_value = payload.get("start_date", payload.get("loan_start_date")) or timezone.localdate()
+            try:
+                start_date = date.fromisoformat(str(start_value)) if not isinstance(start_value, date) else start_value
+            except (TypeError, ValueError):
+                return Response({"detail": "Invalid loan start date."}, status=400)
+            product = Mortgage.objects.filter(pk=product_id, is_active=True).first()
+            if not customer_id or not product or quantity <= 0 or amount <= 0 or percentage <= 0:
+                return Response({"detail": "Customer, product, quantity, loan amount and interest rate are required."}, status=400)
+            market_value = (quantity * product.current_rate).quantize(Decimal("0.01"))
+            daily_interest = (amount * percentage / Decimal("100") / Decimal("365")).quantize(Decimal("0.01"))
+            common = {"customer": customer_id, "loan_type": loan_type.pk, "loan_amount": amount, "loan_start_date": start_date, "total_amount": amount + daily_interest, "paid_amount": 0, "penalty_amount": 0, "outstanding_amount": amount + daily_interest, "loan_status": "ACTIVE", "is_active": True}
+            loan = self.get_serializer(data=common)
+            loan.is_valid(raise_exception=True)
+            loan = loan.save(loan_no=f"LN_{Customer.objects.get(pk=customer_id).pk:06d}_{CustomerLoanDetails.objects.count() + 1:06d}")
+            mortgage = MortgageLoanDetails.objects.create(loan=loan, product=product, product_name=product.product_name, unit=product.unit, quantity=quantity, current_rate=product.current_rate, market_value=market_value, loan_amount=amount, interest_percentage=percentage, daily_interest_amount=daily_interest)
+            generate_customer_mortgage_installment(loan, mortgage)
             return Response(self.get_serializer(loan).data, status=201)
         if "customer_id" in payload:
             payload["customer"] = payload.pop("customer_id")
@@ -252,6 +368,8 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
         customer_id = payload.get("customer")
         if not customer_id or not group_id:
             return Response({"detail": "customer and chit_group are required."}, status=400)
+        if not ChitGroup.objects.filter(pk=group_id, is_active=True).exists():
+            return Response({"detail": "The selected Chit Group is deactivated or does not exist."}, status=400)
         loan_type = LoanType.objects.get_or_create(name="Chit", defaults={"is_active": True})[0]
         amount = Decimal(str(payload.get("loan_amount") or 0))
         payload.update({"loan_type": loan_type.pk, "total_amount": amount, "paid_amount": 0,
@@ -354,7 +472,8 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
 
 
 class HolidayMasterViewSet(FinanceViewSet):
-    queryset = HolidayMaster.objects.filter(is_active=True); serializer_class = HolidayMasterSerializer
+    pagination_class = None
+    queryset = HolidayMaster.objects.all(); serializer_class = HolidayMasterSerializer
 
     def destroy(self, request, *args, **kwargs):
         try:
@@ -370,14 +489,35 @@ class LoanHolidaySettingsViewSet(FinanceViewSet):
 
 @api_view(["POST"])
 def preview_chit_schedule(request):
-    start_value = request.data.get("start_date")
+    payload = request.data
+    group = None
+    if payload.get("chit_group_id"):
+        try:
+            group = ChitGroup.objects.get(pk=payload["chit_group_id"])
+        except (ChitGroup.DoesNotExist, TypeError, ValueError):
+            return Response({"detail": "Invalid Chit Group."}, status=400)
+    start_value = (payload.get("start_date") or payload.get("loan_start_date")
+                   or payload.get("chit_start_date") or (group.start_date if group else None))
     if not start_value:
         return Response({"detail": "Loan Start Date is required."}, status=400)
+
+    def parse_api_date(value):
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(value)):
+            raise ValueError("Dates must use YYYY-MM-DD.")
+        return date.fromisoformat(str(value))
+
     try:
-        start_date = date.fromisoformat(start_value)
-        rows = generate_chit_schedule(start_date, int(request.data["duration"]), request.data["duration_type"], include_sunday=bool(request.data.get("include_sunday", False)))
-    except (KeyError, TypeError, ValueError):
-        return Response({"detail": "Invalid Loan Start Date or schedule details."}, status=400)
+        start_date = parse_api_date(start_value)
+        blocked = [parse_api_date(value) for value in (payload.get("blocked_holidays") or [])]
+        rows = generate_chit_schedule(
+            start_date, group.duration if group else int(payload["duration"]),
+            group.duration_type if group else payload["duration_type"],
+            collection_day=group.collection_day if group else payload.get("collection_day"),
+            collection_month=group.collection_month if group else payload.get("collection_month"),
+            include_sunday=bool(payload.get("include_sunday", False)), holidays=blocked,
+        )
+    except (KeyError, TypeError, ValueError, OverflowError) as exc:
+        return Response({"detail": f"Invalid Loan Start Date or schedule details: {exc}"}, status=400)
     return Response({"loan_end_date": rows[-1].due_date, "installments": [{"installment_number": r.installment_number, "due_date": r.due_date} for r in rows]})
 
 

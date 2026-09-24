@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { enableTableScrolling } from "./utils/tableScrolling";
 import "./styles/global.css";
 import "./styles/list-page-overrides.css";
 import "./styles/responsive-layout.css";
@@ -12,4 +13,6 @@ import "./styles/customer-list-active-style.css";
 import "./styles/tooltips.css";
 import "./styles/table-row-hover.css";
 import "./styles/dropdown-chevrons.css";
+import "./styles/scrollable-grids.css";
+enableTableScrolling(document.getElementById("root"));
 createRoot(document.getElementById("root")).render(<React.StrictMode><App /></React.StrictMode>);

@@ -168,13 +168,13 @@
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     column-gap: 20px !important;
-    row-gap: 24px !important;
+    row-gap: 12px !important;
     grid-template-rows: repeat(6, auto) !important;
-    min-height: 650px !important;
+    min-height: 0 !important;
     height: auto !important;
-    padding: 24px 20px 30px !important;
+    padding: 10px 16px 12px !important;
     align-items: start !important;
-    align-content: stretch !important;
+    align-content: start !important;
   }
   .singleForm .customer-form-grid > :nth-child(1) { grid-area: 1 / 1 !important; }
   .singleForm .customer-form-grid > :nth-child(2) { grid-area: 1 / 2 !important; }
@@ -196,7 +196,100 @@
   .singleForm .customer-form-grid > :nth-child(18) { grid-area: 6 / 3 !important; }
   .singleForm .customer-form-grid .field input,
   .singleForm .customer-form-grid .field select,
-  .singleForm .customer-form-grid .field textarea { height: 36px !important; min-height: 36px !important; margin-top: 7px !important; }
+  .singleForm .customer-form-grid .field textarea { height: 40px !important; min-height: 40px !important; margin-top: 5px !important; }
   .singleForm .customer-form-grid .roleField { padding-bottom: 1px !important; }
   .singleForm .customer-form-actions { margin-top: 18px !important; padding: 0 0 24px !important; }
+}
+
+.main-content:has(.add-customer-page) {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.add-customer-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 8px 16px 0;
+  box-sizing: border-box;
+}
+
+.add-customer-page > header {
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+  min-height: 24px;
+}
+
+.add-customer-form {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.add-customer-form .customer-form-grid {
+  flex: 0 0 auto;
+}
+
+.main-content .add-customer-form .customer-form-actions {
+  margin-top: auto !important;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 8px 16px 10px !important;
+  background: transparent !important;
+  border-top: 0 !important;
+}
+
+@media (min-width: 901px) {
+  .main-content .add-customer-form .customer-form-grid {
+    row-gap: 12px !important;
+    padding-top: 10px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .main-content .add-customer-form .customer-form-grid .field input,
+  .main-content .add-customer-form .customer-form-grid .field select,
+  .main-content .add-customer-form .customer-form-grid .field textarea,
+  .main-content .add-customer-form .customer-form-grid .district-dropdown input {
+    height: 40px !important;
+    min-height: 40px !important;
+    margin-top: 5px !important;
+  }
+
+  .main-content .add-customer-form .customer-form-grid .roles {
+    margin-top: 6px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .main-content:has(.add-customer-page) {
+    overflow: hidden;
+  }
+
+  .add-customer-page {
+    padding: 8px 12px 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .add-customer-page {
+    height: 100%;
+    min-height: 0;
+    padding: 8px 10px 0;
+  }
+
+  .main-content .add-customer-form .customer-form-actions {
+    margin-top: 18px !important;
+    flex-wrap: wrap;
+  }
 }

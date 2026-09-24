@@ -4,25 +4,48 @@ import "../../../styles/chit-group-form-layout.css";
 import "./ChitGroupFormAmount.css";
 import "./chit-group-form-footer-fix.css";
 import "./chit-group-ui-final.css";
-import { formatINR, formatINRNumber } from "../../../utils/currency";
+import { formatINRNumber } from "../../../utils/currency";
 import { actionToast } from "../../../utils/actionToast";
+import { downloadChitPdf } from "../../../utils/chitPdf";
 import PageBreadcrumb from "../../../components/PageBreadcrumb";
 
+// Pad valid amounts without rounding values that existing validation should reject.
+const formatInstallmentAmount = value => {
+  const text = String(value ?? "");
+  if (text === "") return "0.00";
+  if (!/^-?(?:\d+(?:\.\d{0,2})?|\.\d{1,2})$/.test(text)) return text;
+  const [whole, fraction = ""] = text.split(".");
+  return `${whole === "-" ? "-0" : whole || "0"}.${fraction.padEnd(2, "0")}`;
+};
+
 export default function ChitGroupForm({ api, auth, go, id }) {
-  const [form, setForm] = useState({ code: "", name: "", duration: 1, duration_type: "DAY", collection_day: 1, collection_month: 1, total_amount: "" });
-  const [amounts, setAmounts] = useState([]);
-  const [startDate, setStartDate] = useState("");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(() => typeof window === "undefined" ? 15 : Math.max(10, Math.min(15, Math.floor((window.innerHeight - 320) / 38))));
+  const draftKey = "chitufund:draft:chit-group:new";
+  const readDraft = () => { if (id) return null; try { const saved = JSON.parse(sessionStorage.getItem(draftKey) || "null"); return saved && typeof saved === "object" ? saved : null; } catch { return null; } };
+  const draft = useRef(readDraft()).current;
+  const [form, setForm] = useState(() => ({ code: "", name: "", duration: 1, duration_type: "DAY", collection_day: 1, collection_month: 1, total_amount: "", end_date: "", ...(draft?.form || {}) }));
+  const [amounts, setAmounts] = useState(() => Array.isArray(draft?.amounts) ? draft.amounts : []);
+  const [savedSchedules, setSavedSchedules] = useState([]);
+  const [startDate, setStartDate] = useState(() => draft?.startDate || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [totalFocused, setTotalFocused] = useState(false);
+  const [focusedAmount, setFocusedAmount] = useState(null);
   const amountRefs = useRef({});
+  const original = useRef(null);
+
+  useEffect(() => {
+    if (id) return;
+    try { sessionStorage.setItem(draftKey, JSON.stringify({ form, amounts, startDate })); } catch {}
+  }, [id, form, amounts, startDate]);
+  const clearDraft = () => { try { sessionStorage.removeItem(draftKey); } catch {} };
 
   useEffect(() => {
     if (id) {
       api.get(`/finance/chit-groups/${id}/`, auth).then(({ data }) => {
-        setForm({ ...data, total_amount: String(data.total_amount ?? data.grand_total ?? "") });
+        original.current = data;
+        setForm({ ...data, total_amount: String(data.total_amount ?? data.grand_total ?? ""), end_date: data.end_date || "" });
+        setStartDate(data.start_date || "");
+        setSavedSchedules((data.template_installments || data.installments || []).map(item => item.schedule_value));
         setAmounts((data.template_installments || data.installments || []).map(item => String(item.installment_amount ?? "0.00")));
       }).catch(() => setError("Unable to load Chit Group."));
     } else {
@@ -37,43 +60,23 @@ export default function ChitGroupForm({ api, auth, go, id }) {
     }
   }, [id]);
 
-  useEffect(() => {
-    const resize = () => setPageSize(Math.max(10, Math.min(15, Math.floor((window.innerHeight - 320) / 38))));
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, []);
-
   const count = Math.max(1, Math.min(3650, Number(form.duration) || 1));
-  const rows = useMemo(() => Array.from({ length: count }, (_, index) => ({ number: index + 1, schedule: `Installment ${index + 1}`, amount: amounts[index] ?? "0.00" })), [count, amounts]);
-  const pageRows = rows.slice((page - 1) * pageSize, page * pageSize);
-  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const rows = useMemo(() => Array.from({ length: count }, (_, index) => ({ number: index + 1, schedule: savedSchedules[index] ?? `Installment ${index + 1}`, amount: amounts[index] ?? "" })), [count, amounts, savedSchedules]);
   const toPaise = value => Math.round(Number(String(value ?? "0").replace(/,/g, "")) * 100);
-  const grandTotalPaise = rows.reduce((sum, row) => sum + toPaise(row.amount), 0);
-  const pageTotalPaise = pageRows.reduce((sum, row) => sum + toPaise(row.amount), 0);
-  const grandTotal = grandTotalPaise / 100;
-  const pageTotal = pageTotalPaise / 100;
   const targetTotal = Number(form.total_amount || 0);
   const targetTotalPaise = toPaise(targetTotal);
-  const differencePaise = targetTotalPaise - grandTotalPaise;
-  const difference = differencePaise / 100;
   const formatMoney = formatINRNumber;
 
   const set = (key, value) => setForm(current => ({ ...current, [key]: value }));
   const focusAmount = index => {
     if (index < 0 || index >= rows.length) return;
-    const nextPage = Math.floor(index / pageSize) + 1;
-    if (nextPage !== page) {
-      setPage(nextPage);
-      requestAnimationFrame(() => amountRefs.current[index]?.focus());
-      return;
-    }
     amountRefs.current[index]?.focus();
     amountRefs.current[index]?.select();
   };
   // Rows own their inputs; row clicks must never select a shared/active editor.
   const activateAmount = () => {};
   const setActiveAmount = () => {};
-  const originalAmount = "0.00";
+  const originalAmount = "";
 
   const changeDuration = value => {
     const nextCount = Math.max(1, Math.min(3650, Number(value) || 1));
@@ -82,7 +85,6 @@ export default function ChitGroupForm({ api, auth, go, id }) {
 
   const applyDuration = (value, nextCount) => {
     set("duration", value);
-    setPage(1);
     setAmounts(current => current.slice(0, nextCount));
   };
 
@@ -92,8 +94,7 @@ export default function ChitGroupForm({ api, auth, go, id }) {
   };
 
   const commitAmount = (index, value, move = 0) => {
-    const numeric = value === "" ? "0.00" : String(Math.max(0, Number(value) || 0));
-    setAmounts(current => { const next = [...current]; next[index] = numeric; return next; });
+    setAmounts(current => { const next = [...current]; next[index] = formatInstallmentAmount(value); return next; });
     const target = index + move;
     if (move && target >= 0 && target < rows.length) focusAmount(target);
   };
@@ -122,14 +123,13 @@ export default function ChitGroupForm({ api, auth, go, id }) {
   const save = async event => {
     event.preventDefault();
     if (saving) return;
-    if (targetTotal <= 0) { setError("Total Amount must be greater than zero."); return; }
     if (rows.length !== count) { setError(`Installment schedule must contain all ${count} rows.`); return; }
-    if (differencePaise !== 0) { setError(`Installment total must equal Total Amount. Difference ${formatINR(Math.abs(difference))}.`); return; }
     setSaving(true); setError("");
     try {
-      const payload = { ...form, total_amount: targetTotalPaise / 100, duration: count, installments: rows.map(row => ({ installment_number: row.number, schedule_value: row.schedule, installment_amount: toPaise(row.amount) / 100 })) };
+      const payload = { ...form, start_date: startDate || null, end_date: form.end_date || null, collection_date: form.collection_date || null, total_amount: targetTotalPaise / 100, duration: count, installments: rows.map(row => ({ installment_number: row.number, schedule_value: row.schedule, installment_amount: row.amount === "" ? 0 : row.amount })) };
       delete payload.grand_total;
       if (id) await api.put(`/finance/chit-groups/${id}/`, payload, auth); else await api.post("/finance/chit-groups/", payload, auth);
+      clearDraft();
       actionToast("Chit Group saved successfully");
       go("/chit-groups");
     } catch (requestError) {
@@ -143,8 +143,18 @@ export default function ChitGroupForm({ api, auth, go, id }) {
   };
 
   const reset = () => {
-    setForm(current => ({ ...current, name: "", duration: 1, duration_type: "DAY", collection_day: 1, collection_month: 1, total_amount: "" }));
-    setStartDate(""); setAmounts([]); setPage(1); setError("");
+    if (id) {
+      const data = original.current;
+      if (!data) return;
+      setForm({ ...data, total_amount: String(data.total_amount ?? data.grand_total ?? ""), end_date: data.end_date || "" });
+      setStartDate(data.start_date || "");
+      setSavedSchedules((data.template_installments || data.installments || []).map(item => item.schedule_value));
+      setAmounts((data.template_installments || data.installments || []).map(item => String(item.installment_amount ?? "0.00")));
+      setError("");
+      return;
+    }
+    setForm(current => ({ ...current, name: "", duration: 1, duration_type: "DAY", collection_day: 1, collection_month: 1, total_amount: "", end_date: "" }));
+    setStartDate(""); setAmounts([]); setSavedSchedules([]); set("collection_date", null); setError("");
   };
 
   const collectionDateControl = form.duration_type === "YEAR"
@@ -165,7 +175,7 @@ export default function ChitGroupForm({ api, auth, go, id }) {
         <label>Start Date<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></label>
         <label>Collection Date{collectionDateControl}</label>
       </div></section>
-      <section className={styles.scheduleSection}><div className={styles.sectionHead}><h2>CHIT PLAN TABLE</h2></div><div className={styles.tableWrap}><table><thead><tr><th>S.No</th><th>Installment</th><th>Installment Amount</th></tr></thead><tbody>{pageRows.map(row => { const index = row.number - 1; return <tr key={row.number}><td>{row.number}</td><td>{row.schedule}</td><td className="installment-amount-cell" onClick={() => activateAmount(index)}><input className="installment-amount-input" ref={element => { amountRefs.current[index] = element; }} type="number" min="0" step="0.01" value={row.amount} onFocus={event => event.currentTarget.select()} onChange={e => setAmounts(current => { const next = [...current]; next[index] = e.target.value; return next; })} onBlur={e => commitAmount(index, e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitAmount(index, e.target.value, e.shiftKey ? -1 : 1); } else if (e.key === "Escape") { e.preventDefault(); setAmounts(current => { const next = [...current]; next[index] = originalAmount; return next; }); setActiveAmount(null); } }} /></td></tr>; })}</tbody></table></div><div className={styles.meta}><span>Showing {rows.length ? (page - 1) * pageSize + 1 : 0}-{Math.min(page * pageSize, rows.length)} of {rows.length}</span><span className={styles.pagination}><button type="button" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</button>{Array.from({ length: pages }, (_, i) => <button type="button" className={page === i + 1 ? styles.current : ""} key={i} onClick={() => setPage(i + 1)}>{i + 1}</button>)}<button type="button" disabled={page === pages} onClick={() => setPage(value => value + 1)}>Next</button></span><div>Page Total <b>₹{pageTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b><br />Grand Total <b>₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</b>{targetTotal > 0 && Math.abs(difference) > 0.005 && <><br /><small>Difference: ₹{Math.abs(difference).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</small></>}</div></div></section>
+      <section className={styles.scheduleSection}><div className={styles.sectionHead}><h2>CHIT PLAN TABLE</h2><button type="button" onClick={() => downloadChitPdf({ ...form, start_date: startDate, installments: rows.map(row => ({ installment_number: row.number, schedule_value: row.schedule, installment_amount: row.amount })) })}>PDF</button></div><div className={styles.tableWrap}><table><thead><tr><th>S.No</th><th>Installment</th><th>Installment Amount</th></tr></thead><tbody>{rows.map(row => { const index = row.number - 1; return <tr key={row.number}><td>{row.number}</td><td>{row.schedule}</td><td className="installment-amount-cell" onClick={() => activateAmount(index)}><input className="installment-amount-input" ref={element => { amountRefs.current[index] = element; }} type="number" min="0" step="0.01" value={focusedAmount === index ? row.amount : formatInstallmentAmount(row.amount)} onFocus={event => { const value = formatInstallmentAmount(event.currentTarget.value); setFocusedAmount(index); setAmounts(current => { const next = [...current]; next[index] = value; return next; }); event.currentTarget.select(); }} onChange={e => setAmounts(current => { const next = [...current]; next[index] = e.target.value; return next; })} onBlur={e => { commitAmount(index, e.target.value); setFocusedAmount(null); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitAmount(index, e.target.value, e.shiftKey ? -1 : 1); } else if (e.key === "Escape") { e.preventDefault(); setAmounts(current => { const next = [...current]; next[index] = originalAmount; return next; }); setActiveAmount(null); } }} /></td></tr>; })}</tbody></table></div></section>
       <div className={styles.actions}><button type="button" onClick={() => go("/chit-groups")}>Cancel</button><button type="button" onClick={reset}>Reset</button><button className={styles.primary} disabled={saving}>{saving ? "Saving..." : "Save Chit Group"}</button></div>
     </form>
   </div>;

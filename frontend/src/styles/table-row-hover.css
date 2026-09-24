@@ -3,13 +3,18 @@
 table tbody tr{
   transition:background-color .15s ease,box-shadow .15s ease;
 }
+.clickable-data-row{
+  cursor:pointer;
+}
 .app-data-table tbody tr:hover,
-table tbody tr:hover{
+table tbody tr:hover,
+.clickable-data-row:hover{
   background:#f4f8fc !important;
   box-shadow:inset 0 1px 0 var(--theme-primary,#174d7c),inset 0 -1px 0 var(--theme-primary,#174d7c);
 }
 .app-data-table tbody tr:hover>td,
-table tbody tr:hover>td{
+table tbody tr:hover>td,
+.clickable-data-row:hover>td{
   background:#f4f8fc !important;
   box-shadow:inset 0 1px 0 var(--theme-primary,#174d7c),inset 0 -1px 0 var(--theme-primary,#174d7c);
 }

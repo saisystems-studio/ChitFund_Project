@@ -8,3 +8,119 @@
 .list-container .active-footer,.list-container .footer{flex:0 0 42px;min-height:42px;display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding:0 11px;border-top:1px solid #e3edf4;background:#fbfdff;color:#71879a;font-size:11px}.list-container .footer{height:42px}.list-container .active-footer button,.list-container .footer button{height:26px;padding:0 8px;border:1px solid #d7e4ee;border-radius:5px;background:#fff;color:#52718b;font-size:11px}.list-container .active-footer button.current,.list-container .footer .current{border-color:#2479bd;background:#2479bd;color:#fff}.list-container .active-footer button:disabled,.list-container .footer button:disabled{opacity:.45}
 .list-page>.surface,.list-page>.panel{flex:1 1 auto;min-height:0;margin:0;padding:0!important;overflow:hidden}.list-page .tableWrap{margin:0;overflow:visible}
 @media(max-width:760px){.list-page{min-height:0}.list-page-header,.list-toolbar-row{display:block}.list-toolbar-controls{display:grid;grid-template-columns:1fr 1fr;margin-top:8px}.list-toolbar-controls input{grid-column:1/-1;width:100%;min-width:0}.list-toolbar-controls select,.list-toolbar-controls button{width:100%}.list-container{overflow:visible}.list-container .table-wrap,.list-container .tableWrap{overflow:auto}.list-container table,.list-container .tableWrap table{min-width:620px}.list-container .active-footer,.list-container .footer{height:auto;min-height:42px;gap:8px;flex-wrap:wrap;padding:9px 11px}}
+
+/* Full-height list tables with bottom-pinned footers. */
+.main-content>.page:has(.list-container),
+.active-loans-page,
+.collection-dashboard,
+.collection-report-page{
+  min-height:calc(100vh - 72px)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+}
+.main-content>.page:has(.list-container)>.list-container,
+.main-content>.page:has(.list-container)>section.list-container,
+.active-loans-page>.active-table-card,
+.collection-dashboard>.collection-table-card,
+.collection-report-page .report-essential-table{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+}
+.main-content>.page:has(.list-container) .table-wrap,
+.main-content>.page:has(.list-container) .tableWrap,
+.active-loans-page .active-table-wrap,
+.collection-dashboard .collection-table-wrap,
+.collection-report-page .report-table-wrap{
+  flex:0 0 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:auto!important;
+}
+.main-content>.page:has(.list-container) .footer,
+.main-content>.page:has(.list-container) .active-footer,
+.active-loans-page .active-footer,
+.collection-dashboard .collection-footer,
+.collection-report-page .footer{
+  margin-top:auto!important;
+  flex:0 0 auto!important;
+}
+
+/* Common list-page geometry: controls stay above, one white table surface fills the rest. */
+.main-content{
+  height:100vh!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  box-sizing:border-box!important;
+}
+.main-content>.page:has(.list-container),
+.main-content>.chit-group-list-page,
+.main-content>.active-loans-page,
+.main-content>.collection-dashboard,
+.main-content>.collection-report-page{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  height:100%!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+}
+.main-content>.page:has(.list-container)>.list-toolbar-row,
+.main-content>.chit-group-list-page>.list-toolbar-row,
+.main-content>.active-loans-page>.page-breadcrumb,
+.main-content>.active-loans-page>.active-loans-toolbar,
+.main-content>.collection-dashboard>.collection-dashboard-toolbar,
+.main-content>.collection-dashboard>.collection-selected-date,
+.main-content>.collection-dashboard>.collection-filters,
+.main-content>.collection-dashboard>.collection-kpis,
+.main-content>.collection-dashboard>.collection-reminder,
+.main-content>.collection-report-page>.list-toolbar-row{
+  flex:0 0 auto!important;
+}
+.main-content>.page:has(.list-container)>section.list-container,
+.main-content>.chit-group-list-page>section.list-container,
+.main-content>.active-loans-page>section.active-table-card,
+.main-content>.collection-dashboard>section.collection-table-card,
+.main-content>.collection-report-page .report-essential-table{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  background:#fff!important;
+  overflow:hidden!important;
+}
+.main-content>.page:has(.list-container)>section.list-container>.table-wrap,
+.main-content>.page:has(.list-container)>section.list-container>.tableWrap,
+.main-content>.chit-group-list-page>section.list-container>.tableWrap,
+.main-content>.active-loans-page>section.active-table-card>.active-table-wrap,
+.main-content>.collection-dashboard>section.collection-table-card>.collection-table-wrap,
+.main-content>.collection-report-page .report-table-wrap{
+  flex:0 1 auto!important;
+  min-height:0!important;
+  margin:0!important;
+  overflow:auto!important;
+}
+.main-content>.page:has(.list-container)>section.list-container>.footer,
+.main-content>.page:has(.list-container)>section.list-container>.paginationFooter,
+.main-content>.chit-group-list-page>section.list-container>.footer,
+.main-content>.chit-group-list-page>section.list-container>.paginationFooter,
+.main-content>.active-loans-page>section.active-table-card>.active-footer,
+.main-content>.collection-dashboard>section.collection-table-card>.collection-footer,
+.main-content>.collection-report-page .footer{
+  margin-top:auto!important;
+  flex:0 0 42px!important;
+  min-height:42px!important;
+}
+.collection-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 11px;
+  border-top:1px solid #e3edf4;
+  background:#fbfdff;
+  color:#71879a;
+  font-size:11px;
+}

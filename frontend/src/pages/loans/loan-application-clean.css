@@ -77,6 +77,13 @@
 .clean-loan-page .interest-top-row>.collection-plan-field .collection-plan-options{margin-top:13px}
 @media(max-width:700px){.clean-loan-page .chit-plan-row{grid-template-columns:1fr}.clean-loan-page .chit-plan-row>.collection-plan-field{min-width:0}.clean-loan-page .interest-top-row>.collection-plan-field{min-width:0;padding-top:0}.clean-loan-page .interest-top-row>.collection-plan-field .collection-plan-options{margin-top:0}}
 
+.clean-loan-page .mortgage-loan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end;margin-top:14px}
+.clean-loan-page .mortgage-loan-grid .exact-field{min-width:0}
+.clean-loan-page .mortgage-loan-grid input,.clean-loan-page .mortgage-loan-grid select{height:40px}
+.clean-loan-page .mortgage-loan-grid input[readonly]{background:#f5f8fb;color:#173f65;font-weight:700}
+@media(max-width:1000px){.clean-loan-page .mortgage-loan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.clean-loan-page .mortgage-loan-grid{grid-template-columns:1fr}}
+
 /* Chit Group and Collection Plan share one stable label/control baseline. */
 @media (min-width: 701px) {
   .clean-loan-page.is-chit .chit-plan-row,
@@ -169,3 +176,9 @@
 .clean-loan-page .schedule-preview-body{padding:0 13px 12px;border-top:1px solid #dce8f5}
 .clean-loan-page .clean-actions{display:flex;justify-content:center;gap:10px;margin-top:16px;padding:16px 0 8px}
 @media(max-width:650px){.clean-loan-page .clean-actions{flex-wrap:wrap}.clean-loan-page .clean-actions button{flex:1 1 110px}}
+
+.clean-loan-page .clean-top-grid.chit-three-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.clean-loan-page .interest-schedule-grid.interest-six-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+.clean-loan-page .interest-top-row>.interest-collection-date{display:flex;gap:12px;align-items:flex-end;margin:0;flex:0 0 auto}
+@media(max-width:1100px){.clean-loan-page .interest-schedule-grid.interest-six-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.clean-loan-page .clean-top-grid.chit-three-grid,.clean-loan-page .interest-schedule-grid.interest-six-grid{grid-template-columns:1fr}.clean-loan-page .interest-top-row>.interest-collection-date{flex-wrap:wrap}}

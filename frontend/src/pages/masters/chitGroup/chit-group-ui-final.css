@@ -96,3 +96,296 @@
 .chit-group-list-page .detailPagination .currentPage{background:#176db3;color:#fff;border-color:#176db3}
 .chit-group-list-page .detailModal>footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0;padding:16px 20px;border-top:1px solid #e5e7eb}
 @media(max-width:700px){.chit-group-list-page .detailGrid,.chit-group-list-page .details-table-open .detailGrid{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px 16px}.chit-group-list-page .detailTable{margin:0 16px}.chit-group-list-page .detailPagination{margin:0 16px}.chit-group-list-page .detailModal>footer{padding:14px 16px}}
+
+/* Details modal: compact professional card with a fixed, scrollable schedule. */
+.chit-group-list-page .modalBackdrop{
+  padding:16px;
+  overflow:hidden;
+}
+.chit-group-list-page .detailModal{
+  width:min(720px,94vw);
+  height:min(680px,calc(100vh - 32px));
+  max-height:calc(100vh - 32px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid #d9e7f3;
+  border-radius:10px;
+  background:#fff;
+  box-shadow:0 20px 52px rgba(15,39,66,.22);
+}
+.chit-group-list-page .detailModal header{
+  flex:0 0 auto;
+  padding:14px 18px;
+  border-bottom:1px solid #e5eef7;
+  background:#fff;
+}
+.chit-group-list-page .detailModal h2{
+  font-size:18px;
+  line-height:1.2;
+  letter-spacing:0;
+}
+.chit-group-list-page .detail-modal-actions{
+  gap:0;
+}
+.chit-group-list-page .detail-table-toggle{
+  display:none!important;
+}
+.chit-group-list-page .closeButton{
+  width:30px;
+  height:30px;
+  border-radius:7px;
+  background:#edf6ff;
+  color:#176db3;
+  font-size:20px;
+  line-height:1;
+}
+.chit-group-list-page .detailGrid,
+.chit-group-list-page .details-table-open .detailGrid{
+  flex:0 0 auto;
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:0 12px;
+  padding:10px 18px 9px;
+  border-bottom:1px solid #eef4f9;
+}
+.chit-group-list-page .detailGrid>span,
+.chit-group-list-page .detailGrid>span:nth-child(n+6){
+  grid-column:auto;
+  min-width:0;
+  padding:0;
+  border:0;
+  color:#6c879f;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.chit-group-list-page .detailGrid strong{
+  display:block;
+  margin-top:3px;
+  color:#173f65;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.25;
+  letter-spacing:0;
+  text-transform:none;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.chit-group-list-page .detailModal h3{
+  flex:0 0 auto;
+  margin:0;
+  padding:9px 18px 7px;
+  color:#176db3;
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.08em;
+}
+.chit-group-list-page .detailTable{
+  flex:1 1 auto;
+  min-height:180px;
+  max-height:none;
+  margin:0 18px 14px;
+  overflow:auto!important;
+  scrollbar-width:none;
+  border:1px solid #dfeaf4;
+  border-radius:8px;
+  background:#fff;
+}
+.chit-group-list-page .detailTable::-webkit-scrollbar{
+  width:0;
+  height:0;
+}
+.chit-group-list-page .detailTable table{
+  width:100%;
+  min-width:0;
+  table-layout:fixed;
+  border-collapse:separate;
+  border-spacing:0;
+}
+.chit-group-list-page .detailTable th,
+.chit-group-list-page .detailTable td{
+  height:34px!important;
+  padding:8px 12px!important;
+  border-bottom:1px solid #edf3f8;
+  color:#294967;
+  font-size:12px;
+  line-height:1.25;
+}
+.chit-group-list-page .detailTable th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#174d78;
+  color:#fff;
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  box-shadow:0 1px 0 #174d78;
+}
+.chit-group-list-page .detailTable tbody tr:nth-child(even) td{
+  background:#fbfdff;
+}
+.chit-group-list-page .detailTable th:nth-child(1),
+.chit-group-list-page .detailTable td:nth-child(1){
+  width:82px;
+}
+.chit-group-list-page .detailTable th:nth-child(2),
+.chit-group-list-page .detailTable td:nth-child(2){
+  width:auto;
+}
+.chit-group-list-page .detailTable th:nth-child(3),
+.chit-group-list-page .detailTable td:nth-child(3){
+  width:190px;
+  text-align:right;
+}
+.chit-group-list-page .detailTable td:last-child{
+  color:#174d78;
+  font-weight:750;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.chit-group-list-page .detailPagination{
+  display:none!important;
+}
+.chit-group-list-page .detailModal>footer{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin:0;
+  padding:13px 18px;
+  border-top:1px solid #e5eef7;
+  background:#fff;
+  color:#174d78;
+}
+.chit-group-list-page .detailModal>footer strong{
+  font-size:13px;
+  font-weight:850;
+}
+.chit-group-list-page .detailModal>footer .primary{
+  min-width:86px;
+  height:36px;
+  padding:0 16px;
+  border-radius:7px;
+  box-shadow:none;
+}
+@media(max-width:640px){
+  .chit-group-list-page .modalBackdrop{padding:10px}
+  .chit-group-list-page .detailModal{
+    width:calc(100vw - 20px);
+    height:calc(100vh - 20px);
+    max-height:calc(100vh - 20px);
+  }
+  .chit-group-list-page .detailModal header,
+  .chit-group-list-page .detailGrid,
+  .chit-group-list-page .detailModal h3,
+  .chit-group-list-page .detailModal>footer{
+    padding-left:14px;
+    padding-right:14px;
+  }
+  .chit-group-list-page .detailGrid{
+    grid-template-columns:repeat(6,minmax(92px,1fr));
+    gap:0 10px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .chit-group-list-page .detailGrid::-webkit-scrollbar{display:none}
+  .chit-group-list-page .detailTable{
+    margin-left:14px;
+    margin-right:14px;
+  }
+  .chit-group-list-page .detailTable th:nth-child(1),
+  .chit-group-list-page .detailTable td:nth-child(1){
+    width:58px;
+  }
+  .chit-group-list-page .detailTable th:nth-child(3),
+  .chit-group-list-page .detailTable td:nth-child(3){
+    width:132px;
+  }
+}
+
+.chit-group-list-page .detailsRow{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  width:100%;
+  gap:16px;
+  align-items:start;
+  box-sizing:border-box;
+  padding:10px 18px 9px;
+  border-bottom:1px solid #eef4f9;
+  color:#6c879f;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.06em;
+}
+.chit-group-list-page .detailsRow>div{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.chit-group-list-page .detailsRow b{
+  display:inline-block;
+  max-width:100%;
+  margin-top:3px;
+  color:#173f65;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.25;
+  letter-spacing:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* Chit Group list: full-height white table container. */
+.chit-group-list-page{
+  height:calc(100vh - 28px)!important;
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+}
+.chit-group-list-page>.list-container{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+  background:#fff;
+}
+.chit-group-list-page>.list-container .tableWrap{
+  flex:0 0 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:auto!important;
+}
+.chit-group-list-page>.list-container .footer{
+  flex:0 0 auto!important;
+  margin-top:auto!important;
+}
+
+.chit-group-list-page .listContainer{
+  height:calc(100vh - 120px)!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+.chit-group-list-page .tableWrapper{
+  width:100%!important;
+  flex:0 0 auto!important;
+}
+.chit-group-list-page .paginationFooter{
+  margin-top:auto!important;
+  display:flex!important;
+  justify-content:space-between!important;
+  align-items:center!important;
+  padding:14px 20px!important;
+  border-top:1px solid #e5edf5!important;
+  flex:0 0 auto!important;
+  box-sizing:border-box!important;
+}
