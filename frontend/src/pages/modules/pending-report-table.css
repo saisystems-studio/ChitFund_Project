@@ -1,0 +1,40 @@
+/* Pending report: fixed column widths so the whole table fits the card with no side scroll. */
+@media (min-width:768px){
+  /* Shared by desktop and tablet. */
+  .report-essential-table:has(.report-table-pending){overflow-x:hidden}
+  .report-essential-table .report-table.report-table-pending{width:100%;min-width:0;max-width:100%;table-layout:fixed}
+  .report-essential-table .report-table.report-table-pending th,
+  .report-essential-table .report-table.report-table-pending td{padding:9px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .report-essential-table .report-table.report-table-pending th{font-size:11px}
+  .report-essential-table .report-table.report-table-pending td{font-size:12.5px}
+  .report-essential-table .report-table.report-table-pending .report-status{max-width:100%;padding:4px 9px;font-size:11px;white-space:nowrap}
+}
+@media (min-width:1025px){
+  .report-essential-table .report-table.report-table-pending th:first-child,
+  .report-essential-table .report-table.report-table-pending td:first-child{width:56px;padding-left:12px}
+  /* Customer takes the remaining width. */
+  .report-essential-table .report-table.report-table-pending th:nth-child(3),
+  .report-essential-table .report-table.report-table-pending td:nth-child(3){width:118px}
+  .report-essential-table .report-table.report-table-pending th:nth-child(4),
+  .report-essential-table .report-table.report-table-pending td:nth-child(4){width:104px}
+  .report-essential-table .report-table.report-table-pending th:nth-child(5),
+  .report-essential-table .report-table.report-table-pending td:nth-child(5),
+  .report-essential-table .report-table.report-table-pending th:nth-child(6),
+  .report-essential-table .report-table.report-table-pending td:nth-child(6){width:118px}
+  .report-essential-table .report-table.report-table-pending th:last-child,
+  .report-essential-table .report-table.report-table-pending td:last-child{width:108px;padding-right:12px;text-align:left;overflow:visible}
+}
+/* Tablet: proportional widths, tighter padding, badge kept inside the Status cell. */
+@media (min-width:768px) and (max-width:1024px){
+  .report-essential-table .report-table.report-table-pending th,
+  .report-essential-table .report-table.report-table-pending td{padding:8px 5px}
+  .report-essential-table .report-table.report-table-pending td{font-size:12px}
+  .report-essential-table .report-table.report-table-pending th:first-child{width:7%}
+  .report-essential-table .report-table.report-table-pending th:nth-child(3){width:15%}
+  .report-essential-table .report-table.report-table-pending th:nth-child(4){width:13%}
+  .report-essential-table .report-table.report-table-pending th:nth-child(5),
+  .report-essential-table .report-table.report-table-pending th:nth-child(6){width:14%}
+  .report-essential-table .report-table.report-table-pending th:last-child{width:15%}
+  .report-essential-table .report-table.report-table-pending td:last-child{overflow:visible}
+  .report-essential-table .report-table.report-table-pending .report-status{padding:3px 7px;font-size:10.5px}
+}

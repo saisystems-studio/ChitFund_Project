@@ -19,7 +19,7 @@ from .views import ChitGroupViewSet, MortgageViewSet, HolidayMasterViewSet, Loan
 class RequestedFixTests(TestCase):
     def test_chit_amount_dates_activation_and_loan_schedule(self):
         customer = self.customer()
-        loan_type = LoanType.objects.create(name="Chit")
+        loan_type = LoanType.objects.get_or_create(name="Chit")[0]
         payload = {"code": "TEST", "name": "Saved group", "duration": 20, "duration_type": "DAY",
                    "start_date": "2026-09-23", "end_date": "2026-10-31", "total_amount": "100000",
                    "installments": [{"installment_number": n, "schedule_value": f"Saved {n}", "installment_amount": "4000"} for n in range(1, 21)]}
@@ -54,8 +54,8 @@ class RequestedFixTests(TestCase):
 
     def test_interest_duration_type_round_trip_and_100_days(self):
         customer = self.customer()
-        loan_type = LoanType.objects.create(name="Interest")
-        LoanInstallment.objects.create(name="100 Days", code="100DAYS")
+        loan_type = LoanType.objects.get_or_create(name="Interest")[0]
+        LoanInstallment.objects.get_or_create(name="100 Days", defaults={"code": "100DAYS"})
         payload = {"customer_id": customer.id, "loan_type_id": loan_type.id, "amount": "10000",
                    "interest_percentage": "10", "interest_duration": 100, "interest_duration_type": "DAY",
                    "periodicity": "100 Days", "start_date": "2026-09-23", "include_sunday": True}
@@ -145,7 +145,7 @@ class RequestedFixTests(TestCase):
 
     def test_mortgage_edit_keeps_original_rate_and_payments(self):
         customer = self.customer()
-        loan_type = LoanType.objects.create(name="Mortgage")
+        loan_type = LoanType.objects.get_or_create(name="Mortgage")[0]
         product = Mortgage.objects.create(product_name="Renamed product", unit="No", current_rate=6000)
         loan = CustomerLoanDetails.objects.create(customer=customer, loan_type=loan_type, loan_start_date=date(2026, 9, 23), loan_amount=1000, paid_amount=25)
         MortgageLoanDetails.objects.create(loan=loan, product=product, product_name="Saved Gold", unit="Gram", quantity=2, current_rate=5000, market_value=10000, loan_amount=1000, interest_percentage=12)

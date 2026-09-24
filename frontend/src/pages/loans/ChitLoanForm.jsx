@@ -21,6 +21,8 @@ const getLocalToday = () => {
 };
 
 export default function ChitLoanForm({ api, auth, go, id = null }) {
+  const [applicationDate, setApplicationDate] = useState(getLocalToday);
+  useEffect(() => { if (!id) api.get("/finance/loans/application-date/", auth).then(({ data }) => setApplicationDate(data.application_date)).catch(() => {}); }, [id]);
   const draftKey = `chitufund:draft:loan-application:${id || "new"}`;
   const [customers, setCustomers] = useState([]), [groups, setGroups] = useState([]), [holidays, setHolidays] = useState([]), [loanTypes, setLoanTypes] = useState([]), [installments, setInstallments] = useState([]), [mortgageProducts, setMortgageProducts] = useState([]);
   const [customer, setCustomer] = useState(""), [selectedLoanTypeId, setSelectedLoanTypeId] = useState(""), [groupId, setGroupId] = useState("");
@@ -103,6 +105,7 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
     if (!id) return;
     Promise.all([api.get(`/finance/loans/${id}/`, auth), api.get("/finance/loan-holiday-settings/", { ...auth, params: { page_size: 1000 } })]).then(([loanResponse, holidayResponse]) => {
       const loan = loanResponse.data;
+      setApplicationDate(loan.application_date || "");
       setCustomer(String(loan.customer?.id ?? loan.customer_id ?? ""));
       setSelectedLoanTypeId(String(loan.loan_type?.id ?? loan.loan_type_id ?? ""));
       setGroupId(String(loan.plan?.id ?? loan.chit_group_id ?? ""));
@@ -157,8 +160,7 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
     if (!customer) return setError("Select a customer before saving the loan.");
     if (isMortgage) {
       if (!selectedLoanTypeId) return setError("Select the Mortgage loan type before saving.");
-      if (!mortgageProductId) return setError("Select a Mortgage Product before saving.");
-      if (Number(mortgageQuantity) <= 0) return setError("Enter a valid Quantity.");
+      if (mortgageQuantity !== "" && Number(mortgageQuantity) <= 0) return setError("Enter a valid Quantity.");
       if (Number(form.amount) <= 0) return setError("Enter a valid Loan Amount.");
       if (Number(mortgageInterest) <= 0) return setError("Enter a valid Rate of Interest.");
       setSaving(true); setError("");
@@ -232,11 +234,11 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
   const chitPreviewRows = templateRows.map((row, index) => ({ installment_number: row.installment_number ?? index + 1, schedule_value: row.schedule_value, due_date: schedule[index]?.due_date || "", amount: Number(row.installment_amount || 0) }));
   const title = id ? "Edit Loan Application" : isChit ? "Chit Loan Application" : isInterest ? "Interest Loan Application" : isMortgage ? "Mortgage Loan Application" : "Loan Application";
   if (loadingEdit) return <div className="exact-loan-page"><div className="exact-empty">Loading existing loan details...</div></div>;
-  if (isChit) return <ChitLoanLayout {...{ go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, groupId, setGroupId, groups, allowed, installments, periodic, choosePeriodic, form, update, totalInstallments, durationLabel, endDate, chitInstallmentAmount, chosen, setShowHolidays, showHolidays, visibleHolidays, selectedHolidays, setSelectedHolidays, accordionOpen, setAccordionOpen, chitPreviewRows, saving, saveLoan, error, id, group, templateRows, selectableGroups }} />;
-  if (isInterest) return <InterestLoanLayout {...{ go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, installments, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, accordionOpen, setAccordionOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }} />;
-  if (isMortgage) return <MortgageLoanLayout {...{ go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, mortgageProducts, mortgageProductId, setMortgageProductId, mortgageProduct, mortgageQuantity, setMortgageQuantity, form, update, mortgageMarketValue, mortgageInterest, setMortgageInterest, mortgageDailyInterest, money, saveLoan, error, saving, id }} />;
+  if (isChit) return <ChitLoanLayout {...{ applicationDate, go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, groupId, setGroupId, groups, allowed, installments, periodic, choosePeriodic, form, update, totalInstallments, durationLabel, endDate, chitInstallmentAmount, chosen, setShowHolidays, showHolidays, visibleHolidays, selectedHolidays, setSelectedHolidays, accordionOpen, setAccordionOpen, chitPreviewRows, saving, saveLoan, error, id, group, templateRows, selectableGroups }} />;
+  if (isInterest) return <InterestLoanLayout {...{ applicationDate, go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, installments, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, accordionOpen, setAccordionOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }} />;
+  if (isMortgage) return <MortgageLoanLayout {...{ applicationDate, go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, mortgageProducts, mortgageProductId, setMortgageProductId, mortgageProduct, mortgageQuantity, setMortgageQuantity, form, update, mortgageMarketValue, mortgageInterest, setMortgageInterest, mortgageDailyInterest, money, saveLoan, error, saving, id }} />;
   return <div className={`exact-loan-page ${selectedType ? "has-loan-type" : "no-loan-type"} ${isInterest ? "is-interest" : "is-chit"}`}>
-    <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /><strong>LOAN TYPE: {loanType.toUpperCase()}</strong></header>
+    <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /><ApplicationDate value={applicationDate}/><strong>LOAN TYPE: {loanType.toUpperCase()}</strong></header>
     {error && <div className="exact-error">{error}</div>}
     <form className="exact-workspace" onSubmit={saveLoan}>
       <section className="exact-panel exact-left"><PanelTitle icon="â™Ÿ" title="Loan Details"/><div className="exact-two"><Field label="Customer" required><select value={customer} onChange={event => setCustomer(event.target.value)}><option value="">Select Customer</option>{customers.map(item => <option key={item.id} value={item.id}>{item.full_name || item.name}</option>)}</select></Field><Field label="Loan Type" required><div className="exact-select-plus"><select value={selectedLoanTypeId} onChange={event => { setSelectedLoanTypeId(String(event.target.value)); setGroupId(""); }}><option value="">Select Loan Type</option>{loanTypes.map(item => <option key={item.id} value={String(item.id)}>{item.name || item.loan_type_name}</option>)}</select><button type="button" onClick={() => go("/loan-types")} aria-label="Add Loan Type">+</button></div></Field></div>
@@ -255,9 +257,9 @@ function PlanOptions({ allowed, periodic, choosePeriodic }) {
   return <div className="collection-plan-options">{allowed.map(item => { const label = periodicLetters[item.name] || item.name.slice(0, 1); return <button type="button" key={item.id} title={item.name} className={`collection-plan-option ${label === "100" ? "option-100" : ""} ${Number(periodic) === Number(item.id) ? "selected" : ""}`} onClick={() => choosePeriodic(item.id)}>{label}</button>; })}</div>;
 }
 
-function ChitLoanLayout({ go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, groupId, setGroupId, groups, allowed, installments, periodic, choosePeriodic, form, update, totalInstallments, durationLabel, endDate, chitInstallmentAmount, chosen, setShowHolidays, showHolidays, visibleHolidays, selectedHolidays, setSelectedHolidays, accordionOpen, setAccordionOpen, chitPreviewRows, saving, saveLoan, error, id, group, templateRows, selectableGroups }) {
+function ChitLoanLayout({ applicationDate, go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, groupId, setGroupId, groups, allowed, installments, periodic, choosePeriodic, form, update, totalInstallments, durationLabel, endDate, chitInstallmentAmount, chosen, setShowHolidays, showHolidays, visibleHolidays, selectedHolidays, setSelectedHolidays, accordionOpen, setAccordionOpen, chitPreviewRows, saving, saveLoan, error, id, group, templateRows, selectableGroups }) {
   return <div className="exact-loan-page clean-loan-page is-chit">
-    <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /></header>
+    <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /><ApplicationDate value={applicationDate}/></header>
     {error && <div className="exact-error">{error}</div>}
     <form onSubmit={saveLoan}>
       <section className="clean-panel"><h2>Loan Details</h2>
@@ -277,9 +279,9 @@ function ChitLoanLayout({ go, resetForm, clearLoanDraft, customer, setCustomer, 
 function PanelTitle({ icon, title }) { return <div className="exact-panel-title"><i>{icon}</i><h2>{title}</h2></div>; }
 function Field({ label, required, children }) { return <label className="exact-field"><span>{label}{required && <i> *</i>}</span>{children}</label>; }
 
-function InterestLoanLayout({ go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, installments, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, accordionOpen, setAccordionOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }) {
+function InterestLoanLayout({ applicationDate, go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, form, update, interestPercentage, setInterestPercentage, periodic, periodicName, allowed, installments, choosePeriodic, interestDuration, setInterestDuration, interestDurationUnit, setInterestDurationUnit, interestWeekday, setInterestWeekday, interestDate, setInterestDate, interestMonth, setInterestMonth, accordionOpen, setAccordionOpen, interestRows, interestEndDate, interestTotal, interestValue, interestInstallment, interestCount, money, saveLoan, error, saving, id, chosen, visibleHolidays, selectedHolidays, setSelectedHolidays, showHolidays, setShowHolidays }) {
   return <div className="exact-loan-page clean-loan-page is-interest">
-    <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /></header>
+    <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /><ApplicationDate value={applicationDate}/></header>
     {error && <div className="exact-error">{error}</div>}
     <form onSubmit={saveLoan}>
       <section className="clean-panel"><h2>Loan Details</h2>
@@ -392,14 +394,14 @@ function LegacyFlatInterestLoanForm({ go, resetForm, customer, setCustomer, cust
   </div>;
 }
 
-function MortgageLoanLayout({ go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, mortgageProducts, mortgageProductId, setMortgageProductId, mortgageProduct, mortgageQuantity, setMortgageQuantity, form, update, mortgageMarketValue, mortgageInterest, setMortgageInterest, mortgageDailyInterest, money, saveLoan, error, saving, id }) {
+function MortgageLoanLayout({ applicationDate, go, resetForm, clearLoanDraft, customer, setCustomer, customers, selectedLoanTypeId, setSelectedLoanTypeId, loanTypes, mortgageProducts, mortgageProductId, setMortgageProductId, mortgageProduct, mortgageQuantity, setMortgageQuantity, form, update, mortgageMarketValue, mortgageInterest, setMortgageInterest, mortgageDailyInterest, money, saveLoan, error, saving, id }) {
   return <div className="exact-loan-page clean-loan-page is-mortgage">
-    <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /></header>
+    <header className="exact-header"><PageBreadcrumb root="Transactions" current="Loan Application" onBack={() => go("/active-loans")} /><ApplicationDate value={applicationDate}/></header>
     {error && <div className="exact-error">{error}</div>}
     <form onSubmit={saveLoan}>
       <section className="clean-panel"><h2>Mortgage Details</h2>
         <div className="clean-top-grid"><Field label="Customer" required><select value={customer} onChange={event => setCustomer(event.target.value)}><option value="">Select Customer</option>{customers.map(item => <option key={item.id} value={item.id}>{item.full_name || item.name}</option>)}</select></Field><Field label="Loan Type" required><select value={selectedLoanTypeId} onChange={event => setSelectedLoanTypeId(String(event.target.value))}><option value="">Select Loan Type</option>{loanTypes.map(item => <option key={item.id} value={String(item.id)}>{item.name || item.loan_type_name}</option>)}</select></Field></div>
-        <div className="mortgage-loan-grid"><Field label="Product Name" required><select value={mortgageProductId} onChange={event => setMortgageProductId(event.target.value)}><option value="">Select Product</option>{mortgageProducts.map(item => <option key={item.id} value={item.id}>{item.product_name}</option>)}</select></Field><Field label="Quantity" required><input type="number" min="0" step="0.001" inputMode="decimal" value={mortgageQuantity} onChange={event => setMortgageQuantity(event.target.value)} /></Field><Field label="Unit"><input value={mortgageProduct?.unit || ""} readOnly /></Field><Field label="Current Rate"><input value={mortgageProduct ? money(mortgageProduct.current_rate) : ""} readOnly /></Field><Field label="Market Value"><input value={mortgageMarketValue ? money(mortgageMarketValue) : ""} readOnly /></Field><Field label="Loan Amount" required><input type="number" min="0" step="0.01" inputMode="decimal" value={form.amount} onChange={event => update("amount", event.target.value)} /></Field><Field label="Rate of Interest" required><div className="percent-input"><input type="number" min="0" step="0.01" inputMode="decimal" value={mortgageInterest} onChange={event => setMortgageInterest(event.target.value)} /><b>%</b></div></Field><Calculated label="Daily Interest" value={money(mortgageDailyInterest || 0)}/></div>
+        <div className="mortgage-loan-grid"><Field label="Product Name"><select value={mortgageProductId} onChange={event => setMortgageProductId(event.target.value)}><option value="">Select Product</option>{mortgageProducts.map(item => <option key={item.id} value={item.id}>{item.product_name}</option>)}</select></Field><Field label="Quantity"><input type="number" min="0" step="0.001" inputMode="decimal" value={mortgageQuantity} onChange={event => setMortgageQuantity(event.target.value)} /></Field><Field label="Unit"><input value={mortgageProduct?.unit || ""} readOnly /></Field><Field label="Current Rate"><input value={mortgageProduct ? money(mortgageProduct.current_rate) : ""} readOnly /></Field><Field label="Market Value"><input value={mortgageMarketValue ? money(mortgageMarketValue) : ""} readOnly /></Field><Field label="Loan Amount" required><input type="number" min="0" step="0.01" inputMode="decimal" value={form.amount} onChange={event => update("amount", event.target.value)} /></Field><Field label="Rate of Interest" required><div className="percent-input"><input type="number" min="0" step="0.01" inputMode="decimal" value={mortgageInterest} onChange={event => setMortgageInterest(event.target.value)} /><b>%</b></div></Field><Calculated label="Daily Interest" value={money(mortgageDailyInterest || 0)}/></div>
       </section>
       <footer className="clean-actions"><button type="button" onClick={() => { clearLoanDraft(); go("/active-loans"); }}>Cancel</button><button type="button" onClick={resetForm}>Reset</button><button type="submit" className="save" disabled={saving}>{saving ? "Saving..." : "Save"}</button></footer>
     </form>
@@ -434,3 +436,5 @@ function buildInterestSchedule({ startDate, periodicity, duration, durationUnit,
   }
   return rows;
 }
+
+function ApplicationDate({ value }) { return <div className="loan-application-date"><span>Application Date</span><strong>{value || "-"}</strong></div>; }

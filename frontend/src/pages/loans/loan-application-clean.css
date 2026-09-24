@@ -182,3 +182,6 @@
 .clean-loan-page .interest-top-row>.interest-collection-date{display:flex;gap:12px;align-items:flex-end;margin:0;flex:0 0 auto}
 @media(max-width:1100px){.clean-loan-page .interest-schedule-grid.interest-six-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){.clean-loan-page .clean-top-grid.chit-three-grid,.clean-loan-page .interest-schedule-grid.interest-six-grid{grid-template-columns:1fr}.clean-loan-page .interest-top-row>.interest-collection-date{flex-wrap:wrap}}
+
+.loan-application-date{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:var(--text-muted,#607b93)}
+.loan-application-date strong{color:var(--text,#17324d);white-space:nowrap}
