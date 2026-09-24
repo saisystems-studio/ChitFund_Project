@@ -39,3 +39,11 @@
 .active-loans-page .loan-details-modal .loan-modal-footer .loan-status{display:inline-block;padding:5px 9px;border-radius:5px;font-size:10px;text-transform:uppercase}
 .active-loans-page .loan-details-modal .open-collection-btn{align-self:center;width:auto;min-width:0;height:40px;margin:0!important;padding:0 18px;border:0;border-radius:7px;background:linear-gradient(135deg,#174d7c,#2478b8);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
 @media(max-width:600px){.active-loans-page .loan-details-modal{width:calc(100vw - 20px)}.active-loans-page .loan-details-modal>.loan-info-grid{grid-template-columns:1fr 1fr;margin-left:14px!important;margin-right:14px!important}.active-loans-page .loan-details-modal .loan-summary-grid{grid-template-columns:1fr 1fr;margin-left:14px!important;margin-right:14px!important}.active-loans-page .loan-details-modal>h3{margin-left:14px!important;margin-right:14px!important}.active-loans-page .loan-details-modal .installment-table-wrap{margin-left:14px;margin-right:14px}.active-loans-page .loan-details-modal .table-pagination{margin-left:14px!important;margin-right:14px!important}.active-loans-page .loan-details-modal .loan-modal-footer{padding:14px}.active-loans-page .loan-details-modal .open-collection-btn{width:auto}}
+/* Five-column installment schedule (Paid and Balance removed). */
+.active-loans-page .loan-details-modal .installment-table th:nth-child(1){width:10%}
+.active-loans-page .loan-details-modal .installment-table th:nth-child(2){width:24%}
+.active-loans-page .loan-details-modal .installment-table th:nth-child(3){width:22%}
+.active-loans-page .loan-details-modal .installment-table th:nth-child(4){width:24%}
+.active-loans-page .loan-details-modal .installment-table th:nth-child(5){width:20%}
+.active-loans-page .loan-details-modal .installment-table th:nth-child(3){text-align:right}
+.active-loans-page .loan-details-modal .installment-table td:nth-child(4),.active-loans-page .loan-details-modal .installment-table td:nth-child(5){text-align:left}

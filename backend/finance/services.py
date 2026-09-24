@@ -2,8 +2,36 @@ from calendar import monthrange
 from datetime import date, timedelta
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
-from django.db import transaction
+from django.db import models, transaction
 from .models import HolidayMaster, CustomerLoanInstallmentDetails
+
+
+@transaction.atomic
+def next_document_number(loan_type):
+    from .models import LoanDocumentSequence, CustomerLoanDetails
+    prefix = {'chit': 'CH', 'interest': 'IN', 'mortgage': 'M'}.get(loan_type.name.strip().lower(), f'L{loan_type.pk}')
+    LoanDocumentSequence.objects.get_or_create(prefix=prefix)
+    sequence = LoanDocumentSequence.objects.select_for_update().get(prefix=prefix)
+    while True:
+        sequence.last_value += 1
+        number = f'{prefix}-{sequence.last_value:04d}'
+        if not CustomerLoanDetails.objects.filter(models.Q(doc_no=number) | models.Q(loan_no=number)).exists():
+            break
+    sequence.save(update_fields=['last_value'])
+    return number
+
+
+def record_mortgage_history(loan, user, action):
+    from .models import MortgageLoanHistory
+    mortgage = loan.mortgage_details
+    snapshot = {field: (str(getattr(mortgage, field)) if getattr(mortgage, field) is not None else None)
+                for field in ('product_id', 'product_name', 'unit', 'quantity', 'current_rate',
+                              'market_value', 'loan_amount', 'interest_percentage', 'daily_interest_amount')}
+    snapshot.update(customer_id=loan.customer_id, customer_name=loan.customer.full_name,
+                    loan_no=loan.loan_no, application_date=str(loan.application_date),
+                    start_date=str(loan.loan_start_date), total_amount=str(loan.total_amount))
+    MortgageLoanHistory.objects.create(loan=loan, doc_no=loan.doc_no, customer_name=loan.customer.full_name,
+                                      action=action, recorded_by=getattr(user, 'username', ''), snapshot=snapshot)
 def money(value): return Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 def add_months(date, months):
     month = date.month - 1 + months

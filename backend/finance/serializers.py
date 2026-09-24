@@ -9,7 +9,7 @@ from .models import (
     LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
     Mortgage, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings,
-    CollectionTransaction, AdjustmentTypeMaster, MortgageRate,
+    CollectionTransaction, AdjustmentTypeMaster, MortgageRate, Ledger, PaymentEntry,
 )
 
 
@@ -187,7 +187,9 @@ class ChitGroupSerializer(AllFields):
 
 
 class CustomerLoanDetailsSerializer(AllFields):
-    class Meta(AllFields.Meta): model = CustomerLoanDetails
+    class Meta(AllFields.Meta):
+        model = CustomerLoanDetails
+        read_only_fields = ('doc_no', 'application_date')
 
     def to_representation(self, instance):
         from django.utils import timezone
@@ -293,3 +295,38 @@ class AdjustmentTypeMasterSerializer(AllFields):
 
 class LoanHolidaySettingsSerializer(AllFields):
     class Meta(AllFields.Meta): model = LoanHolidaySettings
+
+
+class LedgerSerializer(AllFields):
+    class Meta(AllFields.Meta):
+        model = Ledger
+        read_only_fields = ('created_by', 'modified_by')
+
+    def validate_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Name is required.')
+        return value
+
+
+class PaymentEntrySerializer(AllFields):
+    ledger_name = serializers.CharField(source='ledger.name', read_only=True)
+
+    class Meta(AllFields.Meta):
+        model = PaymentEntry
+        read_only_fields = ('created_by', 'modified_by')
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('Amount must be greater than zero.')
+        return value
+
+    def validate(self, attrs):
+        mode = attrs.get('payment_mode', getattr(self.instance, 'payment_mode', None))
+        required = {'UPI': ('upi_id', 'transaction_utr'), 'Cheque': ('cheque_number', 'cheque_date', 'bank_name'),
+                    'NEFT': ('transaction_utr', 'bank_name')}.get(mode, ())
+        errors = {key: 'This field is required.' for key in required
+                  if not attrs.get(key, getattr(self.instance, key, None))}
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs

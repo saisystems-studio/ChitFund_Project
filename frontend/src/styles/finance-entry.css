@@ -1,0 +1,8 @@
+.finance-entry-page .finance-entry-card{width:100%;max-width:680px;margin:16px auto;box-sizing:border-box}
+.finance-entry-page .finance-entry-card h2{margin:0 0 20px;font-size:18px;color:var(--text,#17324d)}
+.finance-entry-page .collection-entry-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.finance-entry-page .dynamic-fields{grid-column:1/-1}
+.finance-entry-page .entry-field{min-width:0}
+.finance-entry-page .collection-entry-actions{margin-top:20px}
+.finance-entry-page .ledger-records{margin-top:20px}
+@media(max-width:600px){.finance-entry-page .collection-entry-fields{grid-template-columns:1fr}.finance-entry-page .finance-entry-card{padding:16px}}

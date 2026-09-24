@@ -4,7 +4,7 @@ from decimal import Decimal
 import logging
 import re
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, F, Exists, OuterRef
 from django.db.models import ProtectedError
 from django.utils import timezone
 from rest_framework import viewsets
@@ -14,14 +14,32 @@ from rest_framework.response import Response
 from accounts.permissions import CanWriteFinanceData
 from .models import (LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
     Mortgage, MortgageUnit, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
-    CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings, CollectionTransaction, AdjustmentTypeMaster)
+    CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings, CollectionTransaction, AdjustmentTypeMaster,
+    Ledger, PaymentEntry, MortgageLoanHistory)
 from .serializers import (LoanTypeSerializer, LoanInstallmentSerializer, ChitGroupSerializer,
     ChitGroupInstallmentDetailSerializer, MortgageSerializer, CustomerLoanDetailsSerializer, InterestDetailsSerializer,
     CustomerChitDetailsSerializer, CustomerLoanInstallmentDetailsSerializer,
-    HolidayMasterSerializer, LoanHolidaySettingsSerializer, AdjustmentTypeMasterSerializer)
-from .services import generate_chit_schedule, generate_customer_chit_installments, generate_customer_interest_installments, generate_customer_mortgage_installment
+    HolidayMasterSerializer, LoanHolidaySettingsSerializer, AdjustmentTypeMasterSerializer, LedgerSerializer, PaymentEntrySerializer)
+from .services import generate_chit_schedule, generate_customer_chit_installments, generate_customer_interest_installments, generate_customer_mortgage_installment, record_mortgage_history
 
 logger = logging.getLogger(__name__)
+
+
+@api_view(['GET'])
+def mortgage_report(request):
+    rows = MortgageLoanHistory.objects.all()
+    search = request.query_params.get('search', '').strip()
+    if search:
+        rows = rows.filter(Q(doc_no__icontains=search) | Q(customer_name__icontains=search))
+    try:
+        if request.query_params.get('from'):
+            rows = rows.filter(recorded_at__date__gte=date.fromisoformat(request.query_params['from']))
+        if request.query_params.get('to'):
+            rows = rows.filter(recorded_at__date__lte=date.fromisoformat(request.query_params['to']))
+    except ValueError:
+        return Response({'detail': 'Enter valid report dates.'}, status=400)
+    results = list(rows.values('id', 'loan_id', 'doc_no', 'customer_name', 'action', 'recorded_at', 'recorded_by', 'snapshot'))
+    return Response({'count': len(results), 'results': results})
 
 
 class FinancePagination(PageNumberPagination):
@@ -39,6 +57,19 @@ class FinanceViewSet(viewsets.ModelViewSet):
         except ProtectedError:
             return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
         return Response(status=204)
+
+
+class LedgerViewSet(FinanceViewSet):
+    queryset = Ledger.objects.all()
+    serializer_class = LedgerSerializer
+    pagination_class = None
+    search_fields = ('name', 'group')
+
+
+class PaymentEntryViewSet(FinanceViewSet):
+    queryset = PaymentEntry.objects.select_related('ledger')
+    serializer_class = PaymentEntrySerializer
+    search_fields = ('ledger__name',)
 
 
 @api_view(["GET", "POST"])
@@ -192,24 +223,52 @@ class ChitGroupInstallmentDetailViewSet(FinanceViewSet):
 class CustomerLoanDetailsViewSet(FinanceViewSet):
     queryset = CustomerLoanDetails.objects.select_related("customer", "loan_type", "chit_details__chit_group", "interest_details", "mortgage_details__product").prefetch_related("installment_details"); serializer_class = CustomerLoanDetailsSerializer
 
+    @action(detail=False, methods=['get'], url_path='application-date')
+    def application_date(self, request):
+        return Response({'application_date': timezone.localdate()})
+
     def get_queryset(self):
         queryset = super().get_queryset()
         customer = self.request.query_params.get("customer")
         if customer:
             queryset = queryset.filter(customer_id=customer)
         if self.action == "list":
-            queryset = queryset.filter(is_active=True)
-        return queryset
+            status_filter = self.request.query_params.get('status', '').upper()
+            # Preserve the default active-only behavior for existing consumers.
+            if status_filter not in ('ALL', 'COMPLETED'):
+                queryset = queryset.filter(is_active=True)
+            kind = self.request.query_params.get('loan_type', '')
+            if kind and kind.upper() != 'ALL':
+                queryset = queryset.filter(loan_type__name__iexact=kind)
+            search = self.request.query_params.get('search', '').strip()
+            if search:
+                queryset = queryset.filter(Q(doc_no__icontains=search) | Q(loan_no__icontains=search)
+                    | Q(customer__full_name__icontains=search) | Q(customer__customer_code__icontains=search)
+                    | Q(customer__primary_mobile__icontains=search))
+            if status_filter and status_filter != 'ALL':
+                unpaid = CustomerLoanInstallmentDetails.objects.filter(loan_id=OuterRef('pk'), paid_amount__lt=F('installment_amount'))
+                queryset = queryset.annotate(has_unpaid=Exists(unpaid), has_overdue=Exists(unpaid.filter(due_date__lt=timezone.localdate())),
+                    has_schedule=Exists(CustomerLoanInstallmentDetails.objects.filter(loan_id=OuterRef('pk'))))
+                if status_filter == 'COMPLETED':
+                    queryset = queryset.filter(has_schedule=True, has_unpaid=False)
+                elif status_filter == 'OVERDUE':
+                    queryset = queryset.filter(has_overdue=True)
+                elif status_filter in ('ACTIVE', 'PENDING'):
+                    queryset = queryset.filter(has_overdue=False).exclude(has_schedule=True, has_unpaid=False)
+                else:
+                    queryset = queryset.none()
+        return queryset.order_by('-id')
 
     @transaction.atomic
     def update(self, request, *args, **kwargs):
         loan = self.get_object()
         payload = request.data.copy()
         if loan.loan_type.name.strip().lower() == "mortgage":
-            product_id = payload.get("mortgage_product_id", payload.get("product"))
+            product_id = payload.get("mortgage_product_id", payload.get("product", loan.mortgage_details.product_id))
             customer_id = payload.get("customer_id", payload.get("customer", loan.customer_id))
             try:
-                quantity = Decimal(str(payload.get("quantity", loan.mortgage_details.quantity) or 0))
+                raw_quantity = payload.get("quantity", loan.mortgage_details.quantity)
+                quantity = Decimal(str(raw_quantity)) if raw_quantity not in ('', None) else None
                 amount = Decimal(str(payload.get("amount", payload.get("loan_amount", loan.loan_amount)) or 0))
                 percentage = Decimal(str(payload.get("interest_percentage", loan.mortgage_details.interest_percentage) or 0))
             except Exception:
@@ -219,20 +278,27 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
                 start_date = date.fromisoformat(str(start_value)) if not isinstance(start_value, date) else start_value
             except (TypeError, ValueError):
                 return Response({"detail": "Invalid loan start date."}, status=400)
-            product = Mortgage.objects.filter(pk=product_id, is_active=True).first() if product_id else loan.mortgage_details.product
-            if not customer_id or not product or quantity <= 0 or amount <= 0 or percentage <= 0:
-                return Response({"detail": "Customer, product, quantity, loan amount and interest rate are required."}, status=400)
-            rate = loan.mortgage_details.current_rate if product.id == loan.mortgage_details.product_id else product.current_rate
-            market_value = (quantity * rate).quantize(Decimal("0.01"))
+            try:
+                product = Mortgage.objects.filter(pk=product_id, is_active=True).first() if product_id else None
+            except (TypeError, ValueError):
+                product = None
+            if product_id and not product:
+                return Response({'detail': 'Select a valid Mortgage Product.'}, status=400)
+            if quantity is not None and (not quantity.is_finite() or quantity <= 0):
+                return Response({'detail': 'Quantity must be greater than zero when supplied.'}, status=400)
+            if not customer_id or not amount.is_finite() or not percentage.is_finite() or amount <= 0 or percentage <= 0:
+                return Response({"detail": "Customer, loan amount and interest rate are required."}, status=400)
+            rate = (loan.mortgage_details.current_rate if product.pk == loan.mortgage_details.product_id else product.current_rate) if product else Decimal('0')
+            market_value = ((quantity or Decimal('0')) * rate).quantize(Decimal("0.01"))
             daily_interest = (amount * percentage / Decimal("100") / Decimal("365")).quantize(Decimal("0.01"))
             loan.customer_id = customer_id
             loan.loan_amount = amount
             loan.loan_start_date = start_date
             loan.save(update_fields=("customer", "loan_amount", "loan_start_date", "modified_date"))
             mortgage = loan.mortgage_details
-            if mortgage.product_id != product.pk:
-                mortgage.product_name = product.product_name
-                mortgage.unit = product.unit
+            if not product or mortgage.product_id != product.pk:
+                mortgage.product_name = product.product_name if product else ''
+                mortgage.unit = product.unit if product else ''
             mortgage.product = product
             mortgage.quantity = quantity
             mortgage.current_rate = rate
@@ -242,6 +308,7 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             mortgage.daily_interest_amount = daily_interest
             mortgage.save()
             generate_customer_mortgage_installment(loan, mortgage)
+            record_mortgage_history(loan, request.user, 'UPDATED')
             return Response(self.get_serializer(loan).data)
         if loan.loan_type.name.strip().lower() == "interest":
             amount = Decimal(str(payload.get("amount", loan.loan_amount) or 0)); percentage = Decimal(str(payload.get("interest_percentage", loan.interest_details.interest_percentage) or 0)); duration = int(payload.get("interest_duration", loan.interest_details.duration_value) or 0)
@@ -324,7 +391,7 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             total_payable = amount + interest_amount
             per_installment = (total_payable / duration).quantize(Decimal("0.01"))
             common = {"customer": customer_id, "loan_type": loan_type.pk, "loan_amount": amount, "loan_start_date": start_date, "total_amount": total_payable, "paid_amount": 0, "penalty_amount": 0, "outstanding_amount": total_payable, "loan_status": "ACTIVE", "is_active": True}
-            loan = self.get_serializer(data=common); loan.is_valid(raise_exception=True); loan = loan.save(loan_no=f"LN_{Customer.objects.get(pk=customer_id).pk:06d}_{CustomerLoanDetails.objects.count() + 1:06d}")
+            loan = self.get_serializer(data=common); loan.is_valid(raise_exception=True); loan = loan.save()
             yearly = periodicity in ("Annual", "Other", "Others")
             collection_month = payload.get("interest_collection_month") or (start_date.month if yearly else None)
             collection_month_value = int(collection_month or start_date.month); collection_day = int(payload.get("interest_collection_day") or 1)
@@ -337,7 +404,8 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             customer_id = payload.get("customer_id", payload.get("customer"))
             product_id = payload.get("mortgage_product_id", payload.get("product"))
             try:
-                quantity = Decimal(str(payload.get("quantity", 0) or 0))
+                raw_quantity = payload.get('quantity')
+                quantity = Decimal(str(raw_quantity)) if raw_quantity not in ('', None) else None
                 amount = Decimal(str(payload.get("amount", payload.get("loan_amount", 0)) or 0))
                 percentage = Decimal(str(payload.get("interest_percentage", 0) or 0))
             except Exception:
@@ -347,17 +415,26 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
                 start_date = date.fromisoformat(str(start_value)) if not isinstance(start_value, date) else start_value
             except (TypeError, ValueError):
                 return Response({"detail": "Invalid loan start date."}, status=400)
-            product = Mortgage.objects.filter(pk=product_id, is_active=True).first()
-            if not customer_id or not product or quantity <= 0 or amount <= 0 or percentage <= 0:
-                return Response({"detail": "Customer, product, quantity, loan amount and interest rate are required."}, status=400)
-            market_value = (quantity * product.current_rate).quantize(Decimal("0.01"))
+            try:
+                product = Mortgage.objects.filter(pk=product_id, is_active=True).first() if product_id else None
+            except (TypeError, ValueError):
+                product = None
+            if product_id and not product:
+                return Response({'detail': 'Select a valid Mortgage Product.'}, status=400)
+            if quantity is not None and (not quantity.is_finite() or quantity <= 0):
+                return Response({'detail': 'Quantity must be greater than zero when supplied.'}, status=400)
+            if not customer_id or not amount.is_finite() or not percentage.is_finite() or amount <= 0 or percentage <= 0:
+                return Response({"detail": "Customer, loan amount and interest rate are required."}, status=400)
+            rate = product.current_rate if product else Decimal('0')
+            market_value = ((quantity or Decimal('0')) * rate).quantize(Decimal("0.01"))
             daily_interest = (amount * percentage / Decimal("100") / Decimal("365")).quantize(Decimal("0.01"))
             common = {"customer": customer_id, "loan_type": loan_type.pk, "loan_amount": amount, "loan_start_date": start_date, "total_amount": amount + daily_interest, "paid_amount": 0, "penalty_amount": 0, "outstanding_amount": amount + daily_interest, "loan_status": "ACTIVE", "is_active": True}
             loan = self.get_serializer(data=common)
             loan.is_valid(raise_exception=True)
-            loan = loan.save(loan_no=f"LN_{Customer.objects.get(pk=customer_id).pk:06d}_{CustomerLoanDetails.objects.count() + 1:06d}")
-            mortgage = MortgageLoanDetails.objects.create(loan=loan, product=product, product_name=product.product_name, unit=product.unit, quantity=quantity, current_rate=product.current_rate, market_value=market_value, loan_amount=amount, interest_percentage=percentage, daily_interest_amount=daily_interest)
+            loan = loan.save()
+            mortgage = MortgageLoanDetails.objects.create(loan=loan, product=product, product_name=product.product_name if product else '', unit=product.unit if product else '', quantity=quantity, current_rate=rate, market_value=market_value, loan_amount=amount, interest_percentage=percentage, daily_interest_amount=daily_interest)
             generate_customer_mortgage_installment(loan, mortgage)
+            record_mortgage_history(loan, request.user, 'CREATED')
             return Response(self.get_serializer(loan).data, status=201)
         if "customer_id" in payload:
             payload["customer"] = payload.pop("customer_id")
@@ -377,7 +454,7 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
                         "loan_status": "ACTIVE", "is_active": True})
         serializer = self.get_serializer(data=payload)
         serializer.is_valid(raise_exception=True)
-        loan = serializer.save(loan_no=f"LN_{Customer.objects.get(pk=customer_id).pk:06d}_{CustomerLoanDetails.objects.count() + 1:06d}")
+        loan = serializer.save()
         chit = CustomerChitDetails.objects.create(loan=loan, chit_group_id=group_id, include_sunday=bool(include_sunday))
         for holiday_id in selected_ids:
             if str(holiday_id).startswith("sunday-"):
@@ -838,3 +915,88 @@ def loan_wise_report(request):
     for item in grouped.values():
         item["remaining_installments"] = item["installments"] - item["paid_installments"]
     return Response({"summary": {"principal": sum((x["principal"] for x in grouped.values()), Decimal("0")), "payable": sum((x["total_payable"] for x in grouped.values()), Decimal("0")), "collected": sum((x["paid"] for x in grouped.values()), Decimal("0")), "outstanding": sum((x["outstanding"] for x in grouped.values()), Decimal("0"))}, "results": list(grouped.values())})
+
+
+@api_view(["GET"])
+def customer_wise_report(request):
+    """Read-only customer-wise loan report across all loan types."""
+    from customers.models import Customer
+    params = request.query_params
+    try:
+        from_date = date.fromisoformat(params["from"]) if params.get("from") else None
+        to_date = date.fromisoformat(params["to"]) if params.get("to") else None
+    except ValueError:
+        return Response({"detail": "Enter valid report dates."}, status=400)
+    loans = CustomerLoanDetails.objects.select_related(
+        "customer", "loan_type", "chit_details__chit_group", "interest_details__loan_installment", "mortgage_details",
+    ).prefetch_related("installment_details", "collection_transactions__installment").order_by("customer__full_name", "id")
+    customer_id = params.get("customer", "").strip()
+    if customer_id and customer_id.upper() != "ALL":
+        loans = loans.filter(customer_id=customer_id)
+    kind = params.get("loan_type", "").strip()
+    if kind and kind.upper() != "ALL":
+        loans = loans.filter(loan_type__name__iexact=kind)
+    if from_date:
+        loans = loans.filter(loan_start_date__gte=from_date)
+    if to_date:
+        loans = loans.filter(loan_start_date__lte=to_date)
+    status_filter = params.get("status", "").strip().upper()
+    today = timezone.localdate()
+    zero = Decimal("0.00")
+    grouped = {}
+    for loan in loans:
+        installments = sorted(loan.installment_details.all(), key=lambda row: (row.due_date, row.installment_number))
+        paid_total = sum((row.paid_amount for row in installments), zero)
+        total = loan.total_amount or sum((row.installment_amount for row in installments), zero)
+        remaining = max(zero, total - paid_total)
+        unpaid = [row for row in installments if row.paid_amount < row.installment_amount]
+        overdue = [row for row in unpaid if row.due_date < today]
+        status = "Completed" if remaining <= 0 and installments else "Overdue" if overdue else "Active"
+        if status_filter == "COMPLETED" and status != "Completed":
+            continue
+        if status_filter == "ACTIVE" and status == "Completed":
+            continue
+        next_due = (overdue or unpaid)[0] if unpaid else None
+        chit = getattr(loan, "chit_details", None)
+        interest = getattr(loan, "interest_details", None)
+        mortgage = getattr(loan, "mortgage_details", None)
+        group = chit.chit_group if chit else None
+        collection_date = (group.collection_date if group else None) or (interest.collection_date if interest else None) or (next_due.due_date if next_due else None)
+        schedule = [{
+            "installment_number": row.installment_number, "due_date": row.due_date,
+            "installment_amount": row.installment_amount, "paid_amount": row.paid_amount,
+            "balance": max(zero, row.installment_amount - row.paid_amount), "paid_date": row.paid_date,
+            "status": "Paid" if row.paid_amount >= row.installment_amount else "Overdue" if row.due_date < today else "Partial" if row.paid_amount > 0 else "Pending",
+        } for row in installments]
+        transactions = sorted(loan.collection_transactions.all(), key=lambda item: (item.collection_date, item.id))
+        payments = [{
+            "date": item.collection_date, "amount": item.collection_amount, "payment_mode": item.payment_mode,
+            "reference_no": item.reference_no, "installment_number": item.installment.installment_number,
+        } for item in transactions] or [{
+            "date": row.paid_date, "amount": row.paid_amount, "payment_mode": "", "reference_no": "",
+            "installment_number": row.installment_number,
+        } for row in installments if row.paid_amount > 0]
+        item = {
+            "id": loan.id, "doc_no": loan.doc_no or loan.loan_no, "loan_type": loan.loan_type.name, "status": status,
+            "start_date": loan.loan_start_date, "end_date": loan.loan_end_date, "collection_date": collection_date,
+            "next_due_date": next_due.due_date if next_due else None,
+            "loan_amount": loan.loan_amount, "total_amount": total, "total_paid": paid_total, "remaining": remaining,
+            "total_installments": len(installments),
+            "paid_installments": sum(1 for row in installments if row.paid_amount >= row.installment_amount),
+            "pending_installments": len(unpaid),
+            "chit": {"group_code": group.code, "group_name": group.name, "chit_amount": loan.loan_amount or group.grand_total} if group else None,
+            "interest": {"principal": interest.principal_amount, "interest_percentage": interest.interest_percentage,
+                         "interest_amount": interest.interest_amount, "collection_plan": interest.loan_installment.name,
+                         "installment_amount": interest.installment_amount} if interest else None,
+            "mortgage": {"product_name": mortgage.product_name, "quantity": mortgage.quantity, "unit": mortgage.unit,
+                         "current_rate": mortgage.current_rate, "market_value": mortgage.market_value,
+                         "loan_amount": mortgage.loan_amount, "interest_percentage": mortgage.interest_percentage,
+                         "daily_interest_amount": mortgage.daily_interest_amount} if mortgage else None,
+            "schedule": schedule, "payments": payments,
+        }
+        customer = loan.customer
+        entry = grouped.setdefault(customer.id, {"customer": {"id": customer.id, "code": customer.customer_code, "name": customer.full_name, "phone": customer.primary_mobile}, "loans": []})
+        entry["loans"].append(item)
+    customers = [{"id": row.id, "code": row.customer_code, "name": row.full_name}
+                 for row in Customer.objects.order_by("full_name", "id").only("id", "customer_code", "full_name")]
+    return Response({"customers": customers, "results": list(grouped.values())})

@@ -1,0 +1,206 @@
+.cwr-page{
+  --cwr-ink:#102a43;--cwr-ink-2:#4f6a84;--cwr-muted:#7890a5;--cwr-line:#dde7f1;--cwr-soft:#f3f7fb;--cwr-bg:#f6f8fb;
+  --cwr-primary:#123a63;--cwr-accent:#176db3;
+  --cwr-chit:#2a78d6;--cwr-interest:#4a3aa7;--cwr-mortgage:#eb6834;--cwr-collected:#008300;--cwr-pending:#eda100;
+  width:100%;max-width:1440px;margin:0 auto;color:var(--cwr-ink);font-size:13px
+}
+.cwr-page svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.cwr-card{border:1px solid var(--cwr-line);border-radius:8px;background:#fff;box-shadow:0 4px 16px rgba(18,59,99,.05)}
+
+.cwr-breadcrumb{display:flex;align-items:center;gap:10px;margin:0 0 12px;color:#1d4f7d;font-size:15px}
+.cwr-breadcrumb>svg{width:14px;height:14px;color:var(--cwr-ink)}
+.cwr-back{display:grid;place-items:center;padding:0;border:0;background:none;color:#174d7c;cursor:pointer}
+.cwr-back svg{width:18px;height:18px}
+.cwr-breadcrumb strong{color:var(--cwr-ink);font-weight:700}
+
+.cwr-head{display:grid;gap:12px;margin-bottom:12px;padding:14px 16px}
+.cwr-head-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.cwr-head-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.cwr-title{display:flex;align-items:center;gap:12px}
+.cwr-title-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:8px;background:#e8f1fb;color:var(--cwr-accent)}
+.cwr-title-icon svg{width:22px;height:22px}
+.cwr-title h1{margin:0;font-size:19px;font-weight:700;color:var(--cwr-ink)}
+.cwr-title p{margin:2px 0 0;color:var(--cwr-ink-2);font-size:12px}
+.cwr-filters{display:flex;flex-wrap:nowrap;align-items:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e6eef6}
+.cwr-filters label{display:grid;gap:5px;color:var(--cwr-ink-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.cwr-filters select,.cwr-filters input{height:36px;padding:0 10px;border:1px solid #cfdcea;border-radius:6px;background:#fff;color:var(--cwr-ink);font:inherit;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;outline:0}
+.cwr-filters>label{flex:0 1 130px;min-width:100px}
+.cwr-filters>label:first-child{flex:1 1 220px;min-width:150px;max-width:280px}
+.cwr-filters>label.cwr-range{flex:0 0 auto;min-width:0}
+.cwr-filters select{width:100%;min-width:0}
+.cwr-range input{width:136px;padding:0 8px}
+.cwr-summary-toggle{flex:0 0 auto}
+.cwr-filters select:focus,.cwr-filters input:focus{border-color:var(--cwr-accent);box-shadow:0 0 0 3px rgba(23,109,179,.1)}
+.cwr-range span{display:flex;align-items:center;gap:6px}
+.cwr-range em{color:var(--cwr-muted);font-style:normal;font-weight:500;text-transform:none}
+
+.cwr-toggle{display:inline-flex;padding:2px;border:1px solid #d3dfeb;border-radius:999px;background:#eef3f8}
+.cwr-toggle button{height:28px;min-width:92px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:#6b8298;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,color .15s}
+.cwr-toggle button:hover:not(.active){color:#1d4f7d}
+.cwr-toggle button.active{background:var(--cwr-accent);color:#fff;box-shadow:0 2px 6px rgba(23,109,179,.3)}
+.cwr-loading{color:var(--cwr-muted);font-size:12px}
+.cwr-error{margin-bottom:10px;padding:9px 12px;border:1px solid #f1c3cc;border-radius:7px;background:#fff1f3;color:#b83950}
+
+.cwr-summary-toggle{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #c9dcef;border-radius:6px;background:#fff;color:var(--cwr-accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.cwr-summary-toggle:hover{background:#f1f7fd}
+.cwr-summary-toggle.open{border-color:var(--cwr-accent);background:#e8f1fb}
+.cwr-summary-toggle span{font-size:12px}
+.cwr-summary-panel{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows .25s ease,opacity .2s ease,visibility 0s linear .25s}
+.cwr-summary-panel.open{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows .25s ease,opacity .2s ease}
+.cwr-summary-panel-inner{min-height:0;overflow:hidden}
+.cwr-summary{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.cwr-stat{padding:10px 12px;border:1px solid var(--cwr-line);border-radius:8px;background:#fff}
+.cwr-stat small{display:flex;align-items:center;gap:6px;color:var(--cwr-ink-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.cwr-stat small i{width:8px;height:8px;border-radius:2px}
+.cwr-stat strong{display:block;margin-top:5px;color:var(--cwr-ink);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cwr-stat.chit i{background:var(--cwr-chit)}.cwr-stat.interest i{background:var(--cwr-interest)}.cwr-stat.mortgage i{background:var(--cwr-mortgage)}
+.cwr-stat.collected i{background:var(--cwr-collected)}.cwr-stat.pending i{background:var(--cwr-pending)}
+
+.cwr-body{display:grid;gap:12px;transition:opacity .15s}
+.cwr-body.is-loading{opacity:.55}
+.cwr-empty{padding:40px 16px;text-align:center;color:var(--cwr-muted)}
+
+/* Numeric view */
+.cwr-customer{padding:0 14px;transition:box-shadow .2s,border-color .2s}
+.cwr-customer.open{border-color:#c9dcef;box-shadow:0 6px 20px rgba(18,59,99,.09)}
+.cwr-customer-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;width:100%;margin:0;padding:11px 0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.cwr-customer-head>div{flex:1 1 220px;min-width:0}
+.cwr-customer-head:hover h2{color:var(--cwr-accent)}
+.cwr-customer-head:focus-visible{outline:2px solid #8ec5f5;outline-offset:2px;border-radius:6px}
+.cwr-customer.open .cwr-customer-head{border-bottom:1px solid #e6eef6}
+.cwr-customer-head h2 em{color:var(--cwr-ink-2);font-size:13px;font-style:normal;font-weight:600}
+.cwr-customer-arrow{display:grid;place-items:center;width:28px;height:28px;border-radius:6px;background:#eef3f8;color:var(--cwr-accent);font-size:11px}
+.cwr-customer.open .cwr-customer-arrow{background:var(--cwr-accent);color:#fff}
+.cwr-customer-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .25s ease}
+.cwr-customer.open .cwr-customer-panel{grid-template-rows:1fr}
+.cwr-customer-panel-inner{min-height:0;overflow:hidden}
+.cwr-customer.open .cwr-customer-panel-inner{padding-bottom:14px}
+.cwr-customer-head h2{margin:0;font-size:16px;color:var(--cwr-ink);transition:color .15s}
+.cwr-customer-head>div>span{display:block;color:var(--cwr-muted);font-size:12px}
+.cwr-customer-head dl{display:flex;gap:22px;margin:0}
+.cwr-customer-head dl div{text-align:right}
+.cwr-customer-head dt{color:var(--cwr-muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.cwr-customer-head dd{margin:2px 0 0;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.cwr-customer-head dd.collected{color:#0b7a2f}.cwr-customer-head dd.pending{color:#a86a00}
+.cwr-type{margin-top:12px}
+.cwr-type h3{display:flex;align-items:center;gap:8px;margin:0 0 7px;color:var(--cwr-ink);font-size:13px;font-weight:700}
+.cwr-type h3 i{width:4px;height:14px;border-radius:2px}
+.cwr-type h3 span{color:var(--cwr-muted);font-size:11px;font-weight:600}
+.cwr-type.chit h3 i{background:var(--cwr-chit)}.cwr-type.interest h3 i{background:var(--cwr-interest)}.cwr-type.mortgage h3 i{background:var(--cwr-mortgage)}
+.cwr-table-wrap{overflow-x:auto;border:1px solid #e1eaf3;border-radius:6px}
+.cwr-table{width:100%;border-collapse:collapse;white-space:nowrap}
+.cwr-table th{padding:8px 10px;background:var(--cwr-primary);color:#fff;font-size:11px;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:.03em}
+.cwr-table td{padding:7px 10px;border-bottom:1px solid #edf2f7;color:#17324d;font-size:12.5px}
+.cwr-table tbody tr:not(.cwr-detail-row):hover td{background:#f5f9fd}
+.cwr-table tr.open td{background:#eef5fc}
+.cwr-table .num,.cwr-mini .num,.cwr-legend-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.cwr-doc{color:#123f67;font-weight:700}
+.cwr-expand-cell{width:1%;text-align:right}
+.cwr-expand-cell button{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 9px;border:1px solid #c9dcef;border-radius:5px;background:#fff;color:var(--cwr-accent);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer}
+.cwr-expand-cell button svg{width:13px;height:13px;transition:transform .15s}
+.cwr-expand-cell button[aria-expanded="true"] svg{transform:rotate(180deg)}
+.cwr-detail-row>td{padding:0;background:#f8fbfe;border-bottom:1px solid #dde7f1}
+.cwr-detail{padding:10px 12px 12px;white-space:normal}
+.cwr-detail-summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0 0 8px;color:var(--cwr-ink-2);font-size:12px}
+.cwr-detail-summary b{color:var(--cwr-ink)}
+.cwr-detail-summary span{display:inline-flex;align-items:center;gap:5px}
+.cwr-detail-summary span.paid::before,.cwr-detail-summary span.pending::before{content:"";width:8px;height:8px;border-radius:2px}
+.cwr-detail-summary span.paid::before{background:var(--cwr-collected)}.cwr-detail-summary span.pending::before{background:var(--cwr-pending)}
+.cwr-mini{width:100%;max-width:880px;border-collapse:collapse;border:1px solid #e1eaf3;background:#fff;white-space:nowrap}
+.cwr-mini th{padding:7px 10px;background:#eef3f8;color:var(--cwr-ink-2);font-size:10.5px;font-weight:700;text-align:left;text-transform:uppercase}
+.cwr-mini td{padding:6px 10px;border-top:1px solid #edf2f7;font-size:12px}
+.cwr-mini tr.is-paid td:first-child{box-shadow:inset 3px 0 var(--cwr-collected)}
+.cwr-mini tr.is-pending td:first-child{box-shadow:inset 3px 0 var(--cwr-pending)}
+.cwr-mini tr.is-paid td{background:#f3fbf5}
+.cwr-mini-empty{padding:14px!important;text-align:center;color:var(--cwr-muted)}
+.cwr-status{display:inline-flex;align-items:center;height:21px;padding:0 8px;border-radius:5px;background:#eaf2fb;color:#1d5f91;font-size:10.5px;font-weight:700}
+.cwr-status.paid,.cwr-status.completed{background:#e3f5e8;color:#0b7a2f}
+.cwr-status.pending,.cwr-status.partial{background:#fff3d6;color:#8a5a00}
+.cwr-status.overdue{background:#fde7e9;color:#b83950}
+
+/* Histogram view */
+.cwr-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cwr-chart{padding:14px 16px 16px}
+.cwr-chart.wide{grid-column:1/-1}
+.cwr-chart>header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:8px 16px;margin-bottom:12px}
+.cwr-chart h2{margin:0;color:var(--cwr-ink);font-size:14px;font-weight:700}
+.cwr-chart header p{margin:2px 0 0;color:var(--cwr-muted);font-size:12px}
+.cwr-legend{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--cwr-ink-2);font-size:12px}
+.cwr-legend span{display:inline-flex;align-items:center;gap:6px}
+.cwr-legend i,.cwr-legend-table i,.cwr-tooltip i{display:inline-block;width:10px;height:10px;border-radius:2px;flex:0 0 auto}
+i.chit{background:var(--cwr-chit)}i.interest{background:var(--cwr-interest)}i.mortgage{background:var(--cwr-mortgage)}i.collected{background:var(--cwr-collected)}i.pending{background:var(--cwr-pending)}
+.cwr-bars{display:grid;gap:2px}
+.cwr-bar-row{display:grid;grid-template-columns:minmax(90px,170px) minmax(0,1fr) 88px;align-items:center;gap:10px;min-height:28px;padding:2px 4px;border-radius:5px;outline:0;cursor:default}
+.cwr-bar-row:hover,.cwr-bar-row:focus-visible{background:#f2f6fa}
+.cwr-bars.grouped .cwr-bar-row{min-height:34px}
+.cwr-bar-label{overflow:hidden;color:var(--cwr-ink);font-size:12.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+.cwr-bar-value{color:var(--cwr-ink-2);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cwr-bar-value.pair{display:grid;gap:1px;font-size:11px;line-height:14px}
+.cwr-bar-value.pair em{font-style:normal}
+.cwr-track{position:relative;height:100%;min-height:24px;display:flex;align-items:center}
+.cwr-grid{position:absolute;inset:0;pointer-events:none}
+.cwr-grid span{position:absolute;top:0;bottom:0;border-left:1px solid #edf1f5}
+.cwr-stack{position:relative;display:flex;gap:2px;height:14px;min-width:2px;border-radius:0 4px 4px 0;overflow:hidden}
+.cwr-stack span{flex-basis:0;min-width:2px}
+.cwr-stack .chit,.cwr-split .chit{background:var(--cwr-chit)}.cwr-stack .interest,.cwr-split .interest{background:var(--cwr-interest)}.cwr-stack .mortgage,.cwr-split .mortgage{background:var(--cwr-mortgage)}
+.cwr-pair{position:relative;display:grid;gap:2px;width:100%}
+.cwr-pair span{display:block;height:11px;min-width:2px;border-radius:0 4px 4px 0}
+.cwr-pair .collected,.cwr-split .collected{background:var(--cwr-collected)}.cwr-pair .pending,.cwr-split .pending{background:var(--cwr-pending)}
+.cwr-axis-row{display:grid;grid-template-columns:minmax(90px,170px) minmax(0,1fr) 88px;gap:10px;margin-top:6px;padding:0 4px}
+.cwr-axis-name{color:var(--cwr-muted);font-size:11px;align-self:center}
+.cwr-axis{position:relative;height:16px;border-top:1px solid #cfdcea}
+.cwr-axis span{position:absolute;top:3px;transform:translateX(-50%);color:var(--cwr-muted);font-size:10.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cwr-axis span:first-child{transform:none}
+.cwr-axis span:last-child{transform:translateX(-100%)}
+.cwr-split{display:flex;gap:2px;height:22px;margin:4px 0 12px;border-radius:4px;overflow:hidden;background:var(--cwr-soft)}
+.cwr-split span{flex-basis:0;min-width:3px;outline:0;cursor:default}
+.cwr-split span:hover,.cwr-split span:focus-visible{filter:brightness(1.1)}
+.cwr-legend-table{width:100%;border-collapse:collapse}
+.cwr-legend-table th{padding:6px 8px;color:var(--cwr-muted);font-size:10.5px;font-weight:700;text-align:left;text-transform:uppercase;border-bottom:1px solid #e6eef6}
+.cwr-legend-table td{padding:7px 8px;border-bottom:1px solid #f0f4f8;font-size:12.5px}
+.cwr-legend-table td:first-child{display:flex;align-items:center;gap:8px;font-weight:600}
+.cwr-hero{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.cwr-hero strong{color:var(--cwr-ink);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.cwr-hero span{color:var(--cwr-ink-2);font-size:12.5px}
+.cwr-tooltip{position:fixed;z-index:1000;display:grid;gap:4px;min-width:190px;max-width:240px;padding:9px 11px;border:1px solid #d6e2ee;border-radius:7px;background:#fff;box-shadow:0 10px 26px rgba(15,39,66,.16);color:var(--cwr-ink);font-size:12px;pointer-events:none}
+.cwr-tooltip b{margin-bottom:2px;font-size:12.5px}
+.cwr-tooltip span{display:flex;align-items:center;gap:7px;color:var(--cwr-ink-2)}
+.cwr-tooltip em{margin-left:auto;padding-left:12px;color:var(--cwr-ink);font-style:normal;font-weight:700;font-variant-numeric:tabular-nums}
+
+@media(max-width:1200px){.cwr-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.cwr-head-top{flex-direction:column}.cwr-head-actions{width:100%;justify-content:space-between}}
+@media(max-width:900px){.cwr-charts{grid-template-columns:1fr}.cwr-filters{width:100%;flex-wrap:wrap}.cwr-filters>label:first-child{max-width:none}.cwr-filters label{flex:1 1 160px}.cwr-filters select,.cwr-filters label:first-child select{width:100%;min-width:0}.cwr-range{flex-basis:100%!important}.cwr-range input{flex:1;min-width:0}}
+@media(max-width:600px){.cwr-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.cwr-bar-row,.cwr-axis-row{grid-template-columns:84px minmax(0,1fr) 64px;gap:6px}.cwr-axis-name{font-size:0}.cwr-customer-head dl{flex:1;justify-content:space-between}}
+
+/* Scrolling: the report scrolls inside the main content area (scrollbar hidden). The global
+   table enhancer caps every table's parent at 65vh; lift that here so sections render at full
+   height and the wheel scrolls the page instead of getting trapped in inner boxes. */
+.app-shell .main-content:has(> .cwr-page){display:block!important;height:100vh!important;max-height:100vh!important;overflow-y:auto!important;overflow-x:hidden!important;scroll-behavior:smooth;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none}
+.app-shell .main-content:has(> .cwr-page)::-webkit-scrollbar{display:none;width:0;height:0}
+.app-shell .main-content>.cwr-page{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;padding-bottom:24px}
+#root .cwr-page .scrollable-grid{max-height:none!important;overflow-y:visible!important}
+#root .cwr-page .cwr-table-wrap.scrollable-grid{overflow-x:auto}
+#root .cwr-page .cwr-table-wrap{scrollbar-width:thin}
+
+/* Compact Chit table: fits the customer card; Status and Schedule are fixed-width, pinned columns. */
+.cwr-type.chit .cwr-table th{padding:7px 5px;white-space:normal;line-height:1.25;vertical-align:middle}
+.cwr-type.chit .cwr-table td{padding:6px 5px;font-size:12px}
+.cwr-type.chit .cwr-table th:first-child,.cwr-type.chit .cwr-table td:first-child{padding-left:10px}
+.cwr-type.chit .cwr-table td:nth-child(2){min-width:80px;max-width:130px;white-space:normal;overflow-wrap:anywhere}
+.cwr-type.chit .cwr-table th.inst{width:44px;padding-left:3px;padding-right:3px;text-transform:none;text-align:center;letter-spacing:0}
+.cwr-type.chit .cwr-table td.inst{padding-left:3px;padding-right:3px;text-align:center;font-variant-numeric:tabular-nums}
+/* Remaining: safe gap before the pinned columns. */
+.cwr-type.chit .cwr-table th:nth-last-child(3),.cwr-type.chit .cwr-table td:nth-last-child(3){padding-right:12px}
+/* Status (104px) and Schedule (108px): fixed widths so neither can overlap the other. */
+.cwr-type.chit .cwr-table th:nth-last-child(-n+2),.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:nth-last-child(-n+2){position:sticky;z-index:1;box-sizing:border-box;padding-left:8px;padding-right:8px;text-align:center}
+.cwr-type.chit .cwr-table th:nth-last-child(2),.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:nth-last-child(2){right:108px;width:104px;min-width:104px;max-width:104px}
+.cwr-type.chit .cwr-table th:last-child,.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:last-child{right:0;width:108px;min-width:108px;max-width:108px}
+/* Status matches the Interest table: left-aligned badge with the standard cell padding. */
+.cwr-type.chit .cwr-table th:nth-last-child(2){padding:8px 10px;text-align:left}
+.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:nth-last-child(2){padding:7px 10px;text-align:left}
+.cwr-type.chit .cwr-expand-cell button{max-width:100%;padding:0 8px}
+.cwr-type.chit .cwr-table th:nth-last-child(-n+2){background:var(--cwr-primary)}
+.cwr-type.chit .cwr-table tbody tr:not(.cwr-detail-row) td:nth-last-child(-n+2){background:#fff}
+.cwr-type.chit .cwr-table tbody tr:not(.cwr-detail-row):hover td:nth-last-child(-n+2){background:#f5f9fd}
+.cwr-type.chit .cwr-table tr.open td:nth-last-child(-n+2){background:#eef5fc}
+.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:nth-last-child(2){box-shadow:-1px 0 0 #e1eaf3}

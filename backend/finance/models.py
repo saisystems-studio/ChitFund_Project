@@ -1,5 +1,7 @@
 from decimal import Decimal
 from django.db import models
+from django.db import transaction
+from django.utils import timezone
 
 
 MONEY = {"max_digits": 18, "decimal_places": 2, "default": Decimal("0.00")}
@@ -86,6 +88,8 @@ class ChitGroupInstallmentDetail(AuditModel):
 class CustomerLoanDetails(AuditModel):
     id = models.AutoField(primary_key=True, db_column="ID")
     loan_no = models.CharField(max_length=30, unique=True, null=True, blank=True, db_column="LoanNo")
+    doc_no = models.CharField(max_length=30, unique=True, default='', editable=False, db_column="DocNo")
+    application_date = models.DateField(default=timezone.localdate, editable=False, db_column="ApplicationDate")
     customer = models.ForeignKey("customers.Customer", on_delete=models.PROTECT, related_name="customer_loans", db_column="CustomerID")
     loan_type = models.ForeignKey(LoanType, on_delete=models.PROTECT, db_column="LoanTypeID")
     loan_amount = models.DecimalField(**MONEY, db_column="LoanAmount")
@@ -100,6 +104,17 @@ class CustomerLoanDetails(AuditModel):
 
     class Meta:
         db_table = "CustomerLoanDetails_tbl"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            from .services import next_document_number
+            with transaction.atomic():
+                self.application_date = timezone.localdate()
+                self.doc_no = next_document_number(self.loan_type)
+                if not self.loan_no:
+                    self.loan_no = self.doc_no
+                return super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
 
 class InterestDetails(AuditModel):
@@ -142,10 +157,10 @@ class CustomerChitDetails(AuditModel):
 class MortgageLoanDetails(AuditModel):
     id = models.AutoField(primary_key=True, db_column="ID")
     loan = models.OneToOneField(CustomerLoanDetails, on_delete=models.CASCADE, related_name="mortgage_details", db_column="CustomerLoanDetailsID")
-    product = models.ForeignKey(Mortgage, on_delete=models.PROTECT, db_column="MortgageID")
-    product_name = models.CharField(max_length=150, db_column="ProductName")
-    unit = models.CharField(max_length=50, db_column="Unit")
-    quantity = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), db_column="Quantity")
+    product = models.ForeignKey(Mortgage, on_delete=models.PROTECT, null=True, blank=True, db_column="MortgageID")
+    product_name = models.CharField(max_length=150, blank=True, db_column="ProductName")
+    unit = models.CharField(max_length=50, blank=True, db_column="Unit")
+    quantity = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True, db_column="Quantity")
     current_rate = models.DecimalField(**MONEY, db_column="CurrentRate")
     market_value = models.DecimalField(**MONEY, db_column="MarketValue")
     loan_amount = models.DecimalField(**MONEY, db_column="LoanAmount")
@@ -246,3 +261,49 @@ class MortgageUnit(models.Model):
 
     class Meta:
         ordering = ("name",)
+
+
+class LoanDocumentSequence(models.Model):
+    prefix = models.CharField(max_length=20, primary_key=True)
+    last_value = models.PositiveIntegerField(default=0)
+
+
+class MortgageLoanHistory(models.Model):
+    loan = models.ForeignKey(CustomerLoanDetails, null=True, on_delete=models.SET_NULL, related_name="mortgage_history")
+    doc_no = models.CharField(max_length=30)
+    customer_name = models.CharField(max_length=150)
+    action = models.CharField(max_length=10, choices=[('CREATED', 'Created'), ('UPDATED', 'Updated'), ('EXISTING', 'Existing')])
+    recorded_at = models.DateTimeField(default=timezone.now)
+    recorded_by = models.CharField(max_length=150, blank=True)
+    snapshot = models.JSONField()
+
+    class Meta:
+        ordering = ('-recorded_at', '-id')
+
+
+class Ledger(AuditModel):
+    GROUPS = [(name, name) for name in ('Sundry Debtors', 'Sundry Creditors', 'Indirect Expense',
+                                      'Direct Expense', 'Income', 'Cash in Hand', 'Bank Accounts')]
+    name = models.CharField(max_length=150)
+    group = models.CharField(max_length=30, choices=GROUPS)
+    opening_balance = models.DecimalField(**MONEY)
+
+    class Meta:
+        ordering = ('name', 'id')
+
+
+class PaymentEntry(AuditModel):
+    PAYMENT_MODES = [('Cash', 'Cash'), ('UPI', 'UPI'), ('Cheque', 'Cheque'), ('NEFT', 'NEFT/IMPS/RGST')]
+    ledger = models.ForeignKey(Ledger, on_delete=models.PROTECT, related_name='payments')
+    accounts = models.CharField(max_length=10, choices=[('Card', 'Card'), ('Credit', 'Credit')])
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+    payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODES)
+    date = models.DateField(default=timezone.localdate)
+    upi_id = models.CharField(max_length=100, blank=True)
+    transaction_utr = models.CharField(max_length=100, blank=True)
+    bank_name = models.CharField(max_length=150, blank=True)
+    cheque_number = models.CharField(max_length=50, blank=True)
+    cheque_date = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ('-date', '-id')
