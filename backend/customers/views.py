@@ -4,16 +4,21 @@ from django.db.models import ProtectedError
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.db.models import Q
+from django.db.models.functions import Lower
 from .models import CountryMaster, Customer, DistrictMaster, StateMaster
 from .serializers import CustomerSerializer
 from accounts.permissions import CanWriteFinanceData
 
 class CustomerViewSet(viewsets.ModelViewSet):
+    pagination_class = None
     queryset = Customer.objects.filter(is_active=True)
     serializer_class = CustomerSerializer
     search_fields = ("customer_code", "full_name", "primary_mobile")
     ordering_fields = ("full_name", "customer_code", "created_at")
     permission_classes = [CanWriteFinanceData]
+
+    def filter_queryset(self, queryset):
+        return super().filter_queryset(queryset).order_by(Lower("full_name"), "id")
 
     @action(detail=False, methods=["get"], url_path="next-code")
     def next_code(self, request):

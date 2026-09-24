@@ -1,0 +1,7 @@
+.loan-date-input{position:relative;width:100%;min-width:0}
+.clean-loan-page .loan-date-input>input[type=text]{padding-right:36px}
+.loan-date-calendar{position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:#294967;display:flex}
+.loan-date-calendar svg{width:16px;height:16px}
+.clean-loan-page .loan-date-input>input.loan-date-picker{position:absolute;right:0;top:0;width:34px;height:100%;padding:0;margin:0;opacity:0;cursor:pointer}
+.loan-date-picker::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;margin:0;padding:0;cursor:pointer}
+.loan-date-input:has(.loan-date-picker:focus-visible){outline:2px solid #268bda;outline-offset:2px;border-radius:6px}

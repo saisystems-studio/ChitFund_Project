@@ -1,12 +1,15 @@
 from decimal import Decimal
+from calendar import monthrange
+from datetime import date
 import json
 from rest_framework import serializers
 from django.utils import timezone
+from django.db import transaction
 from .models import (
     LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
-    CustomerLoanDetails, InterestDetails, CustomerChitDetails,
+    Mortgage, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings,
-    CollectionTransaction, AdjustmentTypeMaster,
+    CollectionTransaction, AdjustmentTypeMaster, MortgageRate,
 )
 
 
@@ -46,13 +49,14 @@ class LoanTypeSerializer(AllFields):
     def validate(self, attrs):
         """Default collection types may be configured, but never renamed or disabled."""
         attrs = super().validate(attrs)
-        if self.instance and self.instance.name.strip().lower() in {"chit", "interest"}:
+        if self.instance and self.instance.name.strip().lower() in {"chit", "interest", "mortgage"}:
             if "name" in attrs and attrs["name"].strip().lower() != self.instance.name.strip().lower():
                 raise serializers.ValidationError({"name": "The default loan type name cannot be changed."})
             if attrs.get("is_active") is False:
                 raise serializers.ValidationError({"is_active": "Default loan types cannot be deactivated."})
             # Preserve canonical display casing even if a client submits different casing.
-            attrs["name"] = "Chit" if self.instance.name.strip().lower() == "chit" else "Interest"
+            canonical = {"chit": "Chit", "interest": "Interest", "mortgage": "Mortgage"}
+            attrs["name"] = canonical[self.instance.name.strip().lower()]
             attrs["is_active"] = True
         return attrs
 
@@ -75,6 +79,52 @@ class LoanTypeSerializer(AllFields):
 
 class LoanInstallmentSerializer(AllFields):
     class Meta(AllFields.Meta): model = LoanInstallment
+
+
+class MortgageSerializer(AllFields):
+    rate_date = serializers.DateField(required=False, write_only=True)
+    rate_history = serializers.SerializerMethodField()
+
+    class Meta(AllFields.Meta):
+        model = Mortgage
+
+    def get_rate_history(self, obj):
+        return list(obj.rates.values("date", "rate"))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        latest = instance.rates.first()
+        data["rate_date"] = latest.date if latest else None
+        return data
+
+    def validate(self, attrs):
+        if "current_rate" in attrs and attrs["current_rate"] <= 0:
+            raise serializers.ValidationError({"current_rate": "Current Rate must be greater than zero."})
+        if "current_rate" in attrs and not attrs.get("rate_date"):
+            raise serializers.ValidationError({"rate_date": "Date is required when setting a rate."})
+        return attrs
+
+    def _save_rate(self, instance, rate_date, rate):
+        if rate_date is not None and rate is not None:
+            existing, created = MortgageRate.objects.get_or_create(mortgage=instance, date=rate_date, defaults={"rate": rate})
+            if not created and existing.rate != rate:
+                raise serializers.ValidationError({"rate_date": "A different rate is already saved for this date. Choose a new date to preserve history."})
+            instance.current_rate = instance.rates.first().rate
+            instance.save(update_fields=("current_rate",))
+        return instance
+
+    @transaction.atomic
+    def create(self, validated_data):
+        rate_date = validated_data.pop("rate_date", None)
+        instance = super().create(validated_data)
+        return self._save_rate(instance, rate_date, instance.current_rate)
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        rate_date = validated_data.pop("rate_date", None)
+        rate = validated_data.pop("current_rate", None)
+        instance = super().update(instance, validated_data)
+        return self._save_rate(instance, rate_date, rate)
 
 
 class ChitGroupInstallmentDetailSerializer(AllFields):
@@ -106,6 +156,26 @@ class ChitGroupSerializer(AllFields):
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
+        # Persist the first collection date while retaining the existing recurring rule.
+        if any(key in attrs for key in ("start_date", "duration_type", "collection_day", "collection_month")):
+            start = attrs.get("start_date", getattr(self.instance, "start_date", None))
+            kind = attrs.get("duration_type", getattr(self.instance, "duration_type", "DAY"))
+            day = int(attrs.get("collection_day", getattr(self.instance, "collection_day", 1)) or 1)
+            month = int(attrs.get("collection_month", getattr(self.instance, "collection_month", 1)) or 1)
+            if not 1 <= day <= 31 or not 1 <= month <= 12:
+                raise serializers.ValidationError("Select a valid collection day and month.")
+            if start:
+                year, due_month = start.year, month if kind == "YEAR" else start.month
+                due = start if kind == "DAY" else date(year, due_month, min(day, monthrange(year, due_month)[1]))
+                if due < start:
+                    if kind == "YEAR": year += 1
+                    else:
+                        due_month = due_month % 12 + 1
+                        if due_month == 1: year += 1
+                    due = date(year, due_month, min(day, monthrange(year, due_month)[1]))
+                attrs["collection_date"] = due
+            elif "start_date" in attrs:
+                attrs["collection_date"] = None
         installments = attrs.get("installments")
         duration = int(attrs.get("duration", getattr(self.instance, "duration", 0)) or 0)
         total = attrs.get("grand_total", getattr(self.instance, "grand_total", Decimal("0.00")))
@@ -113,10 +183,6 @@ class ChitGroupSerializer(AllFields):
             return attrs
         if len(installments) != duration:
             raise serializers.ValidationError({"installments": [f"Expected {duration} installment rows, received {len(installments)}."]})
-        total_paise = int((Decimal(str(total)) * 100).quantize(Decimal("1")))
-        rows_paise = sum(int((Decimal(str(item.get("installment_amount", 0))) * 100).quantize(Decimal("1"))) for item in installments)
-        if rows_paise != total_paise:
-            raise serializers.ValidationError({"installments": [f"Installment total {rows_paise / 100:.2f} does not equal Total Amount {total_paise / 100:.2f}."]})
         return attrs
 
 
@@ -136,6 +202,10 @@ class CustomerLoanDetailsSerializer(AllFields):
             interest = instance.interest_details
         except InterestDetails.DoesNotExist:
             interest = None
+        try:
+            mortgage = instance.mortgage_details
+        except MortgageLoanDetails.DoesNotExist:
+            mortgage = None
         plan = chit.chit_group if chit else None
         installments = list(instance.installment_details.all().order_by("due_date", "installment_number"))
         paid_total = sum((row.paid_amount for row in installments), Decimal("0.00"))
@@ -161,8 +231,9 @@ class CustomerLoanDetailsSerializer(AllFields):
             "loan_no": instance.loan_no,
             "customer": {"id": customer.id, "code": customer.customer_code, "name": customer.full_name, "phone": customer.primary_mobile},
             "loan_type": {"id": loan_type.id, "name": loan_type.name},
-            "plan": {"id": plan.id, "name": plan.name} if plan else {"name": "Flat Interest" if interest else "-"},
-            "interest_details": ({"principal_amount": interest.principal_amount, "interest_percentage": interest.interest_percentage, "interest_amount": interest.interest_amount, "total_payable_amount": interest.total_payable_amount, "duration_value": interest.duration_value, "start_date": interest.start_date, "end_date": interest.end_date, "collection_day": interest.collection_day, "collection_date": interest.collection_date, "collection_month": interest.collection_month, "installment_count": interest.installment_count, "installment_amount": interest.installment_amount, "periodicity": interest.loan_installment.name} if interest else None),
+            "plan": {"id": plan.id, "name": plan.name} if plan else {"id": mortgage.product_id, "name": mortgage.product_name} if mortgage else {"name": "Flat Interest" if interest else "-"},
+            "interest_details": ({"principal_amount": interest.principal_amount, "interest_percentage": interest.interest_percentage, "interest_amount": interest.interest_amount, "total_payable_amount": interest.total_payable_amount, "duration_value": interest.duration_value, "duration_type": interest.duration_type, "start_date": interest.start_date, "end_date": interest.end_date, "collection_day": interest.collection_day, "collection_date": interest.collection_date, "collection_month": interest.collection_month, "installment_count": interest.installment_count, "installment_amount": interest.installment_amount, "periodicity": interest.loan_installment.name} if interest else None),
+            "mortgage_details": ({"product": mortgage.product_id, "product_name": mortgage.product_name, "unit": mortgage.unit, "quantity": mortgage.quantity, "current_rate": mortgage.current_rate, "market_value": mortgage.market_value, "loan_amount": mortgage.loan_amount, "interest_percentage": mortgage.interest_percentage, "daily_interest_amount": mortgage.daily_interest_amount} if mortgage else None),
             "periodicity": {"name": periodicity},
             "include_sunday": bool(chit.include_sunday) if chit else False,
             "start_date": instance.loan_start_date,

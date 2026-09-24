@@ -89,6 +89,33 @@ def generate_chit_schedule(start_date, duration, duration_type, collection_day=N
     return rows
 
 
+@transaction.atomic
+def save_installments_preserving_payments(loan, rows):
+    from rest_framework.exceptions import ValidationError
+    existing = {row.installment_number: row for row in loan.installment_details.select_for_update()}
+    numbers = {row.installment_number for row in rows}
+    for number, old in existing.items():
+        if number not in numbers:
+            if old.paid_amount or old.penalty_amount or old.collection_transactions.exists():
+                raise ValidationError({"detail": "Cannot remove an installment with recorded payments or penalties."})
+            old.delete()
+    saved = []
+    for row in rows:
+        old = existing.get(row.installment_number)
+        if old:
+            if row.installment_amount + old.penalty_amount < old.paid_amount:
+                raise ValidationError({"detail": "Installment amount cannot be reduced below its recorded payments."})
+            old.due_date = row.due_date
+            old.installment_amount = row.installment_amount
+            old.outstanding_amount = max(Decimal("0.00"), row.installment_amount + old.penalty_amount - old.paid_amount)
+            old.save(update_fields=("due_date", "installment_amount", "outstanding_amount", "modified_date"))
+            saved.append(old)
+        else:
+            row.save()
+            saved.append(row)
+    return saved
+
+
 def generate_customer_chit_installments(loan, chit_details, holiday_settings=()):
     """Recalculate and persist a customer's copied schedule in one transaction."""
     group = chit_details.chit_group
@@ -124,14 +151,13 @@ def generate_customer_chit_installments(loan, chit_details, holiday_settings=())
         raise ValueError("Chit group installment template count must equal duration")
     with transaction.atomic():
         from .models import CustomerLoanInstallmentDetails
-        CustomerLoanInstallmentDetails.objects.filter(loan=loan).delete()
         created = [CustomerLoanInstallmentDetails(
             loan=loan, installment_number=row.installment_number, due_date=row.due_date,
             installment_amount=templates[row.installment_number - 1].installment_amount,
             paid_amount=Decimal("0.00"), penalty_amount=Decimal("0.00"),
             outstanding_amount=templates[row.installment_number - 1].installment_amount,
         ) for row in rows]
-        CustomerLoanInstallmentDetails.objects.bulk_create(created)
+        created = save_installments_preserving_payments(loan, created)
         loan.loan_end_date = rows[-1].due_date
         loan.total_amount = sum((item.installment_amount for item in created), Decimal("0.00"))
         loan.outstanding_amount = loan.total_amount - loan.paid_amount + loan.penalty_amount
@@ -142,7 +168,7 @@ def generate_customer_chit_installments(loan, chit_details, holiday_settings=())
 def generate_customer_interest_installments(loan, interest, include_sunday=False):
     """Persist the flat-interest schedule without changing the Chit schedule path."""
     kind = interest.loan_installment.name
-    if kind == "Daily":
+    if kind in ("Daily", "100 Days"):
         rows = [ChitScheduleRow(index + 1, interest.start_date + timedelta(days=index)) for index in range(interest.installment_count)]
     elif kind == "Weekly":
         first = interest.start_date + timedelta(days=((interest.collection_day - interest.start_date.weekday()) % 7))
@@ -163,10 +189,29 @@ def generate_customer_interest_installments(loan, interest, include_sunday=False
         paid_amount=Decimal("0.00"), penalty_amount=Decimal("0.00"),
         outstanding_amount=(total - unit * (interest.installment_count - 1)) if row.installment_number == interest.installment_count else unit,
     ) for row in rows]
-    CustomerLoanInstallmentDetails.objects.filter(loan=loan).delete()
-    CustomerLoanInstallmentDetails.objects.bulk_create(created)
+    created = save_installments_preserving_payments(loan, created)
     loan.loan_end_date = rows[-1].due_date
     loan.total_amount = total
-    loan.outstanding_amount = total
+    loan.outstanding_amount = max(Decimal("0.00"), total + loan.penalty_amount - loan.paid_amount)
     loan.save(update_fields=("loan_end_date", "total_amount", "outstanding_amount", "modified_date"))
     return created
+
+
+def generate_customer_mortgage_installment(loan, mortgage):
+    total = money(Decimal(str(mortgage.loan_amount)) + Decimal(str(mortgage.daily_interest_amount)))
+    due_date = loan.loan_start_date + timedelta(days=1)
+    row = CustomerLoanInstallmentDetails(
+        loan=loan,
+        installment_number=1,
+        due_date=due_date,
+        installment_amount=total,
+        paid_amount=Decimal("0.00"),
+        penalty_amount=Decimal("0.00"),
+        outstanding_amount=total,
+    )
+    row = save_installments_preserving_payments(loan, [row])[0]
+    loan.loan_end_date = due_date
+    loan.total_amount = total
+    loan.outstanding_amount = max(Decimal("0.00"), total + loan.penalty_amount - loan.paid_amount)
+    loan.save(update_fields=("loan_end_date", "total_amount", "outstanding_amount", "modified_date"))
+    return [row]

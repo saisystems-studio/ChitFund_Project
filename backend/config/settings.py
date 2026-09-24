@@ -36,15 +36,21 @@ DATABASES = {
         "NAME": os.getenv("DB_NAME", "chitfunddd_db"),
         "USER": "",
         "PASSWORD": "",
-        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-        "PORT": os.getenv("DB_PORT", "1433"),
+        "HOST": os.getenv("DB_HOST", r".\SQLEXPRESS"),
+        "PORT": os.getenv("DB_PORT", ""),
         "OPTIONS": {
-            "driver": os.getenv("ODBC_DRIVER", "ODBC Driver 17 for SQL Server"),
-            "extra_params": "Trusted_Connection=yes;TrustServerCertificate=yes;Encrypt=no;",
+            "driver": os.getenv(
+                "ODBC_DRIVER",
+                "ODBC Driver 17 for SQL Server"
+            ),
+            "extra_params": (
+                "Trusted_Connection=yes;"
+                "TrustServerCertificate=yes;"
+                "Encrypt=no;"
+            ),
         },
     }
 }
-
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True

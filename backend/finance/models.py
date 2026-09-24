@@ -40,12 +40,28 @@ class LoanInstallment(AuditModel):
         db_table = "LoanInstallment_tbl"
 
 
+class Mortgage(AuditModel):
+    id = models.AutoField(primary_key=True, db_column="ID")
+    product_name = models.CharField(max_length=150, unique=True, db_column="ProductName")
+    quantity = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True, db_column="Quantity")
+    unit = models.CharField(max_length=50, db_column="Unit")
+    current_rate = models.DecimalField(**MONEY, db_column="CurrentRate")
+    is_active = models.BooleanField(default=True, db_column="IsActive")
+
+    class Meta:
+        db_table = "Mortgage_tbl"
+        ordering = ("product_name",)
+
+
 class ChitGroup(AuditModel):
     id = models.AutoField(primary_key=True, db_column="ID")
     code = models.CharField(max_length=20, unique=True, db_column="ChitGroupCode")
     name = models.CharField(max_length=150, db_column="ChitGroupName")
     duration_type = models.CharField(max_length=10, db_column="DurationType")
     duration = models.PositiveIntegerField(db_column="Duration")
+    start_date = models.DateField(null=True, blank=True, db_column="StartDate")
+    collection_date = models.DateField(null=True, blank=True, db_column="CollectionDate")
+    end_date = models.DateField(null=True, blank=True, db_column="EndDate")
     collection_day = models.PositiveSmallIntegerField(null=True, blank=True, db_column="CollectionDay")
     collection_month = models.PositiveSmallIntegerField(null=True, blank=True, db_column="CollectionMonth")
     grand_total = models.DecimalField(**MONEY, db_column="GrandTotal")
@@ -95,6 +111,7 @@ class InterestDetails(AuditModel):
     total_payable_amount = models.DecimalField(**MONEY, db_column="TotalPayableAmount")
     loan_installment = models.ForeignKey(LoanInstallment, on_delete=models.PROTECT, db_column="LoanInstallmentID")
     duration_value = models.PositiveIntegerField(default=0, db_column="DurationValue")
+    duration_type = models.CharField(max_length=5, blank=True, default="", db_column="DurationType")
     start_date = models.DateField(null=True, blank=True, db_column="StartDate")
     end_date = models.DateField(null=True, blank=True, db_column="EndDate")
     collection_day = models.PositiveSmallIntegerField(null=True, blank=True, db_column="CollectionDay")
@@ -120,6 +137,23 @@ class CustomerChitDetails(AuditModel):
 
     class Meta:
         db_table = "CustomerChitDetails_tbl"
+
+
+class MortgageLoanDetails(AuditModel):
+    id = models.AutoField(primary_key=True, db_column="ID")
+    loan = models.OneToOneField(CustomerLoanDetails, on_delete=models.CASCADE, related_name="mortgage_details", db_column="CustomerLoanDetailsID")
+    product = models.ForeignKey(Mortgage, on_delete=models.PROTECT, db_column="MortgageID")
+    product_name = models.CharField(max_length=150, db_column="ProductName")
+    unit = models.CharField(max_length=50, db_column="Unit")
+    quantity = models.DecimalField(max_digits=18, decimal_places=3, default=Decimal("0.000"), db_column="Quantity")
+    current_rate = models.DecimalField(**MONEY, db_column="CurrentRate")
+    market_value = models.DecimalField(**MONEY, db_column="MarketValue")
+    loan_amount = models.DecimalField(**MONEY, db_column="LoanAmount")
+    interest_percentage = models.DecimalField(max_digits=8, decimal_places=3, default=0, db_column="InterestPercentage")
+    daily_interest_amount = models.DecimalField(**MONEY, db_column="DailyInterestAmount")
+
+    class Meta:
+        db_table = "MortgageLoanDetails_tbl"
 
 
 class CustomerLoanInstallmentDetails(AuditModel):
@@ -178,6 +212,8 @@ class HolidayMaster(AuditModel):
     holiday_date = models.DateField(unique=True, db_column="HolidayDate")
     holiday_name = models.CharField(max_length=150, db_column="HolidayName")
     holiday_type = models.CharField(max_length=30, db_column="HolidayType")
+    state_region = models.CharField(max_length=150, blank=True, default="")
+    description = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True, db_column="IsActive")
 
     class Meta:
@@ -193,3 +229,20 @@ class LoanHolidaySettings(AuditModel):
     class Meta:
         db_table = "LoanHolidaySettings_tbl"
         constraints = [models.UniqueConstraint(fields=("loan", "holiday"), name="uniq_loan_holiday_setting")]
+
+
+class MortgageRate(models.Model):
+    mortgage = models.ForeignKey(Mortgage, on_delete=models.CASCADE, related_name="rates")
+    date = models.DateField()
+    rate = models.DecimalField(**MONEY)
+
+    class Meta:
+        ordering = ("-date", "-id")
+        constraints = [models.UniqueConstraint(fields=("mortgage", "date"), name="uniq_mortgage_rate_date")]
+
+
+class MortgageUnit(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        ordering = ("name",)

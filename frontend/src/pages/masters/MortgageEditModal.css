@@ -1,0 +1,37 @@
+.mortgage-edit-modal{box-sizing:border-box;width:min(620px,calc(100vw - 28px));max-height:calc(100dvh - 28px);display:flex;flex-direction:column;padding:0;overflow:hidden;border:1px solid #c9ddeb;border-radius:14px;background:#fff;color:#204765;box-shadow:0 22px 65px rgba(15,39,66,.25)}
+.mortgage-edit-modal svg{display:block;width:20px;height:20px;flex-shrink:0}
+.mortgage-edit-heading{display:flex;align-items:center;gap:16px;flex-shrink:0;padding:22px 24px;border-bottom:1px solid #dceaf6;background:linear-gradient(115deg,#fff,#f4f9fd)}
+.mortgage-edit-modal .mortgage-edit-badge{display:flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;height:48px;border-radius:50%;background:#e0f0ff;color:#0878c7}
+.mortgage-edit-badge svg{width:26px;height:26px}
+.mortgage-edit-modal h2{margin:0;color:#092445;font-size:24px;line-height:1.25;font-weight:750}
+.mortgage-edit-modal p{margin:6px 0 0;color:#6b86a3;font-size:14px;line-height:1.4}
+.mortgage-edit-modal .mortgage-edit-close{display:flex;align-items:center;justify-content:center;flex:0 0 36px;width:36px;height:36px;margin-left:auto;padding:8px;border:0;border-radius:50%;background:#e3f1ff;color:#1269ab;cursor:pointer}
+.mortgage-edit-body{min-height:0;overflow-y:auto}
+.mortgage-edit-fields{display:grid;gap:20px;padding:24px}
+.mortgage-edit-modal .mortgage-edit-field{display:block;min-width:0;margin:0;color:#204765;font-size:14px;font-weight:700}
+.mortgage-edit-required{color:#ef4444;margin-left:2px}
+.mortgage-edit-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+.mortgage-edit-control{display:flex;align-items:stretch;min-height:44px;margin-top:8px;border:1px solid #c8e0f4;border-radius:9px;background:#fbfdff;overflow:hidden}
+.mortgage-edit-control:focus-within{border-color:#268bda;box-shadow:0 0 0 2px #e4f2fd}
+.mortgage-edit-prefix{display:flex;align-items:center;justify-content:center;flex:0 0 42px;border-right:1px solid #dceaf6;background:#f1f7fc;color:#22618d}
+.mortgage-edit-modal .mortgage-edit-control input,.mortgage-edit-modal .mortgage-edit-control select{box-sizing:border-box;width:100%;min-width:0;height:44px;margin:0;padding:0 12px;border:0;border-radius:0;outline:none;background-color:transparent;color:#204765;font:inherit;font-size:14px;font-weight:650;box-shadow:none}
+.mortgage-edit-control>.custom-select{flex:1;min-width:0}
+.mortgage-edit-control .custom-select-add{padding:4px 8px 8px}
+.mortgage-edit-control .custom-select-add input{border:1px solid #c8e0f4;border-radius:6px;padding:0 8px}
+.mortgage-edit-history{padding:20px 16px;border-top:1px solid #dceaf6}
+.mortgage-edit-history-card{padding:18px;border:1px solid #e1edf8;border-radius:10px;background:#f3f8fd}
+.mortgage-edit-history-heading{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.mortgage-edit-modal h3{margin:0;font-size:20px;line-height:1.25;color:#092445}
+.mortgage-edit-history-heading p{font-size:13px}
+.mortgage-edit-count{margin-left:auto;padding:8px 12px;border-radius:20px;background:#e0f0ff;color:#1a6396;font-size:12px;font-weight:700;white-space:nowrap}
+.mortgage-edit-history-table{overflow:auto;border:1px solid #cce0f1;border-radius:9px;background:#fff}
+.mortgage-edit-history-table table{width:100%;border-collapse:collapse}
+.mortgage-edit-history-table th{padding:13px 16px;background:#195682;color:#fff;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase}
+.mortgage-edit-history-table td{padding:14px 16px;border-bottom:1px solid #e3edf6;color:#345b7d;font-size:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mortgage-edit-history-table tbody tr:last-child td{border-bottom:0}
+.mortgage-edit-footer{display:flex;align-items:center;justify-content:center;gap:12px;flex-shrink:0;padding:20px 24px;border-top:1px solid #dceaf6;background:#fbfdff}
+.mortgage-edit-modal .mortgage-edit-footer button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:116px;height:46px;margin:0;padding:0 18px;border:1px solid #268bda;border-radius:8px;background:#fff;color:#0878c7;font:inherit;font-size:16px;font-weight:750;cursor:pointer}
+.mortgage-edit-modal .mortgage-edit-footer .mortgage-edit-save{background:#0878cd;border-color:#0878cd;color:#fff;box-shadow:0 3px 8px #0878cd19}
+.mortgage-edit-footer button:disabled{opacity:.65;cursor:wait}
+.mortgage-edit-modal button:focus-visible{outline:2px solid #268bda;outline-offset:3px}
+@media(max-width:520px){.mortgage-edit-heading{padding:18px 16px;gap:10px}.mortgage-edit-modal h2{font-size:20px}.mortgage-edit-heading p{font-size:12px}.mortgage-edit-heading>.mortgage-edit-badge{flex-basis:38px;width:38px;height:38px}.mortgage-edit-fields{padding:20px 16px;gap:16px}.mortgage-edit-pair{gap:12px}.mortgage-edit-prefix{flex-basis:32px}.mortgage-edit-history{padding:16px 12px}.mortgage-edit-history-card{padding:12px}.mortgage-edit-history-heading{gap:10px;flex-wrap:wrap}.mortgage-edit-modal h3{font-size:18px}.mortgage-edit-count{padding:6px 9px}.mortgage-edit-footer{padding:16px 12px;gap:8px}.mortgage-edit-modal .mortgage-edit-footer button{min-width:0;flex:1;padding:0 10px;font-size:14px;gap:6px}}

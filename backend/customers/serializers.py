@@ -10,6 +10,12 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("id", "customer_code", "created_at", "updated_at", "role_display")
 
+    def to_internal_value(self, data):
+        if data.get("dob") == "":
+            data = data.copy()
+            data["dob"] = None
+        return super().to_internal_value(data)
+
     def validate_primary_mobile(self, value):
         if not value.isdigit() or len(value) != 10:
             raise serializers.ValidationError("Phone number must contain exactly 10 digits.")
@@ -70,6 +76,8 @@ class CustomerSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        if not attrs.get("country", getattr(self.instance, "country", "")):
+            attrs["country"] = "India"
         if not self.partial:
             required = {
                 "full_name": "Customer name is required.",

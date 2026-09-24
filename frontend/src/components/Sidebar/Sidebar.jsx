@@ -5,7 +5,7 @@ import AdminMenu from "./AdminMenu";
 
 // Keep navigation aligned with the finalized business workflow.
 const groups = [
-  ["masters", "MASTERS", [["Add Customer", "/customers/new"], ["Chit Group", "/chit-groups"], ["Holiday Master", "/holiday-master"], ["Loan Type", "/loan-types"]]],
+  ["masters", "MASTERS", [["Add Customer", "/customers/new"], ["Chit Group", "/chit-groups"], ["Mortgage Master", "/mortgage-master"], ["Holiday Master", "/holiday-master"], ["Loan Type", "/loan-types"]]],
   ["customers", "CUSTOMERS", [["Customer List", "/customers"]]],
   ["transactions", "TRANSACTIONS", [["Loan Applications", "/loan-application"], ["Collection Entry", "/collection-entry"]]],
   ["reports", "REPORTS", [["Today Collections", "/today-collection"], ["Active Loan", "/active-loans"], ["Cash Ledger", "/reports/cash-balance"], ["Bank Ledger", "/reports/bank-balance"], ["Pending & Outstanding", "/reports/collections/pending"], ["Collection History", "/reports/collections/history"]]],
