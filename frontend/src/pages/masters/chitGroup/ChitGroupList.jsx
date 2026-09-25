@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { actionToast } from "../../../utils/actionToast";
+import apiErrorMessage from "../../../utils/apiErrorMessage";
 import styles from "./ChitGroupList.module.css";
 import { formatINR } from "../../../utils/currency";
 import ListPageToolbar from "../../../components/ListPageToolbar";
@@ -49,9 +51,11 @@ export default function ChitGroupList({ api, auth, go }) {
     try {
       await api.delete(`/finance/chit-groups/${confirmItem.id}/`, auth);
       setConfirmItem(null);
+      actionToast("Chit Group deleted successfully.");
       load();
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || "Unable to delete Chit Group.");
+      setConfirmItem(null);
+      actionToast(apiErrorMessage(requestError, "Unable to delete Chit Group."), false);
     }
   };
 

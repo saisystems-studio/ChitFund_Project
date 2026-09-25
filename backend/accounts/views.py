@@ -5,9 +5,35 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-from .models import UserProfile
-from .serializers import LoginSerializer, UserAccountSerializer
+from rest_framework.views import APIView
+from .models import CompanyProfile, UserProfile
+from .serializers import CompanyProfileSerializer, LoginSerializer, UserAccountSerializer
 from .temporary_auth import temporary_credentials_match, temporary_user_data, issue_temporary_token
+
+
+PROFILE_FIELDS = ("company_name", "logo", "address", "phone", "email")
+
+
+def company_profile_data(profile):
+    return {field: getattr(profile, field) if profile else "" for field in PROFILE_FIELDS}
+
+
+class CompanyProfileView(APIView):
+    def get_permissions(self):
+        return [AllowAny()] if self.request.method in ("GET", "HEAD", "OPTIONS") else [IsAdminUser()]
+
+    def get(self, request):
+        profile = CompanyProfile.objects.filter(pk=1).first()
+        return Response(company_profile_data(profile), headers={"Cache-Control": "no-store"})
+
+    def patch(self, request):
+        serializer = CompanyProfileSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        values = dict(serializer.validated_data)
+        if values.pop("remove_logo", False):
+            values["logo"] = ""
+        profile, _ = CompanyProfile.objects.update_or_create(pk=1, defaults=values)
+        return Response(company_profile_data(profile), headers={"Cache-Control": "no-store"})
 
 @api_view(["POST"])
 @permission_classes([AllowAny])

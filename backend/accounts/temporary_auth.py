@@ -1,4 +1,5 @@
 """Temporary development authentication; never persists a user or token."""
+
 import secrets
 
 from django.conf import settings

@@ -6,7 +6,6 @@ function Icon({ name }) {
   const paths = {
     product: <><path d="m12 3 9 5v9l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v9M7.5 5.5l9 5"/></>,
     tag: <><path d="M3 3h8l10 10-8 8L3 11V3Z"/><circle cx="7.5" cy="7.5" r="1"/></>,
-    quantity: <path d="m9 3-2 18M17 3l-2 18M4 9h17M3 15h17"/>,
     unit: <><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></>,
     rate: <path d="M6 4h12M6 8h12M8 4c8 0 8 9 0 9H6l10 8"/>,
     calendar: <><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 11h16"/></>,
@@ -18,8 +17,8 @@ function Icon({ name }) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
-function Field({ label, icon, children }) {
-  return <label className="mortgage-edit-field"><span>{label} <b className="mortgage-edit-required">*</b></span><div className="mortgage-edit-control"><span className="mortgage-edit-prefix"><Icon name={icon}/></span>{children}</div></label>;
+function Field({ label, icon, required, children }) {
+  return <label className="mortgage-edit-field"><span>{label}{required && <> <b className="mortgage-edit-required">*</b></>}</span><div className="mortgage-edit-control"><span className="mortgage-edit-prefix"><Icon name={icon}/></span>{children}</div></label>;
 }
 
 export default function MortgageEditModal({ form, update, units, addUnit, resetVersion, saving, onSave, onReset, onClose }) {
@@ -33,11 +32,8 @@ export default function MortgageEditModal({ form, update, units, addUnit, resetV
       </header>
       <div className="mortgage-edit-body">
         <div className="mortgage-edit-fields">
-          <Field label="Product Name" icon="tag"><input autoFocus value={form.product_name} onChange={event => update("product_name", event.target.value)}/></Field>
-          <div className="mortgage-edit-pair">
-            <Field label="QTY" icon="quantity"><input type="number" required={!form.id} step="0.001" inputMode="decimal" value={form.quantity ?? ""} onChange={event => update("quantity", event.target.value)}/></Field>
-            <Field label="Unit" icon="unit"><CustomSelect key={`${form.id}-${resetVersion}`} label="unit" maxLength={50} value={form.unit} options={units} onChange={value => update("unit", value)} onAdd={addUnit}/></Field>
-          </div>
+          <Field label="Product Name" icon="tag" required><input autoFocus value={form.product_name} onChange={event => update("product_name", event.target.value)}/></Field>
+          <Field label="Unit" icon="unit" required><CustomSelect key={`${form.id}-${resetVersion}`} label="unit" maxLength={50} value={form.unit} options={units} onChange={value => update("unit", value)} onAdd={addUnit}/></Field>
           <Field label="Current Rate" icon="rate"><input type="number" min="0" step="0.01" inputMode="decimal" value={form.current_rate} onChange={event => update("current_rate", event.target.value)}/></Field>
           <Field label="Date" icon="calendar"><input type="date" required value={form.rate_date || ""} onChange={event => update("rate_date", event.target.value)}/></Field>
         </div>

@@ -8,6 +8,7 @@ from django.db.models.functions import Lower
 from .models import CountryMaster, Customer, DistrictMaster, StateMaster
 from .serializers import CustomerSerializer
 from accounts.permissions import CanWriteFinanceData
+from finance.delete_utils import delete_response
 
 class CustomerViewSet(viewsets.ModelViewSet):
     pagination_class = None
@@ -59,12 +60,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         return queryset.order_by("full_name")
 
     def destroy(self, request, *args, **kwargs):
-        customer = self.get_object()
-        try:
-            customer.delete()
-        except ProtectedError:
-            return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return delete_response(self.get_object(), "customer")
 
 
 @api_view(["GET"])

@@ -310,7 +310,8 @@ class LedgerSerializer(AllFields):
 
 
 class PaymentEntrySerializer(AllFields):
-    ledger_name = serializers.CharField(source='ledger.name', read_only=True)
+    ledger_name = serializers.CharField(source='ledger.name', read_only=True, default=None)
+    account_name = serializers.CharField(source='account.name', read_only=True, default=None)
 
     class Meta(AllFields.Meta):
         model = PaymentEntry
@@ -327,6 +328,14 @@ class PaymentEntrySerializer(AllFields):
                     'NEFT': ('transaction_utr', 'bank_name')}.get(mode, ())
         errors = {key: 'This field is required.' for key in required
                   if not attrs.get(key, getattr(self.instance, key, None))}
+        current = lambda key: attrs.get(key, getattr(self.instance, key, None))
+        if not current('ledger') and not current('ledger_group'):
+            errors['ledger_group'] = 'Select a Ledger.'
+        if not current('accounts') and not current('account'):
+            errors['account'] = 'Select an Account.'
+        account = attrs.get('account')
+        if account is not None and account.group not in PaymentEntry.ACCOUNT_GROUPS:
+            errors['account'] = 'Select a Cash or Bank account.'
         if errors:
             raise serializers.ValidationError(errors)
         return attrs

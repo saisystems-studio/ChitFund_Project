@@ -14,3 +14,14 @@
 .payment-preview .preview-party strong,.payment-preview .current-installment>span,.payment-preview .preview-lines b,.payment-preview .preview-allocation b,.payment-preview .preview-total strong{white-space:nowrap}
 .payment-preview .preview-lines span,.payment-preview .preview-allocation span,.payment-preview .preview-total,.payment-preview .preview-status{gap:16px}
 @media(max-width:900px){.collection-entry-layout{grid-template-columns:1fr}.payment-preview{width:100%;min-width:0;max-width:none}}
+.adjustment-fields.ledger-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:800px){.adjustment-fields.ledger-fields{grid-template-columns:1fr}}
+.entry-label>i{margin-left:3px;color:#d94a57;font-style:normal}
+.payment-mode-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 15px;align-items:start}
+.payment-mode-row:has(>.dynamic-fields>:nth-child(2)){grid-template-columns:repeat(3,minmax(0,1fr))}
+.payment-mode-row:has(>.dynamic-fields>:nth-child(3)){grid-template-columns:repeat(4,minmax(0,1fr))}
+.payment-mode-row>.dynamic-fields{display:contents}
+@media(max-width:1100px){.payment-mode-row,.payment-mode-row:has(>.dynamic-fields>:nth-child(2)),.payment-mode-row:has(>.dynamic-fields>:nth-child(3)){grid-template-columns:repeat(2,minmax(0,1fr))}}
+.main-content:has(>.collection-entry-page){padding-top:16px!important;padding-bottom:16px!important;overflow-y:auto}
+.collection-entry-heading{align-items:center}
+.collection-entry-heading .system-date{margin:0}

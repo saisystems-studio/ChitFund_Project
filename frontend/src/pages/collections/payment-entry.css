@@ -51,3 +51,47 @@
 .pe-actions .pe-save:disabled{opacity:.6;cursor:not-allowed}
 
 @media(max-width:760px){.pe-head{flex-direction:column;align-items:stretch}.pe-date{min-width:0}.pe-fields,.pe-fields .dynamic-fields{grid-template-columns:1fr}.pe-actions button{flex:1;min-width:0;padding:0 10px}}
+.collection-entry-heading .pe-breadcrumb{margin:0}
+.payment-entry-page .collection-entry-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+.payment-entry-page .collection-entry-fields>.entry-notes{grid-column:1/-1}
+@media(max-width:1100px){.payment-entry-page .collection-entry-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.payment-entry-page .pe-breadcrumb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.payment-entry-page .pe-history{margin-top:14px}
+.pe-history h2{margin:0 0 10px;color:#173f65;font-size:15px;font-weight:800}
+.pe-history-wrap{overflow:auto;border:1px solid #dce8f5;border-radius:9px}
+.pe-history table{width:100%;min-width:760px;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.pe-history th,.pe-history td{padding:9px 12px;border-bottom:1px solid #edf3f8;font-size:12.5px;text-align:left;white-space:nowrap}
+.pe-history tbody tr:last-child td{border-bottom:0}
+.pe-history .pe-amount{text-align:right}
+.pe-history .pe-voucher-col{width:84px;text-align:center}
+.pe-history-empty{padding:22px;color:#7892a8;font-size:13px;text-align:center}
+.pe-history .report-receipt-actions{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.pe-history .report-receipt-button{display:inline-grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid #cfe0ef;border-radius:7px;background:#fff;color:#176db3;cursor:pointer}
+.pe-history .report-receipt-button:hover:not(:disabled){background:#edf6ff;border-color:#8ec5f5}
+.pe-history .report-receipt-button:disabled{opacity:.55;cursor:wait}
+.pe-history .report-receipt-button:focus-visible{outline:2px solid #268bda;outline-offset:2px}
+.pe-history .report-receipt-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pe-history .report-receipt-button.receipt-pdf{color:#c2410c}
+.pe-history .report-receipt-spinner{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pe-voucher-spin .7s linear infinite}
+@keyframes pe-voucher-spin{to{transform:rotate(360deg)}}
+[data-theme="dark"] .main-content .pe-history .report-receipt-button{background:#202c38;border-color:#435363;color:#8ec5f5}
+/* Compact layout (Payment Entry only) */
+.payment-entry-page .collection-entry-card{padding:16px 18px}
+.payment-entry-page .collection-entry-fields{gap:14px 15px}
+.payment-entry-page .collection-entry-fields .entry-field{margin:0}
+.payment-entry-page .payment-mode-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 15px}
+.payment-entry-page .payment-mode-row:has(>.dynamic-fields>:nth-child(3)){grid-template-columns:repeat(4,minmax(0,1fr))}
+.payment-entry-page .notes-wrap textarea{height:58px;min-height:58px}
+.payment-entry-page .collection-entry-actions{justify-content:center;margin-top:14px;padding-top:14px}
+.payment-entry-page .pe-history{margin-top:12px;padding:14px 18px 16px}
+.payment-entry-page .pe-history h2{margin:0 0 10px;font-size:14px}
+.payment-entry-page .pe-history th{height:36px;padding:0 12px;font-size:11px;letter-spacing:.03em;vertical-align:middle}
+.payment-entry-page .pe-history td{height:40px;padding:0 12px;vertical-align:middle}
+.payment-entry-page .pe-history tbody tr:hover{background:#f7fbff}
+.payment-entry-page .pe-history th:first-child,.payment-entry-page .pe-history td:first-child{width:52px;text-align:center}
+.payment-entry-page .pe-history .pe-voucher-col{width:88px;padding:0 8px}
+.payment-entry-page .pe-history .report-receipt-button{width:28px;height:28px}
+.payment-entry-page .pe-history .report-receipt-button svg{width:15px;height:15px}
+[data-theme="dark"] .main-content .payment-entry-page .pe-history tbody tr:hover{background:#202d3a}
+@media(max-width:1100px){.payment-entry-page .payment-mode-row,.payment-entry-page .payment-mode-row:has(>.dynamic-fields>:nth-child(3)){grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.payment-entry-page .collection-entry-card,.payment-entry-page .pe-history{padding:12px}}

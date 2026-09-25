@@ -10,7 +10,6 @@
 .mortgage-edit-fields{display:grid;gap:20px;padding:24px}
 .mortgage-edit-modal .mortgage-edit-field{display:block;min-width:0;margin:0;color:#204765;font-size:14px;font-weight:700}
 .mortgage-edit-required{color:#ef4444;margin-left:2px}
-.mortgage-edit-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
 .mortgage-edit-control{display:flex;align-items:stretch;min-height:44px;margin-top:8px;border:1px solid #c8e0f4;border-radius:9px;background:#fbfdff;overflow:hidden}
 .mortgage-edit-control:focus-within{border-color:#268bda;box-shadow:0 0 0 2px #e4f2fd}
 .mortgage-edit-prefix{display:flex;align-items:center;justify-content:center;flex:0 0 42px;border-right:1px solid #dceaf6;background:#f1f7fc;color:#22618d}
@@ -34,4 +33,4 @@
 .mortgage-edit-modal .mortgage-edit-footer .mortgage-edit-save{background:#0878cd;border-color:#0878cd;color:#fff;box-shadow:0 3px 8px #0878cd19}
 .mortgage-edit-footer button:disabled{opacity:.65;cursor:wait}
 .mortgage-edit-modal button:focus-visible{outline:2px solid #268bda;outline-offset:3px}
-@media(max-width:520px){.mortgage-edit-heading{padding:18px 16px;gap:10px}.mortgage-edit-modal h2{font-size:20px}.mortgage-edit-heading p{font-size:12px}.mortgage-edit-heading>.mortgage-edit-badge{flex-basis:38px;width:38px;height:38px}.mortgage-edit-fields{padding:20px 16px;gap:16px}.mortgage-edit-pair{gap:12px}.mortgage-edit-prefix{flex-basis:32px}.mortgage-edit-history{padding:16px 12px}.mortgage-edit-history-card{padding:12px}.mortgage-edit-history-heading{gap:10px;flex-wrap:wrap}.mortgage-edit-modal h3{font-size:18px}.mortgage-edit-count{padding:6px 9px}.mortgage-edit-footer{padding:16px 12px;gap:8px}.mortgage-edit-modal .mortgage-edit-footer button{min-width:0;flex:1;padding:0 10px;font-size:14px;gap:6px}}
+@media(max-width:520px){.mortgage-edit-heading{padding:18px 16px;gap:10px}.mortgage-edit-modal h2{font-size:20px}.mortgage-edit-heading p{font-size:12px}.mortgage-edit-heading>.mortgage-edit-badge{flex-basis:38px;width:38px;height:38px}.mortgage-edit-fields{padding:20px 16px;gap:16px}.mortgage-edit-prefix{flex-basis:32px}.mortgage-edit-history{padding:16px 12px}.mortgage-edit-history-card{padding:12px}.mortgage-edit-history-heading{gap:10px;flex-wrap:wrap}.mortgage-edit-modal h3{font-size:18px}.mortgage-edit-count{padding:6px 9px}.mortgage-edit-footer{padding:16px 12px;gap:8px}.mortgage-edit-modal .mortgage-edit-footer button{min-width:0;flex:1;padding:0 10px;font-size:14px;gap:6px}}
