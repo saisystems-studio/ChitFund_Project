@@ -15,7 +15,8 @@ from accounts.permissions import CanWriteFinanceData
 from .models import (LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
     Mortgage, MortgageUnit, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings, CollectionTransaction, AdjustmentTypeMaster,
-    Ledger, PaymentEntry, MortgageLoanHistory)
+    Ledger, PaymentEntry, MortgageLoanHistory, CollectionAllocation)
+from .delete_utils import delete_response
 from .serializers import (LoanTypeSerializer, LoanInstallmentSerializer, ChitGroupSerializer,
     ChitGroupInstallmentDetailSerializer, MortgageSerializer, CustomerLoanDetailsSerializer, InterestDetailsSerializer,
     CustomerChitDetailsSerializer, CustomerLoanInstallmentDetailsSerializer,
@@ -51,17 +52,16 @@ class FinanceViewSet(viewsets.ModelViewSet):
     permission_classes = [CanWriteFinanceData]
     pagination_class = FinancePagination
 
+    delete_label = "record"
+
     def destroy(self, request, *args, **kwargs):
-        try:
-            self.get_object().delete()
-        except ProtectedError:
-            return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
-        return Response(status=204)
+        return delete_response(self.get_object(), self.delete_label)
 
 
 class LedgerViewSet(FinanceViewSet):
     queryset = Ledger.objects.all()
     serializer_class = LedgerSerializer
+    delete_label = "ledger"
     pagination_class = None
     search_fields = ('name', 'group')
 
@@ -69,6 +69,7 @@ class LedgerViewSet(FinanceViewSet):
 class PaymentEntryViewSet(FinanceViewSet):
     queryset = PaymentEntry.objects.select_related('ledger')
     serializer_class = PaymentEntrySerializer
+    delete_label = "payment entry"
     search_fields = ('ledger__name',)
 
 
@@ -116,13 +117,10 @@ class LoanTypeViewSet(FinanceViewSet):
         item = self.get_object()
         if item.name.strip().lower() in {"chit", "interest", "mortgage"}:
             return Response({"detail": "Default loan types cannot be deleted."}, status=400)
-        try:
-            item.delete()
-        except ProtectedError:
-            return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
-        return Response(status=204)
+        return delete_response(item, "loan type")
 
 class LoanInstallmentViewSet(FinanceViewSet):
+    delete_label = "collection type"
     pagination_class = None
     queryset = LoanInstallment.objects.all(); serializer_class = LoanInstallmentSerializer
 
@@ -153,12 +151,7 @@ class MortgageViewSet(FinanceViewSet):
             queryset = queryset.filter(Q(product_name__icontains=search) | Q(unit__icontains=search))
         return queryset.filter(is_active=True) if self.action == "list" else queryset
 
-    def destroy(self, request, *args, **kwargs):
-        try:
-            self.get_object().delete()
-        except ProtectedError:
-            return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
-        return Response(status=204)
+    delete_label = "mortgage product"
 
 
 class ChitGroupViewSet(FinanceViewSet):
@@ -169,12 +162,7 @@ class ChitGroupViewSet(FinanceViewSet):
         # Active groups first; deactivated groups stay listed at the bottom.
         return super().get_queryset().order_by("-is_active", "id")
 
-    def destroy(self, request, *args, **kwargs):
-        try:
-            self.get_object().delete()
-        except ProtectedError:
-            return Response({"detail": "This record is already in use and cannot be deleted."}, status=409)
-        return Response(status=204)
+    delete_label = "chit group"
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -222,6 +210,7 @@ class ChitGroupInstallmentDetailViewSet(FinanceViewSet):
 
 class CustomerLoanDetailsViewSet(FinanceViewSet):
     queryset = CustomerLoanDetails.objects.select_related("customer", "loan_type", "chit_details__chit_group", "interest_details", "mortgage_details__product").prefetch_related("installment_details"); serializer_class = CustomerLoanDetailsSerializer
+    delete_label = "loan"
 
     @action(detail=False, methods=['get'], url_path='application-date')
     def application_date(self, request):
@@ -499,6 +488,23 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
             payment_date = date.fromisoformat(str(request.data.get("payment_date")))
         except (InvalidOperation, TypeError, ValueError):
             return Response({"detail": "Enter a valid payment date and amount."}, status=400)
+        account = None
+        if request.data.get("account_id"):
+            account = Ledger.objects.filter(pk=request.data.get("account_id"), group__in=("Cash in Hand", "Bank Accounts")).first() if str(request.data.get("account_id")).isdigit() else None
+            if account is None:
+                return Response({"detail": "Select a valid Cash or Bank account."}, status=400)
+        # The Ledger entry is recorded alongside the collection; it never changes installment dues or loan outstanding.
+        ledger_group = str(request.data.get("ledger_group") or "").strip()
+        try:
+            ledger_amount = Decimal(str(request.data.get("ledger_amount") or "0"))
+        except (InvalidOperation, TypeError, ValueError):
+            return Response({"detail": "Enter a valid Ledger Amount."}, status=400)
+        if ledger_amount < 0:
+            return Response({"detail": "Ledger Amount cannot be negative."}, status=400)
+        if ledger_group and ledger_group not in dict(CollectionTransaction.LEDGER_GROUPS):
+            return Response({"detail": "Select a valid Ledger."}, status=400)
+        if ledger_amount > 0 and not ledger_group:
+            return Response({"detail": "Select a Ledger for the Ledger Amount."}, status=400)
         loan = installment.loan
         all_rows = list(loan.installment_details.all().order_by("due_date", "installment_number"))
         remaining_total = sum((max(Decimal("0.00"), row.installment_amount - row.paid_amount) for row in all_rows), Decimal("0.00"))
@@ -507,6 +513,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
         if received > remaining_total + penalty - discount:
             return Response({"detail": f"Customer Paid Amount exceeds the remaining loan outstanding by {received - remaining_total:.2f}."}, status=400)
         allocations = []
+        allocated_rows = []
         remaining = received
         for row in all_rows:
             balance = max(Decimal("0.00"), row.installment_amount - row.paid_amount)
@@ -517,6 +524,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
             remaining -= applied
             row.paid_date = payment_date
             allocations.append({"installment_number": row.installment_number, "amount": applied})
+            allocated_rows.append((row, applied))
         if allocations and penalty:
             first = next(row for row in all_rows if row.installment_number == allocations[0]["installment_number"])
             first.penalty_amount += penalty
@@ -524,7 +532,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
             first = next(row for row in all_rows if row.installment_number == allocations[0]["installment_number"])
             details = request.data
             cheque_date = details.get("cheque_date") or None
-            CollectionTransaction.objects.create(
+            collection = CollectionTransaction.objects.create(
                 installment=first, loan=loan, customer=loan.customer,
                 collection_amount=received, collection_date=payment_date,
                 payment_mode=details.get("payment_mode", "Cash"),
@@ -532,8 +540,10 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
                 remarks=details.get("notes", ""), upi_id=details.get("upi_id", ""),
                 bank_name=details.get("bank_name", ""), cheque_number=details.get("cheque_number", ""),
                 cheque_date=cheque_date, adjustment_type=details.get("adjustment_type", ""),
-                adjustment_amount=penalty, discount_amount=discount,
+                adjustment_amount=penalty, discount_amount=discount, account=account,
+                ledger_group=ledger_group, ledger_amount=ledger_amount,
             )
+            CollectionAllocation.objects.bulk_create([CollectionAllocation(transaction=collection, installment=row, amount=applied) for row, applied in allocated_rows])
         for row in all_rows:
             row.outstanding_amount = max(Decimal("0.00"), row.installment_amount + row.penalty_amount - row.paid_amount)
             row.payment_status = "PAID" if row.outstanding_amount <= 0 else "PARTIAL" if row.paid_amount > 0 else "OVERDUE" if row.due_date < payment_date else "PENDING"
@@ -552,12 +562,7 @@ class HolidayMasterViewSet(FinanceViewSet):
     pagination_class = None
     queryset = HolidayMaster.objects.all(); serializer_class = HolidayMasterSerializer
 
-    def destroy(self, request, *args, **kwargs):
-        try:
-            self.get_object().delete()
-        except ProtectedError:
-            return Response({"detail": "This holiday is in use and cannot be deleted."}, status=409)
-        return Response(status=204)
+    delete_label = "holiday"
 
 
 class LoanHolidaySettingsViewSet(FinanceViewSet):
@@ -824,7 +829,8 @@ def collections_create(request):
     payment_date = request.data.get("collection_date") or timezone.localdate()
     try: payment_date = date.fromisoformat(str(payment_date))
     except ValueError: return Response({"detail": "Collection date is invalid."}, status=400)
-    CollectionTransaction.objects.create(installment=installment, loan=installment.loan, customer=installment.loan.customer, collection_amount=amount, collection_date=payment_date, payment_mode=request.data.get("payment_mode", "Cash"), reference_no=request.data.get("reference_no", ""), remarks=request.data.get("remarks", ""))
+    collection = CollectionTransaction.objects.create(installment=installment, loan=installment.loan, customer=installment.loan.customer, collection_amount=amount, collection_date=payment_date, payment_mode=request.data.get("payment_mode", "Cash"), reference_no=request.data.get("reference_no", ""), remarks=request.data.get("remarks", ""))
+    CollectionAllocation.objects.create(transaction=collection, installment=installment, amount=amount)
     new_paid = paid + amount; new_balance = max(Decimal("0.00"), installment.installment_amount + installment.penalty_amount - new_paid)
     installment.paid_amount = new_paid; installment.outstanding_amount = new_balance; installment.paid_date = payment_date if new_balance <= 0 else installment.paid_date; installment.payment_status = "PAID" if new_balance <= 0 else "PARTIAL"; installment.save(update_fields=("paid_amount", "outstanding_amount", "paid_date", "payment_status", "modified_date"))
     return Response({"detail": f"{amount:.2f} collection saved successfully.", "balance": new_balance, "payment_status": installment.payment_status}, status=201)

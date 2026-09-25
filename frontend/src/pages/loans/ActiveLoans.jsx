@@ -5,6 +5,8 @@ import "./active-loans-popup-ui.css";
 import "./loan-detail-redesign.css";
 import { formatINR } from "../../utils/currency";
 import confirmDelete from "../../utils/confirmDelete";
+import { actionToast } from "../../utils/actionToast";
+import apiErrorMessage from "../../utils/apiErrorMessage";
 import PageBreadcrumb from "../../components/PageBreadcrumb";
 import RowActions from "../../components/RowActions";
 
@@ -41,7 +43,7 @@ export default function ActiveLoans({ api, auth, go }) {
   const visible = filtered.slice((page - 1) * pageSize, page * pageSize), pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const performance = items.reduce((all, row) => ({ count: all.count + 1, total: all.total + Number(row.total_amount || 0), outstanding: all.outstanding + Number(row.outstanding_amount || 0), overdue: all.overdue + ((row.status || "").toLowerCase() === "overdue" ? Number(row.next_due_amount || 0) : 0) }), { count: 0, total: 0, outstanding: 0, overdue: 0 });
   const viewLoan = async row => { try { const { data } = await api.get(`/finance/loans/${row.id}/`, auth); setDetail(data); } catch { setError("Unable to load loan details."); setDetail(row); } };
-  const deleteLoan = async row => { if (!await confirmDelete(`Delete loan ${row.doc_no || row.loan_no || "record"}?`)) return; try { await api.delete(`/finance/loans/${row.id}/`, auth); load(); } catch { setError("Unable to delete loan."); } };
+  const deleteLoan = async row => { if (!await confirmDelete(`Delete loan ${row.doc_no || row.loan_no || "record"}?`)) return; try { await api.delete(`/finance/loans/${row.id}/`, auth); actionToast("Loan deleted successfully."); load(); } catch (requestError) { actionToast(apiErrorMessage(requestError, "Unable to delete loan."), false); } };
   return <div className="active-loans-page">
     <PageBreadcrumb root="Transactions" current="Active Loans" onBack={() => go("/dashboard")} />
     <div className="active-loans-toolbar">

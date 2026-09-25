@@ -206,10 +206,25 @@ class CollectionTransaction(AuditModel):
     adjustment_type = models.CharField(max_length=100, blank=True, default="", db_column="AdjustmentType")
     adjustment_amount = models.DecimalField(**MONEY, db_column="AdjustmentAmount")
     discount_amount = models.DecimalField(**MONEY, db_column="DiscountAmount")
+    account = models.ForeignKey("Ledger", on_delete=models.PROTECT, null=True, blank=True, related_name="collection_transactions", db_column="AccountLedgerID")
+    LEDGER_GROUPS = [(name, name) for name in ("Sundry Debtors", "Sundry Creditors", "Indirect Expense", "Direct Expense", "Income")]
+    ledger_group = models.CharField(max_length=30, blank=True, default="", choices=LEDGER_GROUPS, db_column="LedgerGroup")
+    ledger_amount = models.DecimalField(**MONEY, db_column="LedgerAmount")
 
     class Meta:
         db_table = "CollectionTransaction_tbl"
         ordering = ("-collection_date", "-id")
+
+
+class CollectionAllocation(models.Model):
+    """How one collection was split across installments (used for receipts)."""
+    transaction = models.ForeignKey(CollectionTransaction, on_delete=models.CASCADE, related_name="allocations", db_column="CollectionTransactionID")
+    installment = models.ForeignKey(CustomerLoanInstallmentDetails, on_delete=models.PROTECT, related_name="collection_allocations", db_column="InstallmentID")
+    amount = models.DecimalField(**MONEY, db_column="Amount")
+
+    class Meta:
+        db_table = "CollectionAllocation_tbl"
+        ordering = ("id",)
 
 
 class AdjustmentTypeMaster(AuditModel):
@@ -294,8 +309,13 @@ class Ledger(AuditModel):
 
 class PaymentEntry(AuditModel):
     PAYMENT_MODES = [('Cash', 'Cash'), ('UPI', 'UPI'), ('Cheque', 'Cheque'), ('NEFT', 'NEFT/IMPS/RGST')]
-    ledger = models.ForeignKey(Ledger, on_delete=models.PROTECT, related_name='payments')
-    accounts = models.CharField(max_length=10, choices=[('Card', 'Card'), ('Credit', 'Credit')])
+    LEDGER_GROUPS = [(name, name) for name in ('Sundry Debtors', 'Sundry Creditors', 'Indirect Expense', 'Direct Expense', 'Income')]
+    ACCOUNT_GROUPS = ('Cash in Hand', 'Bank Accounts')
+    # ledger/accounts are kept for earlier entries; new entries use ledger_group and account.
+    ledger = models.ForeignKey(Ledger, on_delete=models.PROTECT, related_name='payments', null=True, blank=True)
+    accounts = models.CharField(max_length=10, choices=[('Card', 'Card'), ('Credit', 'Credit')], blank=True, default='')
+    ledger_group = models.CharField(max_length=30, choices=LEDGER_GROUPS, blank=True, default='')
+    account = models.ForeignKey(Ledger, on_delete=models.PROTECT, related_name='account_payments', null=True, blank=True)
     amount = models.DecimalField(max_digits=18, decimal_places=2)
     payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODES)
     date = models.DateField(default=timezone.localdate)
@@ -304,6 +324,7 @@ class PaymentEntry(AuditModel):
     bank_name = models.CharField(max_length=150, blank=True)
     cheque_number = models.CharField(max_length=50, blank=True)
     cheque_date = models.DateField(null=True, blank=True)
+    notes = models.CharField(max_length=500, blank=True, default='')
 
     class Meta:
         ordering = ('-date', '-id')

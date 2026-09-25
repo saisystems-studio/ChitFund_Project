@@ -63,3 +63,7 @@
     grid-template-columns: 1fr !important;
   }
 }
+.collection-dashboard-toolbar>.today-report-title{display:flex;align-items:center;gap:8px;flex:0 0 auto;min-width:0;white-space:nowrap}
+.today-report-title h1{margin:0;color:#173f65;font-size:18px;line-height:1.2;font-weight:800}
+@media(max-width:600px){.today-report-title h1{font-size:16px}}
+[data-theme="dark"] .today-report-title h1{color:#f4f7fa}

@@ -3,6 +3,7 @@ import RowActions from "../../components/RowActions";
 import confirmDelete from "../../utils/confirmDelete";
 import { formatINR } from "../../utils/currency";
 import { actionToast } from "../../utils/actionToast";
+import apiErrorMessage from "../../utils/apiErrorMessage";
 import "../collections/collection-entry.css";
 import "./ledger-master.css";
 
@@ -34,8 +35,8 @@ export default function LedgerMaster({ api, auth, go }) {
   };
   const remove = async item => {
     if (!await confirmDelete("Delete this ledger?")) return;
-    try { await api.delete(`/finance/ledgers/${item.id}/`, auth); if (editing === item.id) reset(); load(); }
-    catch (requestError) { setError(requestError.response?.data?.detail || "Unable to delete ledger."); }
+    try { await api.delete(`/finance/ledgers/${item.id}/`, auth); if (editing === item.id) reset(); setSuccess("Ledger deleted successfully."); load(); }
+    catch (requestError) { setError(apiErrorMessage(requestError, "Unable to delete ledger.")); }
   };
   const needle = search.trim().toLowerCase();
   const filtered = items.filter(item => !needle || `${item.name} ${item.group}`.toLowerCase().includes(needle));
