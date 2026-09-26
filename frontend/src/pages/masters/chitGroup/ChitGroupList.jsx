@@ -1,8 +1,9 @@
+import { useCompanyProfile } from "../../../components/CompanyProfileContext";
 import { useEffect, useState } from "react";
 import { actionToast } from "../../../utils/actionToast";
 import apiErrorMessage from "../../../utils/apiErrorMessage";
 import styles from "./ChitGroupList.module.css";
-import { formatINR } from "../../../utils/currency";
+import { formatINR, formatINRNumber } from "../../../utils/currency";
 import ListPageToolbar from "../../../components/ListPageToolbar";
 import "./chit-group-list-saas.css";
 import "./chit-group-list-pagination.css";
@@ -13,11 +14,18 @@ import { downloadChitPdf, dateLabel } from "../../../utils/chitPdf";
 
 const money = formatINR;
 const durationLabel = value => value === "DAY" ? "Days" : value === "MONTH" ? "Months" : "Years";
+const collectionDayLabel = value => {
+  const day = Number(String(value || "").slice(0, 10).split("-")[2]);
+  if (!day) return "-";
+  const suffix = day % 100 >= 11 && day % 100 <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" }[day % 10] || "th");
+  return `${day}${suffix}`;
+};
 const EditIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="m4 16-.7 4 4-.7L18.8 7.8a2.1 2.1 0 0 0-3-3L4 16Z"/><path d="m14.5 6.5 3 3"/></svg>;
 const TrashIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>;
 const PowerIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2v10" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/><path d="M7.05 5.8a8 8 0 1 0 9.9 0" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/></svg>;
 
 export default function ChitGroupList({ api, auth, go }) {
+  const { profile } = useCompanyProfile();
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -86,11 +94,13 @@ export default function ChitGroupList({ api, auth, go }) {
 
     {selected && <div className={styles.modalBackdrop} onMouseDown={event => event.target === event.currentTarget && setSelected(null)}><div className={styles.detailModal} role="dialog" aria-modal="true">
       <header><h2>Chit Group Details</h2><div className="detail-modal-actions"><button className={styles.closeButton} onClick={() => setSelected(null)}>×</button></div></header>
-      <div className="detailsRow"><div>Group Code<br/><b>{selected.code || "-"}</b></div><div>Group Name<br/><b>{selected.name || "-"}</b></div><div>Duration Type<br/><b>{durationLabel(selected.duration_type)}</b></div><div>Duration<br/><b>{selected.duration ?? "-"}</b></div><div>Start Date<br/><b>{dateLabel(selected.start_date)}</b></div><div>End Date<br/><b>{dateLabel(selected.end_date)}</b></div><div>Collection Date<br/><b>{dateLabel(selected.collection_date)}</b></div><div>Status<br/><b>{selected.is_active ? "Active" : "Inactive"}</b></div></div>
+      <div className="detailsRow"><div>Group Code : <b>{selected.code || "-"}</b></div><div>Group Name : <b>{selected.name || "-"}</b></div><div>Duration : <b>{selected.duration != null ? `${selected.duration} ${durationLabel(selected.duration_type)}` : "-"}</b></div><div>Chit Amount : <b>{selected.total_amount == null && selected.grand_total == null ? "-" : `INR ${formatINRNumber(selected.total_amount ?? selected.grand_total)}`}</b></div><div>Start Date : <b>{dateLabel(selected.start_date)}</b></div><div>Collection Date : <b>{collectionDayLabel(selected.collection_date)}</b></div></div>
       {(() => { const allInstallments = [...(selected.installments || selected.template_installments || [])].sort((a, b) => (a.installment_number || a.installment_no || 0) - (b.installment_number || b.installment_no || 0)); return <><h3>INSTALLMENT SCHEDULE</h3><div className={styles.detailTable}><table><thead><tr><th>S.No</th><th>Schedule</th><th>Installment Amount</th></tr></thead><tbody>{allInstallments.map((row, index) => <tr key={row.id || index}><td>{row.installment_number || row.installment_no || index + 1}</td><td>{row.schedule_value ?? row.schedule ?? row.template_date ?? "-"}</td><td>{money(row.installment_amount ?? row.amount ?? 0)}</td></tr>)}{!allInstallments.length && <tr><td colSpan="3" className={styles.noInstallments}>No installments found.</td></tr>}</tbody></table></div></>; })()}
-      <footer><strong></strong><div><button className={styles.primary} onClick={() => downloadChitPdf(selected)}>PDF</button> <button className={styles.primary} onClick={() => setSelected(null)}>Close</button></div></footer>
+      <footer><strong></strong><div><button className={styles.primary} onClick={() => downloadChitPdf(selected, profile)}>PDF</button> <button className={styles.primary} onClick={() => setSelected(null)}>Close</button></div></footer>
     </div></div>}
 
     {confirmItem && <div className={styles.modalBackdrop}><div className={styles.confirmModal} role="dialog" aria-modal="true"><h2>Delete Chit Group?</h2><p>Are you sure you want to delete this record?</p><footer><button onClick={() => setConfirmItem(null)}>Cancel</button><button className={styles.dangerButton} onClick={deleteRecord}>Delete</button></footer></div></div>}
   </div>;
 }
+
+

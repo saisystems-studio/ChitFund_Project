@@ -13,7 +13,7 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from accounts.permissions import CanWriteFinanceData
 from .models import (LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
-    Mortgage, MortgageUnit, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
+    Mortgage, MortgageUnit, MortgageProductGroup, MortgageRate, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings, CollectionTransaction, AdjustmentTypeMaster,
     Ledger, PaymentEntry, MortgageLoanHistory, CollectionAllocation)
 from .delete_utils import delete_response
@@ -143,6 +143,28 @@ class MortgageViewSet(FinanceViewSet):
         existing = MortgageUnit.objects.filter(name__iexact=name).first()
         item = existing or MortgageUnit.objects.get_or_create(name=name)[0]
         return Response({"name": item.name}, status=200 if existing else 201)
+
+    @action(detail=False, methods=["get", "post"], url_path="product-groups")
+    def product_groups(self, request):
+        if request.method == "GET":
+            names = set(MortgageProductGroup.objects.values_list("name", flat=True))
+            names.update(Mortgage.objects.exclude(product_group="").values_list("product_group", flat=True))
+            return Response(sorted(names, key=str.casefold))
+        name = str(request.data.get("name", "")).strip()
+        if not name or len(name) > 50 or name.casefold() == "other":
+            return Response({"detail": "Enter a product group name of 1–50 characters other than Other."}, status=400)
+        existing = MortgageProductGroup.objects.filter(name__iexact=name).first()
+        item = existing or MortgageProductGroup.objects.get_or_create(name=name)[0]
+        return Response({"name": item.name}, status=200 if existing else 201)
+
+    @action(detail=False, methods=["get"])
+    def rate_history(self, request):
+        rows = MortgageRate.objects.select_related("mortgage").order_by("-date", "-id")
+        search = request.query_params.get("search", "").strip()
+        if search:
+            rows = rows.filter(mortgage__product_name__icontains=search)
+        results = [{"id": row.id, "product_name": row.mortgage.product_name, "date": row.date, "rate": row.rate} for row in rows]
+        return Response(results)
 
     def get_queryset(self):
         queryset = super().get_queryset()

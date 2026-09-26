@@ -44,6 +44,7 @@ class LoanInstallment(AuditModel):
 
 class Mortgage(AuditModel):
     id = models.AutoField(primary_key=True, db_column="ID")
+    product_group = models.CharField(max_length=50, blank=True, default="", db_column="ProductGroup")
     product_name = models.CharField(max_length=150, unique=True, db_column="ProductName")
     quantity = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True, db_column="Quantity")
     unit = models.CharField(max_length=50, db_column="Unit")
@@ -272,6 +273,13 @@ class MortgageRate(models.Model):
 
 
 class MortgageUnit(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        ordering = ("name",)
+
+
+class MortgageProductGroup(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
     class Meta:

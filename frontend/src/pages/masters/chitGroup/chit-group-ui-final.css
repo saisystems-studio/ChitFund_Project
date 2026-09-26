@@ -313,15 +313,15 @@
   display:grid;
   grid-template-columns:repeat(6,1fr);
   width:100%;
-  gap:16px;
-  align-items:start;
+  gap:10px;
+  align-items:center;
   box-sizing:border-box;
-  padding:10px 18px 9px;
+  padding:10px 18px;
   border-bottom:1px solid #eef4f9;
   color:#6c879f;
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:.06em;
+  font-size:11px;
+  font-weight:400;
+  letter-spacing:0;
 }
 .chit-group-list-page .detailsRow>div{
   min-width:0;
@@ -330,17 +330,13 @@
   white-space:nowrap;
 }
 .chit-group-list-page .detailsRow b{
-  display:inline-block;
+  display:inline;
   max-width:100%;
-  margin-top:3px;
   color:#173f65;
   font-size:12px;
   font-weight:750;
   line-height:1.25;
   letter-spacing:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
 }
 
 /* Chit Group list: full-height white table container. */
