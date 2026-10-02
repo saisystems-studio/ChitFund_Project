@@ -255,3 +255,63 @@
     min-width: 680px;
   }
 }
+
+.schedule-preview-heading-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.schedule-preview-heading-group .loan-accordion-toggle {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-preview-pdf {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #dce8f5;
+  border-radius: 9px;
+  background: #fff;
+  color: #c2410c;
+  cursor: pointer;
+}
+
+.schedule-preview-pdf:hover:not(:disabled) {
+  background: #fff3ea;
+  border-color: #f3b58a;
+}
+
+.schedule-preview-pdf:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.schedule-preview-pdf svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.schedule-preview-pdf-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: schedule-pdf-spin .7s linear infinite;
+}
+
+@keyframes schedule-pdf-spin {
+  to { transform: rotate(360deg); }
+}

@@ -545,7 +545,7 @@
   .main-content .active-loans-page .active-table-wrap td:nth-child(2):before{content:"Customer"}
   .main-content .active-loans-page .active-table-wrap td:nth-child(3):before{content:"Plan"}
   .main-content .active-loans-page .active-table-wrap td:nth-child(4):before{content:"Period"}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(5):before{content:"Total"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(5):before{content:"Total Amount"}
   .main-content .active-loans-page .active-table-wrap td:nth-child(6):before{content:"Collected"}
   .main-content .active-loans-page .active-table-wrap td:nth-child(7):before{content:"Outstanding"}
   .main-content .active-loans-page .active-table-wrap td:nth-child(8):before{content:"Next Due"}

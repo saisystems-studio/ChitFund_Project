@@ -8,22 +8,20 @@ import CompanyProfileForm from "./CompanyProfileForm";
 // Keep navigation aligned with the finalized business workflow.
 const groups = [
   ["masters", "MASTERS", [
-    ["Ledger List", "/ledgers"],
-    ["Add Ledger", "/ledgers"],
-    ["Customer List", "/customers"],
     ["Add Customer", "/customers/new"],
-    ["Chit Group List", "/chit-groups"],
+    ["Customer List", "/customers"],
+    ["Group", "/groups"],
+    ["Add Ledger", "/ledgers"],
+    ["Ledger List", "/ledgers"],
     ["Add Chit Group", "/chit-groups/new"],
-    ["Mortgage Product List", "/mortgage-master"],
-    ["Add Mortgage Product", "/mortgage-master"],
-    ["Mortgage Rate History", "/mortgage-rate-history"],
-    ["Holiday List", "/holiday-master"],
-    ["Add Holiday", "/holiday-master"],
-    ["Loan Type List", "/loan-types"],
-    ["Add Loan Type", "/loan-types"],
+    ["Chit Group List", "/chit-groups"],
+    ["Add Mortgage", "/mortgage-master"],
+    ["Mortgage Rate History", "/mortgage-master"],
+    ["Holiday", "/holiday-master"],
+    ["Loan Type", "/loan-types"],
   ]],
-  ["transactions", "TRANSACTIONS", [["Loan Applications", "/loan-application"], ["Collection Entry", "/collection-entry"], ["Payment Entry", "/payment-entry"]]],
-  ["reports", "REPORTS", [["Today Report", "/today-collection"], ["Active Loan", "/active-loans"], ["Customer-wise Report", "/reports/customer-wise"], ["Mortgage Report", "/reports/mortgage"], ["Cash Ledger", "/reports/cash-balance"], ["Bank Ledger", "/reports/bank-balance"], ["Pending & Outstanding", "/reports/collections/pending"], ["Collection History", "/reports/collections/history"]]],
+  ["transactions", "TRANSACTIONS", [["Loan Application", "/loan-application"], ["Collection Entry", "/collection-entry"], ["Payment Entry", "/payment-entry"]]],
+  ["reports", "REPORTS", [["Today Report", "/today-collection"], ["Active Loan", "/active-loans"], ["Customer-wise Report", "/reports/customer-wise"], ["Mortgage Report", "/reports/mortgage"], ["Cash Ledger", "/reports/cash-balance"], ["Bank Ledger", "/reports/bank-balance"], ["Pending & Outstanding", "/reports/collections/pending"], ["Collection Entry History", "/collection-list"], ["Collection History", "/reports/collections/history"], ["Payment History", "/payment-list"]]],
 ];
 
 function LegacySidebar({ route, go, user, onLogout, theme, onToggleTheme, onUserUpdate }) {
@@ -80,4 +78,4 @@ function SidebarFlyout({ label, links, top, route, onNavigate }) {
 
 function ProfilePopup({ user, onClose, onChangePassword, onUserUpdate }) { const [email, setEmail] = useState(user?.email || "admin@example.com"); const [saved, setSaved] = useState(false); const save = event => { event.preventDefault(); onUserUpdate?.({ ...user, email }); setSaved(true); setTimeout(onClose, 600); }; return <div className={styles.popup}><div className={styles.popupHeader}><b>Profile</b><button type="button" onClick={onClose}>×</button></div><form onSubmit={save}><label>Username<input value={user?.username || "admin"} readOnly /></label><label>Email<input type="email" value={email} onChange={e => setEmail(e.target.value)} /></label><button type="button" className={styles.passwordLink} onClick={onChangePassword}>Change Password</button>{saved && <small className={styles.success}>Profile saved</small>}<div className={styles.popupActions}><button type="button" onClick={onClose}>Cancel</button><button className={styles.saveButton}>Save</button></div></form></div>; }
 function SettingsPopup({ theme, onToggleTheme, onClose, user, token }) { return <div className={`${styles.popup} ${styles.settingsPopup}`}><div className={styles.popupHeader}><b>Settings</b><button type="button" onClick={onClose}>×</button></div><CompanyProfileForm user={user} token={token} /><div className={styles.appearance}><span>Appearance</span><div><span>☀ Light</span><button type="button" className={`${styles.themeToggle} ${theme === "dark" ? styles.darkToggle : ""}`} onClick={onToggleTheme} aria-label="Toggle theme"><i/></button><span>Dark ☾</span></div></div><div className={styles.popupActions}><button type="button" onClick={onClose}>Close</button></div></div>; }
-function ChangePasswordPopup({ onClose }) { const [message, setMessage] = useState(""); const submit = event => { event.preventDefault(); setMessage("Password update requires the configured account service."); }; return <div className={styles.popup}><div className={styles.popupHeader}><b>Change Password</b><button type="button" onClick={onClose}>×</button></div><form onSubmit={submit}><label>Current Password *<input type="password" required /></label><label>New Password *<input type="password" required /></label><label>Confirm Password *<input type="password" required /></label>{message && <small className={styles.success}>{message}</small>}<div className={styles.popupActions}><button type="button" onClick={onClose}>Cancel</button><button className={styles.saveButton}>Update Password</button></div></form></div>; }
+function ChangePasswordPopup({ onClose }) { const [message, setMessage] = useState(""); const submit = event => { event.preventDefault(); setMessage("Password update requires the configured account service."); }; return <div className={styles.popup}><div className={styles.popupHeader}><b>Change Password</b><button type="button" onClick={onClose}>×</button></div><form onSubmit={submit}><label>Current Password <span className="required-star">*</span><input type="password" required /></label><label>New Password <span className="required-star">*</span><input type="password" required /></label><label>Confirm Password <span className="required-star">*</span><input type="password" required /></label>{message && <small className={styles.success}>{message}</small>}<div className={styles.popupActions}><button type="button" onClick={onClose}>Cancel</button><button className={styles.saveButton}>Update Password</button></div></form></div>; }

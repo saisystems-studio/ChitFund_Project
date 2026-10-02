@@ -14,7 +14,16 @@
 .mortgage-modal footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding:14px 18px;border-top:1px solid #e5eef7;background:#fbfdff}
 .mortgage-modal footer button{border:1px solid #cfe0ef;background:#fff;color:#176db3;border-radius:7px;padding:9px 14px;font-weight:750;cursor:pointer}
 .mortgage-modal-add footer{justify-content:center}
-.mortgage-master-surface .table-wrap td.mortgage-row-action-cell{position:relative;padding-right:88px;text-align:left;white-space:nowrap}
-.mortgage-master-surface .mortgage-row-action-cell .action-group{position:absolute;right:8px;top:50%;transform:translateY(-50%);opacity:0;visibility:hidden;pointer-events:none}
-.mortgage-master-surface tr:hover .mortgage-row-action-cell .action-group,.mortgage-master-surface tr:focus-within .mortgage-row-action-cell .action-group{opacity:1;visibility:visible;pointer-events:auto}
+.mortgage-master-surface .table-wrap td.mortgage-row-action-cell{text-align:right;white-space:nowrap;width:90px}
+.mortgage-master-surface .mortgage-action-head{text-align:right;width:90px}
+.mortgage-master-surface .table-wrap th:nth-child(1),.mortgage-master-surface .table-wrap td:nth-child(1){width:6%}
+.mortgage-master-surface .table-wrap th:nth-child(2),.mortgage-master-surface .table-wrap td:nth-child(2){width:17%}
+.mortgage-master-surface .table-wrap th:nth-child(3),.mortgage-master-surface .table-wrap td:nth-child(3){width:29%}
+.mortgage-master-surface .table-wrap th:nth-child(4),.mortgage-master-surface .table-wrap td:nth-child(4){width:10%}
+.mortgage-master-surface .table-wrap th:nth-child(5),.mortgage-master-surface .table-wrap td:nth-child(5){width:14%}
+.mortgage-master-surface .table-wrap th:nth-child(6),.mortgage-master-surface .table-wrap td:nth-child(6){width:12%}
+.mortgage-master-surface .mortgage-row-action-cell .action-group{display:inline-flex;justify-content:flex-end;opacity:1;visibility:visible;pointer-events:auto;background:transparent;border:none;box-shadow:none;padding:0;min-height:auto;gap:10px}
 .mortgage-modal .mortgage-required{color:#ef4444;font-weight:750}
+.mortgage-master-surface tr.mortgage-row-clickable{cursor:pointer}
+.mortgage-master-surface tr.mortgage-row-clickable:hover{background:#f4f9fd}
+@media(hover:none){.mortgage-master-surface .mortgage-row-action-cell .action-group{opacity:1;visibility:visible;pointer-events:auto}}

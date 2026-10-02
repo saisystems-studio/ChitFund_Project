@@ -87,15 +87,15 @@
 .cwr-type h3 i{width:4px;height:14px;border-radius:2px}
 .cwr-type h3 span{color:var(--cwr-muted);font-size:11px;font-weight:600}
 .cwr-type.chit h3 i{background:var(--cwr-chit)}.cwr-type.interest h3 i{background:var(--cwr-interest)}.cwr-type.mortgage h3 i{background:var(--cwr-mortgage)}
-.cwr-table-wrap{overflow-x:auto;border:1px solid #e1eaf3;border-radius:6px}
-.cwr-table{width:100%;border-collapse:collapse;white-space:nowrap}
-.cwr-table th{padding:8px 10px;background:var(--cwr-primary);color:#fff;font-size:11px;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:.03em}
-.cwr-table td{padding:7px 10px;border-bottom:1px solid #edf2f7;color:#17324d;font-size:12.5px}
+.cwr-table-wrap{overflow:visible;border:1px solid #e1eaf3;border-radius:6px}
+.cwr-table{width:100%;table-layout:fixed;min-width:0;border-collapse:collapse}
+.cwr-table th{padding:6px 7px;background:var(--cwr-primary);color:#fff;font-size:10px;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cwr-table td{padding:5px 7px;border-bottom:1px solid #edf2f7;color:#17324d;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cwr-table tbody tr:not(.cwr-detail-row):hover td{background:#f5f9fd}
 .cwr-table tr.open td{background:#eef5fc}
 .cwr-table .num,.cwr-mini .num,.cwr-legend-table .num{text-align:right;font-variant-numeric:tabular-nums}
 .cwr-doc{color:#123f67;font-weight:700}
-.cwr-expand-cell{width:1%;text-align:right}
+.cwr-expand-cell{width:9%;text-align:right}
 .cwr-expand-cell button{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 9px;border:1px solid #c9dcef;border-radius:5px;background:#fff;color:var(--cwr-accent);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer}
 .cwr-expand-cell button svg{width:13px;height:13px;transition:transform .15s}
 .cwr-expand-cell button[aria-expanded="true"] svg{transform:rotate(180deg)}
@@ -106,9 +106,9 @@
 .cwr-detail-summary span{display:inline-flex;align-items:center;gap:5px}
 .cwr-detail-summary span.paid::before,.cwr-detail-summary span.pending::before{content:"";width:8px;height:8px;border-radius:2px}
 .cwr-detail-summary span.paid::before{background:var(--cwr-collected)}.cwr-detail-summary span.pending::before{background:var(--cwr-pending)}
-.cwr-mini{width:100%;max-width:880px;border-collapse:collapse;border:1px solid #e1eaf3;background:#fff;white-space:nowrap}
-.cwr-mini th{padding:7px 10px;background:#eef3f8;color:var(--cwr-ink-2);font-size:10.5px;font-weight:700;text-align:left;text-transform:uppercase}
-.cwr-mini td{padding:6px 10px;border-top:1px solid #edf2f7;font-size:12px}
+.cwr-mini{width:100%;max-width:100%;table-layout:fixed;min-width:0;border-collapse:collapse;border:1px solid #e1eaf3;background:#fff}
+.cwr-mini th{padding:6px 8px;background:#eef3f8;color:var(--cwr-ink-2);font-size:10.5px;font-weight:700;text-align:left;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cwr-mini td{padding:5px 8px;border-top:1px solid #edf2f7;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cwr-mini tr.is-paid td:first-child{box-shadow:inset 3px 0 var(--cwr-collected)}
 .cwr-mini tr.is-pending td:first-child{box-shadow:inset 3px 0 var(--cwr-pending)}
 .cwr-mini tr.is-paid td{background:#f3fbf5}
@@ -182,24 +182,15 @@ i.chit{background:var(--cwr-chit)}i.interest{background:var(--cwr-interest)}i.mo
 #root .cwr-page .cwr-table-wrap.scrollable-grid{overflow-x:auto}
 #root .cwr-page .cwr-table-wrap{scrollbar-width:thin}
 
-/* Compact Chit table: fits the customer card; Status and Schedule are fixed-width, pinned columns. */
-.cwr-type.chit .cwr-table th{padding:7px 5px;white-space:normal;line-height:1.25;vertical-align:middle}
-.cwr-type.chit .cwr-table td{padding:6px 5px;font-size:12px}
-.cwr-type.chit .cwr-table th:first-child,.cwr-type.chit .cwr-table td:first-child{padding-left:10px}
-.cwr-type.chit .cwr-table td:nth-child(2){min-width:80px;max-width:130px;white-space:normal;overflow-wrap:anywhere}
-.cwr-type.chit .cwr-table th.inst{width:44px;padding-left:3px;padding-right:3px;text-transform:none;text-align:center;letter-spacing:0}
-.cwr-type.chit .cwr-table td.inst{padding-left:3px;padding-right:3px;text-align:center;font-variant-numeric:tabular-nums}
-/* Remaining: safe gap before the pinned columns. */
-.cwr-type.chit .cwr-table th:nth-last-child(3),.cwr-type.chit .cwr-table td:nth-last-child(3){padding-right:12px}
-/* Status (104px) and Schedule (108px): fixed widths so neither can overlap the other. */
-.cwr-type.chit .cwr-table th:nth-last-child(-n+2),.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:nth-last-child(-n+2){position:sticky;z-index:1;box-sizing:border-box;padding-left:8px;padding-right:8px;text-align:center}
-.cwr-type.chit .cwr-table th:nth-last-child(2),.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:nth-last-child(2){right:108px;width:104px;min-width:104px;max-width:104px}
-.cwr-type.chit .cwr-table th:last-child,.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:last-child{right:0;width:108px;min-width:108px;max-width:108px}
-/* Status matches the Interest table: left-aligned badge with the standard cell padding. */
-.cwr-type.chit .cwr-table th:nth-last-child(2){padding:8px 10px;text-align:left}
-.cwr-type.chit .cwr-table tr:not(.cwr-detail-row) td:nth-last-child(2){padding:7px 10px;text-align:left}
-.cwr-type.chit .cwr-expand-cell button{max-width:100%;padding:0 8px}
-.cwr-type.chit .cwr-table th:nth-last-child(-n+2){background:var(--cwr-primary)}
+/* Compact Chit table: every column sized to fit without horizontal scroll. */
+.cwr-type.chit .cwr-table th{padding:6px 5px;white-space:normal;line-height:1.25;vertical-align:middle}
+.cwr-type.chit .cwr-table td{padding:5px 5px;font-size:11px}
+.cwr-type.chit .cwr-table th:first-child,.cwr-type.chit .cwr-table td:first-child{padding-left:8px}
+.cwr-type.chit .cwr-table td:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cwr-type.chit .cwr-table th.inst{padding-left:2px;padding-right:2px;text-transform:none;text-align:center;letter-spacing:0}
+.cwr-type.chit .cwr-table td.inst{padding-left:2px;padding-right:2px;text-align:center;font-variant-numeric:tabular-nums}
+.cwr-type.chit .cwr-table th:nth-last-child(2),.cwr-type.chit .cwr-table td:nth-last-child(2){text-align:left}
+.cwr-type.chit .cwr-expand-cell button{max-width:100%;padding:0 6px;font-size:10.5px}
 .cwr-type.chit .cwr-table tbody tr:not(.cwr-detail-row) td:nth-last-child(-n+2){background:#fff}
 .cwr-type.chit .cwr-table tbody tr:not(.cwr-detail-row):hover td:nth-last-child(-n+2){background:#f5f9fd}
 .cwr-type.chit .cwr-table tr.open td:nth-last-child(-n+2){background:#eef5fc}

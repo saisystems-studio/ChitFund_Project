@@ -33,6 +33,7 @@ export default function MortgageEditModal({ form, update, units, addUnit, produc
           <Field label="Product Group" icon="group" required><CustomSelect key={`group-${form.id}-${resetVersion}`} label="product group" maxLength={50} value={form.product_group} options={productGroups} onChange={value => update("product_group", value)} onAdd={addProductGroup}/></Field>
           <Field label="Product Name" icon="tag" required><input autoFocus value={form.product_name} onChange={event => update("product_name", event.target.value)}/></Field>
           <Field label="Unit" icon="unit" required><CustomSelect key={`${form.id}-${resetVersion}`} label="unit" maxLength={50} value={form.unit} options={units} onChange={value => update("unit", value)} onAdd={addUnit}/></Field>
+          <Field label="Quantity" icon="unit"><input type="number" min="0" step="0.01" value={form.quantity ?? ""} onChange={event => update("quantity", event.target.value)}/></Field>
           <Field label="Current Rate" icon="rate"><input type="number" min="0" step="0.01" inputMode="decimal" value={form.current_rate} onChange={event => update("current_rate", event.target.value)}/></Field>
           <Field label="Date" icon="calendar"><input type="date" required value={form.rate_date || ""} onChange={event => update("rate_date", event.target.value)}/></Field>
         </div>

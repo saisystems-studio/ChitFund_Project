@@ -5,10 +5,16 @@ from .models import Customer
 
 class CustomerSerializer(serializers.ModelSerializer):
     role_display = serializers.CharField(source="get_role_display", read_only=True)
+    # Display-only; the stored relationship is always customer.group_id (Group_tbl.id), never this name.
+    group_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Customer
         fields = "__all__"
-        read_only_fields = ("id", "customer_code", "created_at", "updated_at", "role_display")
+        read_only_fields = ("id", "customer_code", "created_at", "updated_at", "role_display", "group_name")
+
+    def get_group_name(self, obj):
+        return obj.group.name if obj.group_id else None
 
     def to_internal_value(self, data):
         if data.get("dob") == "":

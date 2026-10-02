@@ -57,6 +57,10 @@ class Customer(models.Model):
     is_whatsapp_same_as_phone = models.BooleanField(default=False, db_column="IsWhatsappSameAsPhone")
     email = models.EmailField(blank=True, db_column="Email")
     role = models.CharField(max_length=10, choices=Role.choices, db_index=True, db_column="CustomerRole")
+    # Additive, nullable link into the Group_tbl hierarchy (Sundry Debtors/
+    # Sundry Creditors and their descendants). Existing rows stay NULL; role
+    # remains the source of truth for Debtor/Creditor/Both classification.
+    group = models.ForeignKey("finance.Group", null=True, blank=True, on_delete=models.SET_NULL, related_name="customers", db_column="GroupID")
     address = models.TextField(blank=True, db_column="Address")
     city = models.CharField(max_length=80, blank=True, db_column="City")
     district = models.CharField(max_length=80, blank=True, db_column="District")

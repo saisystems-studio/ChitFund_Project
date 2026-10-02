@@ -1,0 +1,17 @@
+.save-confirm-backdrop{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;background:rgba(8,19,42,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.save-confirm-card{position:relative;width:min(380px,100%);padding:32px 28px 28px;border:1px solid #dceaf6;border-radius:14px;background:#fff;box-shadow:0 24px 60px rgba(8,19,42,.28);text-align:center}
+.save-confirm-close{position:absolute;top:12px;right:12px;width:30px;height:30px;border:0;border-radius:50%;background:#eef6ff;color:#176db3;font-size:18px;cursor:pointer}
+.save-confirm-icon{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#e2f8ea;color:#15a36a}
+.save-confirm-icon svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.save-confirm-card h2{margin:0 0 6px;color:#123b63;font-size:19px}
+.save-confirm-card p{margin:0;color:#607b95;font-size:13px}
+.save-confirm-actions{display:flex;gap:10px;margin-top:22px}
+.save-confirm-actions button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;border:1px solid #cfe0ef;border-radius:9px;background:#fff;color:#176db3;font:inherit;font-size:13px;font-weight:750;cursor:pointer}
+.save-confirm-actions svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.save-confirm-actions .save-confirm-download{border-color:#123a63;background:#123a63;color:#fff}
+.save-confirm-actions .save-confirm-download:hover:not(:disabled){background:#174d7c}
+.save-confirm-actions .save-confirm-print:hover:not(:disabled){background:#f1f7fd}
+.save-confirm-actions button:disabled{opacity:.6;cursor:wait}
+.save-confirm-spinner{width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:save-confirm-spin .7s linear infinite}
+@keyframes save-confirm-spin{to{transform:rotate(360deg)}}
+@media(max-width:420px){.save-confirm-actions{flex-direction:column}}

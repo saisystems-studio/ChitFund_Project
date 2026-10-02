@@ -1,10 +1,12 @@
 .main-content:has(.customer-row) .customer-row{cursor:pointer}
 .main-content:has(.customer-row) .customer-row:focus{outline:2px solid #8fc3e7;outline-offset:-2px}
-.main-content:has(.customer-row) .table-wrap th:nth-child(1){width:5%}
-.main-content:has(.customer-row) .table-wrap th:nth-child(2){width:13%}
-.main-content:has(.customer-row) .table-wrap th:nth-child(3){width:15%}
-.main-content:has(.customer-row) .table-wrap th:nth-child(4){width:12%}
-.main-content:has(.customer-row) .table-wrap th:nth-child(5){width:25%}
-.main-content:has(.customer-row) .table-wrap th:nth-child(6),.main-content:has(.customer-row) .table-wrap th:nth-child(7){width:12%}
-.main-content:has(.customer-row) .customer-code-cell{font-weight:800;color:#174d7c;overflow:visible;text-overflow:clip}
+.main-content:has(.customer-row) .table-wrap table{table-layout:fixed;width:100%;min-width:0}
+.main-content:has(.customer-row) .table-wrap th,.main-content:has(.customer-row) .table-wrap td{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.main-content:has(.customer-row) .table-wrap th:nth-child(1),.main-content:has(.customer-row) .table-wrap td:nth-child(1){width:12%}
+.main-content:has(.customer-row) .table-wrap th:nth-child(2),.main-content:has(.customer-row) .table-wrap td:nth-child(2){width:25%}
+.main-content:has(.customer-row) .table-wrap th:nth-child(3),.main-content:has(.customer-row) .table-wrap td:nth-child(3){width:13%}
+.main-content:has(.customer-row) .table-wrap th:nth-child(4),.main-content:has(.customer-row) .table-wrap td:nth-child(4){width:28%}
+.main-content:has(.customer-row) .table-wrap th:nth-child(5),.main-content:has(.customer-row) .table-wrap td:nth-child(5){width:12%}
+.main-content:has(.customer-row) .table-wrap th:last-child,.main-content:has(.customer-row) .table-wrap td:last-child{width:10%;text-align:right;overflow:visible}
+.main-content:has(.customer-row) .customer-code-cell{font-weight:800;color:#174d7c}
 .main-content:has(.customer-row) .table-wrap td.customer-address-cell{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3;overflow-wrap:anywhere}

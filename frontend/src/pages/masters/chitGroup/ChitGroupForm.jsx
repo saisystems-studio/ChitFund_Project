@@ -170,10 +170,10 @@ export default function ChitGroupForm({ api, auth, go, id }) {
     {error && <div className={styles.error}>{error}</div>}
     <form data-chit-group-form onSubmit={save} className={styles.surface}>
       <section><h2>GROUP INFORMATION</h2><div className={`${styles.grid} ${styles.groupInfoRow}`}>
-        <label>Chit Name *<input required value={form.name || ""} onChange={e => set("name", e.target.value)} /></label>
-        <label>No. of Installments *<input type="number" min="1" max="3650" required value={form.duration} onChange={e => changeDuration(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); focusAmount(0); } }} /></label>
-        <label>Chit Amount *<div className={styles.moneyInput}><span>₹</span><input type="text" inputMode="decimal" required value={totalFocused ? (form.total_amount || "") : (form.total_amount ? formatMoney(form.total_amount) : "")} onFocus={() => setTotalFocused(true)} onChange={e => changeTotal(e.target.value)} onBlur={() => setTotalFocused(false)} /></div></label>
-        <label>Duration Type *<div className={styles.radios}>{[["DAY", "Days"], ["MONTH", "Months"], ["YEAR", "Years"]].map(([value, text]) => <label key={value}><input type="radio" checked={form.duration_type === value} onChange={() => set("duration_type", value)} />{text}</label>)}</div></label>
+        <label>Chit Name <span className="required-star">*</span><input required value={form.name || ""} onChange={e => set("name", e.target.value)} /></label>
+        <label>No. of Installments <span className="required-star">*</span><input type="number" min="1" max="3650" required value={form.duration} onChange={e => changeDuration(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); focusAmount(0); } }} /></label>
+        <label>Chit Amount <span className="required-star">*</span><div className={styles.moneyInput}><span>₹</span><input type="text" inputMode="decimal" required value={totalFocused ? (form.total_amount || "") : (form.total_amount ? formatMoney(form.total_amount) : "")} onFocus={() => setTotalFocused(true)} onChange={e => changeTotal(e.target.value)} onBlur={() => setTotalFocused(false)} /></div></label>
+        <label>Duration Type <span className="required-star">*</span><div className={styles.radios}>{[["DAY", "Days"], ["MONTH", "Months"], ["YEAR", "Years"]].map(([value, text]) => <label key={value}><input type="radio" checked={form.duration_type === value} onChange={() => set("duration_type", value)} />{text}</label>)}</div></label>
         <label>Start Date<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></label>
         <label>Collection Date{collectionDateControl}</label>
       </div></section>
