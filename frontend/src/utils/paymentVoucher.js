@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
-import { BAND, INK, LINE, MUTED, PAGE, amount, companyFromProfile, header, loadImage, printPdf, signatures, voucherTitle, wordsAndNotes } from "./collectionReceipt";
+import { BAND, INK, LINE, MUTED, PAGE, amount, companyFromProfile, header, loadImage, metaBlock, partyBlock, printPdf, signatureLayout, signatures, voucherTitle, wordsAndNotes } from "./collectionReceipt";
 
 // Same A4 layout and helpers as the Collection Receipt; PDF and Print share one document.
 export const paymentVoucherNo = entry => `PV-${String(entry.id).padStart(6, "0")}`;
@@ -38,38 +38,26 @@ function particulars(entry) {
 
 function voucherPage(doc, { company, logo, entry }) {
   const { margin, width, height } = PAGE, right = width - margin;
-  let y = voucherTitle(doc, "PAYMENT VOUCHER", header(doc, company, logo) + 10);
+  let y = voucherTitle(doc, "PAYMENT VOUCHER", header(doc, company, logo) + 8);
 
-  // Left: ledger / party. Right: date, voucher and payment details.
-  const labelWidth = 26, valueWidth = 95 - labelWidth, top = y;
-  let leftY = y + 4;
-  for (const [label, value] of [["Ledger/Party", entry.ledger_group || entry.ledger_name], ["Address", entry.address]]) {
-    doc.setFont("helvetica", "normal").setFontSize(9.5).setTextColor(...MUTED).text(`${label}:`, margin, leftY);
-    doc.setFont("helvetica", "bold").setTextColor(...(value ? INK : MUTED));
-    const lines = doc.splitTextToSize(String(value || "—"), valueWidth);
-    doc.text(lines, margin + labelWidth, leftY); leftY += 5.5 * lines.length;
-  }
+  // Left: ledger / party. Right: date, voucher and payment details. Both as compact "Label : Value" rows.
+  const top = y;
+  const leftY = partyBlock(doc, margin, y, [["Ledger/Party", entry.ledger_group || entry.ledger_name], ["Address", entry.address]]);
   const reference = entry.transaction_utr || entry.cheque_number;
   const meta = [["Date", dateLabel(entry.date)], ["Voucher No", paymentVoucherNo(entry)], ["Payment Mode", MODES[entry.payment_mode] || entry.payment_mode], ["Paid From", entry.account_name || entry.accounts], ["Reference", reference]].filter(([, value]) => value);
-  let rightY = top;
-  for (const [label, value] of meta) {
-    doc.setFont("helvetica", "normal").setFontSize(9.5).setTextColor(...MUTED).text(`${label}:`, right - 62, rightY + 4);
-    doc.setFont("helvetica", "bold").setTextColor(...INK);
-    const lines = doc.splitTextToSize(String(value), 38);
-    doc.text(lines, right, rightY + 4, { align: "right" }); rightY += 5.5 * lines.length;
-  }
-  y = Math.max(leftY, rightY + 4) + 4;
+  const rightY = metaBlock(doc, right, top, meta);
+  y = Math.max(leftY, rightY) + 4;
 
   const rows = particulars(entry), total = rows.reduce((sum, row) => sum + row.amount, 0);
   const glyph = rupeeGlyph();
   autoTable(doc, {
-    startY: y, margin: { left: margin, right: margin, bottom: 50 }, theme: "grid",
+    startY: y, margin: { left: margin, right: margin, bottom: height - signatureLayout(doc, company).top + 8 }, theme: "grid",
     head: [["S.No", "Particulars", "Amount"]],
     body: rows.map((row, index) => [String(index + 1), row.particulars, money(row.amount)]),
-    foot: [[{ content: "TOTAL", colSpan: 2, styles: { halign: "right" } }, money(total)]],
-    styles: { font: "helvetica", fontSize: 9.5, textColor: INK, lineColor: LINE, lineWidth: 0.2, cellPadding: 2.6, valign: "middle", overflow: "linebreak" },
+    foot: [[{ content: "Total Amount", colSpan: 2, styles: { halign: "right" } }, money(total)]],
+    styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: LINE, lineWidth: 0.2, cellPadding: 2.2, valign: "middle", overflow: "linebreak" },
     headStyles: { fillColor: INK, textColor: 255, fontStyle: "bold", halign: "left" },
-    footStyles: { fillColor: BAND, textColor: INK, fontStyle: "bold", fontSize: 10.5 },
+    footStyles: { fillColor: BAND, textColor: INK, fontStyle: "bold", fontSize: 10 },
     columnStyles: { 0: { cellWidth: 15, halign: "center" }, 2: { cellWidth: 40, halign: "right" } },
     didParseCell: data => {
       if (data.section === "head" && data.column.index !== 1) data.cell.styles.halign = data.column.index === 0 ? "center" : "right";
@@ -85,9 +73,8 @@ function voucherPage(doc, { company, logo, entry }) {
       doc.addImage(glyph.src, "PNG", cell.x + cell.width - cell.padding("right") - textWidth - glyphWidth - 0.4, baseline - glyphHeight * glyph.baseline, glyphWidth, glyphHeight);
     },
   });
-  y = doc.lastAutoTable.finalY + 7;
-  if (y > height - 70) { doc.addPage(); y = margin + 5; }
-  wordsAndNotes(doc, total, entry.notes, y);
+  y = doc.lastAutoTable.finalY + 6;
+  wordsAndNotes(doc, total, entry.notes, y, signatureLayout(doc, company).top - 8);
   signatures(doc, company, "Receiver Signature");
 }
 

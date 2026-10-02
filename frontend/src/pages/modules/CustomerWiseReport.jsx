@@ -199,7 +199,7 @@ function Histogram({ results, summary }) {
     <section className="cwr-card cwr-chart wide">
       <header><div><h2>Customer-wise Loan Amount</h2><p>Loan amount per customer, split by loan type</p></div><Legend items={TYPES.map(type => [type, typeKey(type)])} /></header>
       <div className="cwr-bars">
-        {amountRows.map(row => <div className="cwr-bar-row" key={row.id} {...bind(<TipBody title={row.name} rows={[...TYPES.filter(type => row.byType[typeKey(type)]).map(type => [type, money(row.byType[typeKey(type)]), typeKey(type)]), ["Total", money(row.total)]]} />)}>
+        {amountRows.map(row => <div className="cwr-bar-row" key={row.id} {...bind(<TipBody title={row.name} rows={[...TYPES.filter(type => row.byType[typeKey(type)]).map(type => [type, money(row.byType[typeKey(type)]), typeKey(type)]), ["Total Amount", money(row.total)]]} />)}>
           <span className="cwr-bar-label" title={row.name}>{row.name}</span>
           <div className="cwr-track"><Grid /><div className="cwr-stack" style={{ width: `${row.total / amountMax * 100}%` }}>{TYPES.filter(type => row.byType[typeKey(type)] > 0).map(type => <span key={type} className={typeKey(type)} style={{ flexGrow: row.byType[typeKey(type)] }} />)}</div></div>
           <span className="cwr-bar-value">{compactINR(row.total)}</span>

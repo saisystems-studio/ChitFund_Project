@@ -139,7 +139,7 @@
   .active-table-wrap th:nth-child(1)::after { content: "S.NO"; font-size: 10px; }
   .active-table-wrap th:nth-child(2)::after { content: "LOAN NO"; font-size: 10px; }
   .active-table-wrap th:nth-child(3)::after { content: "CUSTOMER"; font-size: 10px; }
-  .active-table-wrap th:nth-child(5)::after { content: "TOTAL"; font-size: 10px; }
+  .active-table-wrap th:nth-child(5)::after { content: "TOTAL AMOUNT"; font-size: 10px; }
   .active-table-wrap th:nth-child(7)::after { content: "OUTSTANDING"; font-size: 10px; }
   .active-table-wrap th:nth-child(9)::after { content: "STATUS"; font-size: 10px; }
   .active-table-wrap th:nth-child(10)::after { content: "MORE"; font-size: 10px; }

@@ -13,14 +13,15 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from accounts.permissions import CanWriteFinanceData
 from .models import (LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
-    Mortgage, MortgageUnit, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
+    Mortgage, MortgageUnit, MortgageProductGroup, MortgageRate, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings, CollectionTransaction, AdjustmentTypeMaster,
-    Ledger, PaymentEntry, MortgageLoanHistory, CollectionAllocation)
+    Ledger, PaymentEntry, MortgageLoanHistory, CollectionAllocation, Group)
 from .delete_utils import delete_response
 from .serializers import (LoanTypeSerializer, LoanInstallmentSerializer, ChitGroupSerializer,
     ChitGroupInstallmentDetailSerializer, MortgageSerializer, CustomerLoanDetailsSerializer, InterestDetailsSerializer,
     CustomerChitDetailsSerializer, CustomerLoanInstallmentDetailsSerializer,
-    HolidayMasterSerializer, LoanHolidaySettingsSerializer, AdjustmentTypeMasterSerializer, LedgerSerializer, PaymentEntrySerializer)
+    HolidayMasterSerializer, LoanHolidaySettingsSerializer, AdjustmentTypeMasterSerializer, LedgerSerializer, PaymentEntrySerializer,
+    GroupSerializer)
 from .services import generate_chit_schedule, generate_customer_chit_installments, generate_customer_interest_installments, generate_customer_mortgage_installment, record_mortgage_history
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,22 @@ class LedgerViewSet(FinanceViewSet):
     delete_label = "ledger"
     pagination_class = None
     search_fields = ('name', 'group')
+
+
+class GroupViewSet(FinanceViewSet):
+    pagination_class = None
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    delete_label = "group"
+
+    def get_queryset(self):
+        return super().get_queryset().order_by("name", "id")
+
+    def destroy(self, request, *args, **kwargs):
+        item = self.get_object()
+        if item.is_system:
+            return Response({"detail": "This root group is a system default and cannot be deleted."}, status=400)
+        return delete_response(item, self.delete_label)
 
 
 class PaymentEntryViewSet(FinanceViewSet):
@@ -143,6 +160,28 @@ class MortgageViewSet(FinanceViewSet):
         existing = MortgageUnit.objects.filter(name__iexact=name).first()
         item = existing or MortgageUnit.objects.get_or_create(name=name)[0]
         return Response({"name": item.name}, status=200 if existing else 201)
+
+    @action(detail=False, methods=["get", "post"], url_path="product-groups")
+    def product_groups(self, request):
+        if request.method == "GET":
+            names = set(MortgageProductGroup.objects.values_list("name", flat=True))
+            names.update(Mortgage.objects.exclude(product_group="").values_list("product_group", flat=True))
+            return Response(sorted(names, key=str.casefold))
+        name = str(request.data.get("name", "")).strip()
+        if not name or len(name) > 50 or name.casefold() == "other":
+            return Response({"detail": "Enter a product group name of 1–50 characters other than Other."}, status=400)
+        existing = MortgageProductGroup.objects.filter(name__iexact=name).first()
+        item = existing or MortgageProductGroup.objects.get_or_create(name=name)[0]
+        return Response({"name": item.name}, status=200 if existing else 201)
+
+    @action(detail=False, methods=["get"])
+    def rate_history(self, request):
+        rows = MortgageRate.objects.select_related("mortgage").order_by("-date", "-id")
+        search = request.query_params.get("search", "").strip()
+        if search:
+            rows = rows.filter(mortgage__product_name__icontains=search)
+        results = [{"id": row.id, "product_name": row.mortgage.product_name, "date": row.date, "rate": row.rate} for row in rows]
+        return Response(results)
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -495,6 +534,13 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
                 return Response({"detail": "Select a valid Cash or Bank account."}, status=400)
         # The Ledger entry is recorded alongside the collection; it never changes installment dues or loan outstanding.
         ledger_group = str(request.data.get("ledger_group") or "").strip()
+        ledger = None
+        if request.data.get("ledger_id"):
+            ledger = Ledger.objects.filter(pk=request.data.get("ledger_id")).first() if str(request.data.get("ledger_id")).isdigit() else None
+            if ledger is None:
+                return Response({"detail": "Select a valid Ledger."}, status=400)
+            if not ledger_group:
+                ledger_group = ledger.group
         try:
             ledger_amount = Decimal(str(request.data.get("ledger_amount") or "0"))
         except (InvalidOperation, TypeError, ValueError):
@@ -528,6 +574,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
         if allocations and penalty:
             first = next(row for row in all_rows if row.installment_number == allocations[0]["installment_number"])
             first.penalty_amount += penalty
+        collection = None
         if allocations:
             first = next(row for row in all_rows if row.installment_number == allocations[0]["installment_number"])
             details = request.data
@@ -541,7 +588,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
                 bank_name=details.get("bank_name", ""), cheque_number=details.get("cheque_number", ""),
                 cheque_date=cheque_date, adjustment_type=details.get("adjustment_type", ""),
                 adjustment_amount=penalty, discount_amount=discount, account=account,
-                ledger_group=ledger_group, ledger_amount=ledger_amount,
+                ledger_group=ledger_group, ledger_amount=ledger_amount, ledger=ledger,
             )
             CollectionAllocation.objects.bulk_create([CollectionAllocation(transaction=collection, installment=row, amount=applied) for row, applied in allocated_rows])
         for row in all_rows:
@@ -555,7 +602,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
         loan.loan_status = "COMPLETED" if loan.outstanding_amount <= 0 else "ACTIVE"
         loan.is_active = loan.outstanding_amount > 0
         loan.save(update_fields=("total_amount", "paid_amount", "penalty_amount", "outstanding_amount", "loan_status", "is_active", "modified_date"))
-        return Response({"detail": "Collection saved successfully.", "allocations": allocations, "remaining_unallocated": remaining, "loan_id": loan.id})
+        return Response({"detail": "Collection saved successfully.", "allocations": allocations, "remaining_unallocated": remaining, "loan_id": loan.id, "collection_id": collection.id if collection else None})
 
 
 class HolidayMasterViewSet(FinanceViewSet):
@@ -1006,3 +1053,81 @@ def customer_wise_report(request):
     customers = [{"id": row.id, "code": row.customer_code, "name": row.full_name}
                  for row in Customer.objects.order_by("full_name", "id").only("id", "customer_code", "full_name")]
     return Response({"customers": customers, "results": list(grouped.values())})
+
+
+LEDGER_REPORT_GROUPS = {"cash": "Cash in Hand", "bank": "Bank Accounts"}
+
+
+def _signed(value):
+    """Split a signed balance into a display amount and its DR/CR type (positive = DR, negative = CR)."""
+    value = value if value is not None else Decimal("0.00")
+    return (abs(value), "CR" if value < 0 else "DR")
+
+
+@api_view(["GET"])
+def ledger_statement(request):
+    """Cash/Bank ledger statement: Collection Entries post as Debit, Payment Entries post as Credit,
+    running from the ledger's Opening Balance (positive = Dr, negative = Cr)."""
+    params = request.query_params
+    kind = params.get("type", "").strip().lower()
+    group_name = LEDGER_REPORT_GROUPS.get(kind)
+    if not group_name:
+        return Response({"detail": "type must be 'cash' or 'bank'."}, status=400)
+    try:
+        from_date = date.fromisoformat(params["from"]) if params.get("from") else None
+        to_date = date.fromisoformat(params["to"]) if params.get("to") else None
+    except ValueError:
+        return Response({"detail": "Enter valid report dates."}, status=400)
+
+    ledgers = list(Ledger.objects.filter(group=group_name))
+    ledger_ids = [item.id for item in ledgers]
+    opening_balance = sum((item.opening_balance for item in ledgers), Decimal("0.00"))
+
+    zero = Decimal("0.00")
+    entries = []
+    collections = CollectionTransaction.objects.filter(account_id__in=ledger_ids).select_related("customer", "loan")
+    for item in collections:
+        entries.append({
+            "date": item.collection_date, "sort": (item.collection_date, item.id, 0),
+            "particulars": f"{item.customer.full_name} · Collection ({item.loan.loan_no})",
+            "reference": f"RV-{item.id:06d}", "type": "Collection Entry",
+            "debit": item.collection_amount or zero, "credit": zero,
+        })
+    payments = PaymentEntry.objects.filter(account_id__in=ledger_ids).select_related("ledger", "account")
+    for item in payments:
+        entries.append({
+            "date": item.date, "sort": (item.date, item.id, 1),
+            "particulars": (item.ledger.name if item.ledger else item.ledger_group) or "Payment Entry",
+            "reference": f"PV-{item.id:06d}", "type": "Payment Entry",
+            "debit": zero, "credit": item.amount or zero,
+        })
+    entries.sort(key=lambda row: row["sort"])
+
+    before_range = [row for row in entries if from_date and row["date"] < from_date]
+    opening_for_range = opening_balance + sum((row["debit"] for row in before_range), zero) - sum((row["credit"] for row in before_range), zero)
+
+    visible = [row for row in entries
+               if (not from_date or row["date"] >= from_date) and (not to_date or row["date"] <= to_date)]
+
+    running = opening_for_range
+    rows = []
+    total_debit = total_credit = zero
+    for row in visible:
+        running += row["debit"] - row["credit"]
+        total_debit += row["debit"]
+        total_credit += row["credit"]
+        balance_amount, balance_type = _signed(running)
+        rows.append({
+            "date": row["date"], "particulars": row["particulars"], "reference": row["reference"],
+            "type": row["type"], "debit": row["debit"], "credit": row["credit"],
+            "balance": balance_amount, "balance_type": balance_type,
+        })
+
+    opening_amount, opening_type = _signed(opening_for_range)
+    closing_amount, closing_type = _signed(running)
+    return Response({
+        "ledger_type": kind, "group": group_name,
+        "opening_balance": opening_amount, "opening_balance_type": opening_type,
+        "rows": rows, "total_debit": total_debit, "total_credit": total_credit,
+        "closing_balance": closing_amount, "closing_balance_type": closing_type,
+    })

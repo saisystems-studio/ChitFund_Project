@@ -1,0 +1,19 @@
+.ls-range{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#385975}
+.ls-range>span:first-child{white-space:nowrap}
+.ls-range span:last-child{display:flex;align-items:center;gap:6px}
+.ls-range input{width:140px;margin:0;padding:8px 10px;font-size:13px}
+.ls-range em{color:#7791aa;font-style:normal}
+
+.ls-summary{margin:22px 0}
+.ls-summary .card small{margin-top:2px}
+
+.ls-type{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:.4px;vertical-align:middle}
+.ls-type.dr{background:#e6f8f0;color:#1a8a5f}
+.ls-type.cr{background:#fdeceb;color:#c23b3b}
+
+.ls-panel .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ls-panel td{vertical-align:middle}
+.ls-opening-row td{background:#f6fafd;font-weight:700;border-bottom:2px solid #e1eaf3}
+.ls-panel .footer.paginationFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 4px 6px;color:#17324d;font-size:13px}
+
+@media(max-width:900px){.ls-range{flex-wrap:wrap}.ls-range input{width:120px}}

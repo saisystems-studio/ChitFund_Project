@@ -1,0 +1,52 @@
+.group-page{width:100%;max-width:1400px;margin:0 auto;color:#17324d}
+.group-page svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+.group-breadcrumb{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:15px}
+.group-breadcrumb button{padding:0;border:0;background:none;font:inherit;cursor:pointer}
+.group-back{display:grid;place-items:center;color:#174d7c}
+.group-back svg{width:18px;height:18px}
+.group-crumb{color:#176db3}
+.group-crumb:hover{text-decoration:underline}
+.group-sep{width:14px!important;height:14px!important;color:#17324d}
+.group-breadcrumb strong{color:#102a43;font-weight:700}
+
+.group-card{padding:14px;border:1px solid #dde7f1;border-radius:8px;background:#fff;box-shadow:0 4px 16px rgba(18,59,99,.06)}
+.group-card+.group-card{margin-top:16px}
+.group-card-title{margin:0;padding:10px 14px;border-left:3px solid #174d7c;border-radius:3px;background:#f1f7fd;color:#102a43;font-size:17px;font-weight:700}
+
+.group-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;padding:16px 14px 18px;border:1px solid #e6eef6;border-top:0;border-radius:0 0 6px 6px}
+.group-field{display:grid;gap:7px;min-width:0;color:#17324d;font-size:13px;font-weight:700}
+.group-field i{color:#d94a57;font-style:normal}
+.group-input{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border:1px solid #cfdcea;border-radius:6px;background:#fff;color:#4a6580;transition:border-color .15s,box-shadow .15s}
+.group-input:focus-within{border-color:#176db3;box-shadow:0 0 0 3px rgba(23,109,179,.1)}
+.group-input input{flex:1;min-width:0;height:100%;padding:0;border:0;outline:0;background:transparent;color:#17324d;font:inherit;font-size:13px;font-weight:500}
+.group-input input::placeholder{color:#8196aa}
+
+.group-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+.group-actions button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;min-width:110px;padding:0 18px;border:1px solid #176db3;border-radius:6px;background:#fff;color:#174d7c;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.group-actions button:hover{background:#f1f7fd}
+.group-actions .group-save{min-width:130px;border-color:#123a63;background:#123a63;color:#fff}
+.group-actions .group-save:hover{background:#174d7c}
+.group-actions .group-save:disabled{opacity:.6;cursor:not-allowed}
+
+.group-list .group-card-title{margin-bottom:10px}
+.group-table-wrap{overflow:visible;border:1px solid #e1eaf3;border-radius:6px}
+.group-table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse}
+.group-table th{padding:9px 10px;background:#123a63;color:#fff;font-size:12px;font-weight:700;letter-spacing:.3px;text-align:left;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group-table th:last-child{border-right:0}
+.group-table td{padding:8px 10px;border-bottom:1px solid #edf2f7;color:#17324d;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group-table tbody tr:last-child td{border-bottom:0}
+.group-table tbody tr:hover td{background:#f5f9fd}
+.group-table th:first-child,.group-table td:first-child{width:12%}
+.group-table th:nth-child(2),.group-table td:nth-child(2){width:44%}
+.group-table th:last-child,.group-table td:last-child{width:44%}
+.group-empty{padding:28px;text-align:center;color:#607b95;font-size:13px}
+
+@media(max-width:900px){.group-fields{grid-template-columns:1fr;gap:14px}}
+@media(max-width:600px){.group-actions{flex-direction:column-reverse}.group-actions button{width:100%}}
+
+/* One border per field: the wrapper owns the border and focus ring; inner controls never draw their own. */
+.group-page .group-input input{margin:0;border:0!important;outline:0!important;box-shadow:none!important;background-color:transparent}
+.group-page .group-input input:focus,.group-page .group-input input:focus-visible{border:0!important;outline:0!important;box-shadow:none!important}
+.group-page .group-input{box-sizing:border-box;border:1px solid #cfdcea;transition:border-color .15s,box-shadow .15s}
+.group-page .group-input:focus-within{border-color:#176db3;box-shadow:0 0 0 3px rgba(23,109,179,.12)}

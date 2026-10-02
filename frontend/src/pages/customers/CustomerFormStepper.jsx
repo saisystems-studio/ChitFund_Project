@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./CustomerForm.module.css";
 import { actionToast } from "../../utils/actionToast";
 import DistrictDropdown from "../../components/DistrictDropdown";
+import SearchableDropdown from "../../components/SearchableDropdown/SearchableDropdown";
+import { ROLE_ROOT_NAMES, findRootGroup, descendantOptions } from "../../utils/groupHierarchy";
 import "./CustomerFormCompact.css";
 import "./CustomerWhatsapp.css";
 import "./CustomerFormGrid.css";
 import PageBreadcrumb from "../../components/PageBreadcrumb";
 
-const empty = { customer_code: "", full_name: "", dob: "", gender: "", occupation: "", monthly_income: "", role: "", email: "", primary_mobile: "", alternate_mobile: "", whatsapp_number: "", is_whatsapp_same_as_phone: false, aadhaar_number: "", pan_number: "", address: "", district: "", state: "", country: "India", pincode: "", is_active: true };
+const empty = { customer_code: "", full_name: "", dob: "", gender: "", occupation: "", monthly_income: "", role: "", group: "", email: "", primary_mobile: "", alternate_mobile: "", whatsapp_number: "", is_whatsapp_same_as_phone: false, aadhaar_number: "", pan_number: "", address: "", district: "", state: "", country: "India", pincode: "", is_active: true };
 const CUSTOMER_DRAFT_KEY = "chitufund:draft:add-customer";
 const loadDraft = () => {
   try {
@@ -38,6 +40,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [groups, setGroups] = useState([]);
   const refs = useRef({});
   const checkboxEnter = useRef(0);
 
@@ -48,11 +51,24 @@ export default function CustomerFormStepper({ api, auth, go }) {
     }).catch(() => { if (active) actionToast("Unable to generate customer code.", false); });
     return () => { active = false; };
   }, [api, auth]);
+  useEffect(() => {
+    let active = true;
+    api.get("/finance/groups/", auth).then(({ data }) => { if (active) setGroups(data.results ?? data); }).catch(() => {});
+    return () => { active = false; };
+  }, [api, auth]);
   useEffect(() => { try { sessionStorage.setItem(CUSTOMER_DRAFT_KEY, JSON.stringify(form)); } catch {} }, [form]);
+  // Customer Type's two options come straight from Group_tbl's root records (never a hardcoded id);
+  // the Group dropdown is then limited to that root's descendants, nested to any depth.
+  const customerTypeOptions = useMemo(() => Object.entries(ROLE_ROOT_NAMES)
+    .map(([role, rootName]) => [role, findRootGroup(groups, rootName)])
+    .filter(([, root]) => root)
+    .map(([role, root]) => ({ value: role, label: root.group_name })), [groups]);
+  const groupRootId = form.role === "BORROWER" || form.role === "LENDER" ? findRootGroup(groups, ROLE_ROOT_NAMES[form.role])?.id ?? null : null;
+  const groupOptions = useMemo(() => descendantOptions(groups, groupRootId), [groups, groupRootId]);
 
   const focus = key => refs.current[key]?.focus();
   const nextKey = key => {
-    const order = ["full_name", "email", "primary_mobile", "is_whatsapp_same_as_phone", "whatsapp_number", "alternate_mobile", "dob", "gender", "occupation", "monthly_income", "role", "address", "district", "state", "pincode", "aadhaar_number", "pan_number"];
+    const order = ["full_name", "email", "primary_mobile", "is_whatsapp_same_as_phone", "whatsapp_number", "alternate_mobile", "dob", "gender", "occupation", "monthly_income", "role", "group", "address", "district", "state", "pincode", "aadhaar_number", "pan_number"];
     const index = order.indexOf(key);
     return index >= 0 ? order[index + 1] : undefined;
   };
@@ -61,7 +77,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
     let value = raw;
     if (numeric.has(key)) value = String(value).replace(/\D/g, "").slice(0, key === "aadhaar_number" ? 12 : key === "pincode" ? 6 : 10);
     if (key === "pan_number") value = String(value).replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 10);
-    setForm(current => ({ ...current, [key]: key === "is_whatsapp_same_as_phone" ? Boolean(raw) : value, ...(key === "is_whatsapp_same_as_phone" ? { whatsapp_number: raw ? current.primary_mobile : "" } : {}), ...(key === "primary_mobile" && current.is_whatsapp_same_as_phone ? { whatsapp_number: value } : {}) }));
+    setForm(current => ({ ...current, [key]: key === "is_whatsapp_same_as_phone" ? Boolean(raw) : value, ...(key === "is_whatsapp_same_as_phone" ? { whatsapp_number: raw ? current.primary_mobile : "" } : {}), ...(key === "primary_mobile" && current.is_whatsapp_same_as_phone ? { whatsapp_number: value } : {}), ...(key === "role" && value !== current.role ? { group: "" } : {}) }));
     if (errors[key]) setErrors(current => ({ ...current, [key]: validators[key]?.(value) || "" }));
   };
   const validate = () => {
@@ -79,7 +95,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
     if (saving || !validate()) { if (!saving) actionToast("Unable to save customer. Please check the highlighted fields.", false); return; }
     setSaving(true); setNotice(""); setSaveError("");
     try {
-      const { data } = await api.post("/customers/", { ...form, dob: form.dob || null, monthly_income: form.monthly_income === "" ? null : form.monthly_income }, auth);
+      const { data } = await api.post("/customers/", { ...form, dob: form.dob || null, monthly_income: form.monthly_income === "" ? null : form.monthly_income, group: form.group || null }, auth);
       actionToast("Customer saved successfully.");
       try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {}
       const next = await api.get("/customers/next-code/", auth);
@@ -112,7 +128,8 @@ export default function CustomerFormStepper({ api, auth, go }) {
     {field("whatsapp_number", "WhatsApp Number", { inputMode: "numeric", placeholder: "Enter WhatsApp Number", readOnly: form.is_whatsapp_same_as_phone, "aria-readonly": form.is_whatsapp_same_as_phone, labelExtra: <span className={styles.whatsappSame} onKeyDown={event => keyDown(event, "is_whatsapp_same_as_phone")}><input ref={node => { refs.current.is_whatsapp_same_as_phone = node; }} type="checkbox" checked={form.is_whatsapp_same_as_phone} onChange={event => set("is_whatsapp_same_as_phone", event.target.checked)}/> Same as Phone</span> })}
     {field("dob", "DOB", { type: "date" })}{field("gender", "Gender", { children: <select value={form.gender} onChange={event => set("gender", event.target.value)} onKeyDown={event => keyDown(event, "gender")}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select> })}{field("occupation", "Occupation")}
     {field("monthly_income", "Monthly Income", { type: "number", min: "0", step: "0.01" })}
-    <fieldset className={`${styles.roleField} ${errors.role ? styles.invalid : ""}`}><legend>Customer Type <b>*</b></legend><div className={styles.roles}>{[["BORROWER", "Debtor"], ["LENDER", "Creditor"], ["BOTH", "Debtor & Creditor"]].map(([value, label]) => <label className={styles.radio} key={value}><input ref={node => { if (value === "BORROWER") refs.current.role = node; }} type="radio" name="customer-role" value={value} checked={form.role === value} onChange={event => set("role", event.target.value)} onKeyDown={event => keyDown(event, "role")}/>{label}</label>)}</div><FieldError message={errors.role}/></fieldset>
+    {field("role", "Customer Type", { children: <select ref={node => { refs.current.role = node; }} value={form.role} onChange={event => set("role", event.target.value)} onKeyDown={event => keyDown(event, "role")}><option value="">Select</option>{customerTypeOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select> })}
+    {field("group", "Group", { children: <SearchableDropdown options={groupOptions} value={form.group || ""} onChange={value => set("group", value)} onEnterNext={() => moveNext("group")} placeholder={form.role ? "Select Group" : "Select Customer Type first"} disabled={!form.role} allowClear/> })}
     {field("address", "Address", { type: "textarea" })}
     {location("district", "District", "district", "state", item => setForm(current => ({ ...current, district: item.name, state: item.state, country: item.country, pincode: item.pincode || "" })))}
     {location("state", "State", "state", "pincode", item => set("state", item.name))}

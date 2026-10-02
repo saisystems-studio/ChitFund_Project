@@ -10,6 +10,9 @@ import "./ledger-master.css";
 const groups = ["Sundry Debtors", "Sundry Creditors", "Indirect Expense", "Direct Expense", "Income", "Cash in Hand", "Bank Accounts"];
 const pageSize = 10;
 const blank = () => ({ name: "", group: "", opening_balance: "0" });
+// Convention: a positive Opening Balance is Dr, a negative one is Cr.
+const balanceType = value => Number(value || 0) < 0 ? "CR" : "DR";
+const BalanceBadge = ({ value }) => <span className={`ledger-balance-type ${balanceType(value).toLowerCase()}`}>{balanceType(value)}</span>;
 
 export default function LedgerMaster({ api, auth, go }) {
   const [form, setForm] = useState(blank), [items, setItems] = useState([]), [editing, setEditing] = useState(null);
@@ -64,7 +67,7 @@ export default function LedgerMaster({ api, auth, go }) {
           </label>
           <label className="ledger-field">
             <span>Opening Balance</span>
-            <span className="ledger-input ledger-money"><b>₹</b><input type="number" step="0.01" placeholder="0.00" value={form.opening_balance} onChange={event => update("opening_balance", event.target.value)}/></span>
+            <span className="ledger-input ledger-money"><b>₹</b><input type="number" step="0.01" placeholder="0.00" value={form.opening_balance} onChange={event => update("opening_balance", event.target.value)}/><BalanceBadge value={form.opening_balance}/></span>
           </label>
         </div>
         <footer className="ledger-actions">
@@ -80,8 +83,8 @@ export default function LedgerMaster({ api, auth, go }) {
         <label className="ledger-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input placeholder="Search ledger name or group..." value={search} onChange={event => { setSearch(event.target.value); setPage(1); }}/></label>
       </header>
       <div className="ledger-table-wrap"><table className="ledger-table">
-        <thead><tr><th>S.No</th><th>Name</th><th>Group</th><th className="num">Opening Balance</th><th>Actions</th></tr></thead>
-        <tbody>{rows.map((item, index) => <tr key={item.id}><td>{String(first + index).padStart(2, "0")}</td><td>{item.name}</td><td>{item.group}</td><td className="num">{formatINR(item.opening_balance)}</td><td><RowActions onEdit={() => { setEditing(item.id); setForm({ name: item.name, group: item.group, opening_balance: item.opening_balance }); window.scrollTo({ top: 0, behavior: "smooth" }); }} onDelete={() => remove(item)}/></td></tr>)}</tbody>
+        <thead><tr><th>S.No</th><th>Name</th><th>Group</th><th className="num">Opening Balance</th><th>Action</th></tr></thead>
+        <tbody>{rows.map((item, index) => <tr key={item.id}><td>{String(first + index).padStart(2, "0")}</td><td>{item.name}</td><td>{item.group}</td><td className="num">{formatINR(Math.abs(item.opening_balance))} <BalanceBadge value={item.opening_balance}/></td><td><RowActions onEdit={() => { setEditing(item.id); setForm({ name: item.name, group: item.group, opening_balance: item.opening_balance }); window.scrollTo({ top: 0, behavior: "smooth" }); }} onDelete={() => remove(item)}/></td></tr>)}</tbody>
       </table>{!filtered.length && <div className="ledger-empty">No ledgers found.</div>}</div>
       <footer className="ledger-pager">
         <span>Showing {first} to {last} of {filtered.length} entries</span>

@@ -1,97 +1,23 @@
-.pe-page{width:100%;max-width:1400px;margin:0 auto;color:#17324d}
-.pe-page svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
-
 .pe-breadcrumb{display:flex;align-items:center;gap:12px;margin:0 0 18px;color:#1d4f7d;font-size:15px}
 .pe-back{display:grid;place-items:center;padding:0;border:0;background:none;color:#174d7c;cursor:pointer}
 .pe-sep{width:14px!important;height:14px!important;color:#17324d}
 .pe-breadcrumb strong{color:#102a43;font-weight:700}
-
-.pe-card{max-width:1180px;margin:0 auto;padding:14px 16px 18px;border:1px solid #dde7f1;border-radius:10px;background:#fff;box-shadow:0 6px 20px rgba(18,59,99,.06)}
-.pe-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border-radius:8px;background:#f2f7fc}
-.pe-title{display:flex;align-items:center;gap:14px}
-.pe-icon{display:grid;place-items:center;width:44px;height:44px;color:#176db3}
-.pe-icon svg{width:32px;height:32px;stroke-width:1.6}
-.pe-title h2{margin:0;color:#102a43;font-size:20px;font-weight:700}
-.pe-title p{margin:3px 0 0;color:#4f6a84;font-size:14px}
-
-.pe-date{display:flex;align-items:stretch;min-width:260px;height:52px;border:1px solid #cfdcea;border-radius:8px;background:#fff;overflow:hidden}
-.pe-date:focus-within{border-color:#176db3;box-shadow:0 0 0 3px rgba(23,109,179,.1)}
-.pe-date-body{display:flex;flex:1;flex-direction:column;justify-content:center;padding:0 12px}
-.pe-date small{color:#4f6a84;font-size:11px;font-weight:600}
-.pe-date i,.pe-label i{color:#d94a57;font-style:normal}
-.pe-date input{width:100%;height:24px;padding:0;border:0;outline:0;background:transparent;color:#102a43;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
-
-.pe-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 34px;padding:20px 12px 22px}
-.pe-field{display:grid;gap:8px;min-width:0}
-.pe-label{color:#102a43;font-size:14px;font-weight:700}
-.pe-control{display:flex;align-items:stretch;height:44px;border:1px solid #cfdcea;border-radius:6px;background:#fff;transition:border-color .15s,box-shadow .15s}
-.pe-control:focus-within{border-color:#176db3;box-shadow:0 0 0 3px rgba(23,109,179,.1)}
-.pe-addon{display:grid;place-items:center;flex:0 0 48px;border-right:1px solid #cfdcea;border-radius:6px 0 0 6px;background:#f3f7fb;color:#102a43}
-.pe-date .pe-addon{border-radius:0}
-.pe-rupee{font-size:17px;font-weight:600}
-.pe-control>input,.pe-control>select,.pe-dropdown>div{flex:1;min-width:0}
-.pe-control input,.pe-control select{width:100%;height:100%;margin:0;padding:0 14px;border:0!important;border-radius:0 6px 6px 0;outline:0!important;box-shadow:none!important;background-color:transparent;color:#17324d;font:inherit;font-size:14px}
-.pe-control input::placeholder{color:#6f879d}
-.pe-control select,.pe-dropdown input{appearance:none;-webkit-appearance:none;padding-right:38px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23102a43' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center/16px;cursor:pointer}
-.pe-dropdown>div{position:relative}
-.pe-dropdown button{right:34px!important}
-.pe-dropdown ul{margin-top:4px!important}
-
-.pe-fields .dynamic-fields{gap:16px 34px}
-.pe-fields .dynamic-fields label,.pe-fields .dynamic-fields .entry-field{color:#102a43;font-size:14px;font-weight:700}
-.pe-fields .dynamic-fields input,.pe-fields .dynamic-fields textarea{height:44px;border-color:#cfdcea;border-radius:6px;font-size:14px}
-
-.pe-actions{display:flex;justify-content:center;align-items:center;gap:12px;margin:0 12px;padding-top:24px;border-top:1px solid #e1eaf3}
-.pe-actions button{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:44px;min-width:130px;padding:0 24px;border:1px solid #176db3;border-radius:6px;background:#fff;color:#176db3;font:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s}
-.pe-actions .pe-cancel:hover{background:#f1f7fd}
-.pe-actions .pe-reset{border-color:#9ccbee;background:#e7f3fc}
-.pe-actions .pe-reset:hover{background:#d9ecfa}
-.pe-actions .pe-save{min-width:150px;border-color:#123a63;background:#123a63;color:#fff}
-.pe-actions .pe-save:hover{background:#174d7c}
-.pe-actions .pe-save:disabled{opacity:.6;cursor:not-allowed}
-
-@media(max-width:760px){.pe-head{flex-direction:column;align-items:stretch}.pe-date{min-width:0}.pe-fields,.pe-fields .dynamic-fields{grid-template-columns:1fr}.pe-actions button{flex:1;min-width:0;padding:0 10px}}
 .collection-entry-heading .pe-breadcrumb{margin:0}
-.payment-entry-page .collection-entry-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
-.payment-entry-page .collection-entry-fields>.entry-notes{grid-column:1/-1}
-@media(max-width:1100px){.payment-entry-page .collection-entry-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .payment-entry-page .pe-breadcrumb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
-.payment-entry-page .pe-history{margin-top:14px}
-.pe-history h2{margin:0 0 10px;color:#173f65;font-size:15px;font-weight:800}
-.pe-history-wrap{overflow:auto;border:1px solid #dce8f5;border-radius:9px}
-.pe-history table{width:100%;min-width:760px;border-collapse:collapse;font-variant-numeric:tabular-nums}
-.pe-history th,.pe-history td{padding:9px 12px;border-bottom:1px solid #edf3f8;font-size:12.5px;text-align:left;white-space:nowrap}
-.pe-history tbody tr:last-child td{border-bottom:0}
-.pe-history .pe-amount{text-align:right}
-.pe-history .pe-voucher-col{width:84px;text-align:center}
-.pe-history-empty{padding:22px;color:#7892a8;font-size:13px;text-align:center}
-.pe-history .report-receipt-actions{display:inline-flex;align-items:center;justify-content:center;gap:6px}
-.pe-history .report-receipt-button{display:inline-grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid #cfe0ef;border-radius:7px;background:#fff;color:#176db3;cursor:pointer}
-.pe-history .report-receipt-button:hover:not(:disabled){background:#edf6ff;border-color:#8ec5f5}
-.pe-history .report-receipt-button:disabled{opacity:.55;cursor:wait}
-.pe-history .report-receipt-button:focus-visible{outline:2px solid #268bda;outline-offset:2px}
-.pe-history .report-receipt-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.pe-history .report-receipt-button.receipt-pdf{color:#c2410c}
-.pe-history .report-receipt-spinner{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pe-voucher-spin .7s linear infinite}
-@keyframes pe-voucher-spin{to{transform:rotate(360deg)}}
-[data-theme="dark"] .main-content .pe-history .report-receipt-button{background:#202c38;border-color:#435363;color:#8ec5f5}
+
 /* Compact layout (Payment Entry only) */
-.payment-entry-page .collection-entry-card{padding:16px 18px}
-.payment-entry-page .collection-entry-fields{gap:14px 15px}
+.payment-entry-page.collection-entry-page{max-width:1040px;min-height:auto}
+.payment-entry-page .collection-entry-card{padding:16px 20px 18px}
+.payment-entry-page .collection-entry-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px}
+.payment-entry-page .collection-entry-fields>.entry-notes{grid-column:1/-1}
 .payment-entry-page .collection-entry-fields .entry-field{margin:0}
-.payment-entry-page .payment-mode-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 15px}
+.payment-entry-page .entry-field input,
+.payment-entry-page .entry-field select{height:43px}
+.payment-entry-page .currency-input{height:43px}
+.payment-entry-page .currency-input input{height:41px!important}
+.payment-entry-page .payment-mode-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px}
 .payment-entry-page .payment-mode-row:has(>.dynamic-fields>:nth-child(3)){grid-template-columns:repeat(4,minmax(0,1fr))}
-.payment-entry-page .notes-wrap textarea{height:58px;min-height:58px}
-.payment-entry-page .collection-entry-actions{justify-content:center;margin-top:14px;padding-top:14px}
-.payment-entry-page .pe-history{margin-top:12px;padding:14px 18px 16px}
-.payment-entry-page .pe-history h2{margin:0 0 10px;font-size:14px}
-.payment-entry-page .pe-history th{height:36px;padding:0 12px;font-size:11px;letter-spacing:.03em;vertical-align:middle}
-.payment-entry-page .pe-history td{height:40px;padding:0 12px;vertical-align:middle}
-.payment-entry-page .pe-history tbody tr:hover{background:#f7fbff}
-.payment-entry-page .pe-history th:first-child,.payment-entry-page .pe-history td:first-child{width:52px;text-align:center}
-.payment-entry-page .pe-history .pe-voucher-col{width:88px;padding:0 8px}
-.payment-entry-page .pe-history .report-receipt-button{width:28px;height:28px}
-.payment-entry-page .pe-history .report-receipt-button svg{width:15px;height:15px}
-[data-theme="dark"] .main-content .payment-entry-page .pe-history tbody tr:hover{background:#202d3a}
-@media(max-width:1100px){.payment-entry-page .payment-mode-row,.payment-entry-page .payment-mode-row:has(>.dynamic-fields>:nth-child(3)){grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.payment-entry-page .collection-entry-card,.payment-entry-page .pe-history{padding:12px}}
+.payment-entry-page .notes-wrap textarea{height:76px;min-height:76px}
+.payment-entry-page .collection-entry-actions{justify-content:flex-end;margin-top:14px;padding-top:14px}
+@media(max-width:1100px){.payment-entry-page .collection-entry-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.payment-entry-page .payment-mode-row,.payment-entry-page .payment-mode-row:has(>.dynamic-fields>:nth-child(3)){grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.payment-entry-page .collection-entry-card{padding:12px}.payment-entry-page .collection-entry-fields,.payment-entry-page .payment-mode-row{grid-template-columns:1fr}.payment-entry-page .collection-entry-actions{justify-content:stretch}.payment-entry-page .collection-entry-actions button{flex:1}}

@@ -9,7 +9,7 @@ from .models import (
     LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
     Mortgage, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings,
-    CollectionTransaction, AdjustmentTypeMaster, MortgageRate, Ledger, PaymentEntry,
+    CollectionTransaction, AdjustmentTypeMaster, MortgageRate, Ledger, PaymentEntry, Group,
 )
 
 
@@ -108,7 +108,10 @@ class MortgageSerializer(AllFields):
         if rate_date is not None and rate is not None:
             existing, created = MortgageRate.objects.get_or_create(mortgage=instance, date=rate_date, defaults={"rate": rate})
             if not created and existing.rate != rate:
-                raise serializers.ValidationError({"rate_date": "A different rate is already saved for this date. Choose a new date to preserve history."})
+                if existing.pk != instance.rates.first().pk:
+                    raise serializers.ValidationError({"rate_date": "An older rate is already saved for this date. Edit the current rate date to preserve older history."})
+                existing.rate = rate
+                existing.save(update_fields=("rate",))
             instance.current_rate = instance.rates.first().rate
             instance.save(update_fields=("current_rate",))
         return instance
@@ -307,6 +310,42 @@ class LedgerSerializer(AllFields):
         if not value:
             raise serializers.ValidationError('Name is required.')
         return value
+
+
+class GroupSerializer(AllFields):
+    # The client works with IDs only; parent_group_id is the single source of
+    # truth for the hierarchy link (never the parent's display name), and
+    # group_name/parent_group_id mirror the Group_tbl column names so other
+    # modules (e.g. Ledger) can bind to the same shape later.
+    group_name = serializers.CharField(source="name", max_length=150)
+    parent_group_id = serializers.PrimaryKeyRelatedField(source="parent", queryset=Group.objects.all(), required=False, allow_null=True, default=None)
+
+    class Meta(AllFields.Meta):
+        model = Group
+        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "created_by", "create_date", "modified_by", "modified_date")
+        read_only_fields = ("is_system", "created_by", "create_date", "modified_by", "modified_date")
+
+    def validate_group_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Group Name is required.")
+        return value
+
+    def validate(self, attrs):
+        name = attrs.get("name", getattr(self.instance, "name", ""))
+        parent = attrs.get("parent", getattr(self.instance, "parent", None))
+        duplicates = Group.objects.filter(parent=parent, name__iexact=name)
+        if self.instance:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise serializers.ValidationError({"group_name": "A group with this name already exists under the selected Group Tag."})
+        if self.instance and parent is not None:
+            node = parent
+            while node is not None:
+                if node.pk == self.instance.pk:
+                    raise serializers.ValidationError({"parent_group_id": "A group cannot be moved under itself or one of its own sub-groups."})
+                node = node.parent
+        return attrs
 
 
 class PaymentEntrySerializer(AllFields):

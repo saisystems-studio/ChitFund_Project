@@ -44,6 +44,7 @@ class LoanInstallment(AuditModel):
 
 class Mortgage(AuditModel):
     id = models.AutoField(primary_key=True, db_column="ID")
+    product_group = models.CharField(max_length=50, blank=True, default="", db_column="ProductGroup")
     product_name = models.CharField(max_length=150, unique=True, db_column="ProductName")
     quantity = models.DecimalField(max_digits=18, decimal_places=3, null=True, blank=True, db_column="Quantity")
     unit = models.CharField(max_length=50, db_column="Unit")
@@ -207,6 +208,7 @@ class CollectionTransaction(AuditModel):
     adjustment_amount = models.DecimalField(**MONEY, db_column="AdjustmentAmount")
     discount_amount = models.DecimalField(**MONEY, db_column="DiscountAmount")
     account = models.ForeignKey("Ledger", on_delete=models.PROTECT, null=True, blank=True, related_name="collection_transactions", db_column="AccountLedgerID")
+    ledger = models.ForeignKey("Ledger", on_delete=models.PROTECT, null=True, blank=True, related_name="ledger_collections", db_column="LedgerID")
     LEDGER_GROUPS = [(name, name) for name in ("Sundry Debtors", "Sundry Creditors", "Indirect Expense", "Direct Expense", "Income")]
     ledger_group = models.CharField(max_length=30, blank=True, default="", choices=LEDGER_GROUPS, db_column="LedgerGroup")
     ledger_amount = models.DecimalField(**MONEY, db_column="LedgerAmount")
@@ -278,6 +280,13 @@ class MortgageUnit(models.Model):
         ordering = ("name",)
 
 
+class MortgageProductGroup(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        ordering = ("name",)
+
+
 class LoanDocumentSequence(models.Model):
     prefix = models.CharField(max_length=20, primary_key=True)
     last_value = models.PositiveIntegerField(default=0)
@@ -299,12 +308,29 @@ class MortgageLoanHistory(models.Model):
 class Ledger(AuditModel):
     GROUPS = [(name, name) for name in ('Sundry Debtors', 'Sundry Creditors', 'Indirect Expense',
                                       'Direct Expense', 'Income', 'Cash in Hand', 'Bank Accounts')]
+    customer = models.ForeignKey('customers.Customer', null=True, blank=True, on_delete=models.SET_NULL, related_name='ledgers')
     name = models.CharField(max_length=150)
     group = models.CharField(max_length=30, choices=GROUPS)
     opening_balance = models.DecimalField(**MONEY)
 
     class Meta:
         ordering = ('name', 'id')
+
+
+class Group(AuditModel):
+    """Self-referencing chart-of-accounts group tree (unlimited depth).
+    Root groups are seeded as system records; every other group must chain
+    up to one of them via parent_id, never by storing the parent's name."""
+    id = models.AutoField(primary_key=True, db_column="ID")
+    name = models.CharField(max_length=150, db_column="GroupName")
+    parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True, related_name="children", db_column="ParentGroupID")
+    is_system = models.BooleanField(default=False, db_column="IsSystem")
+    is_active = models.BooleanField(default=True, db_column="IsActive")
+
+    class Meta:
+        db_table = "Group_tbl"
+        ordering = ("name", "id")
+        constraints = [models.UniqueConstraint(fields=("parent", "name"), name="uniq_group_parent_name")]
 
 
 class PaymentEntry(AuditModel):

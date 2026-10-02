@@ -1,0 +1,43 @@
+.transaction-list .transaction-output-cell{white-space:nowrap}
+.transaction-list .transaction-row-action-cell{text-align:right;white-space:nowrap;width:90px}
+.transaction-list .transaction-action-head{text-align:right;width:90px}
+.transaction-list th:nth-child(1),.transaction-list td:nth-child(1){width:5%}
+.transaction-list th:nth-child(2),.transaction-list td:nth-child(2){width:10%}
+.transaction-list th:nth-child(3),.transaction-list td:nth-child(3){width:12%}
+.transaction-list th:nth-child(4),.transaction-list td:nth-child(4){width:24%}
+.transaction-list th:nth-child(5),.transaction-list td:nth-child(5){width:16%}
+.transaction-list th:nth-child(6),.transaction-list td:nth-child(6){width:11%}
+.transaction-list th:nth-child(7),.transaction-list td:nth-child(7){width:11%}
+
+/* Payment History: 7 columns (S.No, Date, Particulars, Voucher No, DR Amount, CR Amount, Action), not 8 -
+   the generic nth-child widths above (and the app-wide 6th-column hider in styles.css) target the wrong cell here, so re-declare this table's own column layout. */
+.main-content .list-container .payment-history-table th:nth-child(6),
+.main-content .list-container .payment-history-table td:nth-child(6){display:table-cell}
+.transaction-list .payment-history-table th:nth-child(1),.transaction-list .payment-history-table td:nth-child(1){width:5%}
+.transaction-list .payment-history-table th:nth-child(2),.transaction-list .payment-history-table td:nth-child(2){width:12%}
+.transaction-list .payment-history-table th:nth-child(3),.transaction-list .payment-history-table td:nth-child(3){width:31%}
+.transaction-list .payment-history-table th:nth-child(4),.transaction-list .payment-history-table td:nth-child(4){width:16%}
+.transaction-list .payment-history-table th:nth-child(5),.transaction-list .payment-history-table td:nth-child(5){width:14%}
+.transaction-list .payment-history-table th:nth-child(6),.transaction-list .payment-history-table td:nth-child(6){width:14%}
+.transaction-list .payment-history-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.transaction-list .payment-history-table .transaction-action-head,
+.transaction-list .payment-history-table .transaction-row-action-cell{width:152px}
+.transaction-list .payment-history-table .transaction-row-action-cell .action-group{justify-content:center;gap:6px}
+.transaction-list .transaction-row-action-cell .action-group{display:inline-flex;justify-content:flex-end;opacity:1;visibility:visible;pointer-events:auto;background:transparent;border:none;box-shadow:none;padding:0;min-height:auto;gap:10px}
+.transaction-list .transaction-output-actions{display:inline-flex;gap:6px}
+.transaction-output-actions button{border:1px solid #cfe0ef;border-radius:5px;background:#fff;color:#176db3;padding:4px 7px;cursor:pointer;font:inherit;font-size:11px}
+.transaction-edit-backdrop{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(15,39,66,.3);padding:20px}
+.transaction-edit-modal{width:min(700px,100%);max-height:calc(100dvh - 40px);display:flex;flex-direction:column;background:#fff;color:#294967;border:1px solid #dceaf6;border-radius:10px;box-shadow:0 18px 45px rgba(15,39,66,.2)}
+.transaction-edit-modal header,.transaction-edit-modal footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;flex-shrink:0}
+.transaction-edit-modal header{border-bottom:1px solid #e5eef7}.transaction-edit-modal h2{margin:0;font-size:18px;color:#123b63}
+.transaction-edit-modal header button{background:transparent;border:0;font-size:25px;cursor:pointer;color:inherit}
+.transaction-edit-body{padding:16px 20px;overflow:auto;min-height:0}.transaction-edit-body fieldset{border:0;padding:0;margin:0;min-width:0}
+.transaction-edit-identity{display:flex;flex-wrap:wrap;gap:10px 25px;margin-bottom:18px;font-size:13px}
+.transaction-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.transaction-edit-modal label{display:grid;gap:6px;font-size:12px;font-weight:650}
+.transaction-edit-modal input,.transaction-edit-modal select,.transaction-edit-modal textarea{width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;border:1px solid #cfe0ef;border-radius:6px;font:inherit;color:#294967;background:#fff}
+.transaction-edit-modal details{margin:12px 0}.transaction-edit-modal summary{cursor:pointer;margin-bottom:12px;font-size:13px;font-weight:650}
+.transaction-edit-modal footer{justify-content:flex-end;border-top:1px solid #e5eef7}
+.transaction-edit-modal footer button{padding:9px 14px;border:1px solid #cfe0ef;border-radius:6px;cursor:pointer}
+.transaction-edit-modal button:disabled{opacity:.6;cursor:wait}
+@media(max-width:600px){.transaction-edit-grid{grid-template-columns:1fr}.transaction-edit-backdrop{padding:10px}.transaction-edit-modal{max-height:calc(100dvh - 20px)}}
