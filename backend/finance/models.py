@@ -333,11 +333,18 @@ class Group(AuditModel):
     """Self-referencing chart-of-accounts group tree (unlimited depth).
     Root groups are seeded as system records; every other group must chain
     up to one of them via parent_id, never by storing the parent's name."""
+    # Accounting classification (Asset/Liability/Income/Expense) is only
+    # ever set on root (is_system) groups -- every descendant inherits its
+    # root's nature, since e.g. any sub-group under "Fixed Assets" is still
+    # an asset. Reports resolve a ledger's nature via root().nature, never
+    # by matching a group/ledger name.
+    NATURE_CHOICES = [("ASSET", "Asset"), ("LIABILITY", "Liability"), ("INCOME", "Income"), ("EXPENSE", "Expense")]
     id = models.AutoField(primary_key=True, db_column="ID")
     name = models.CharField(max_length=150, db_column="GroupName")
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True, related_name="children", db_column="ParentGroupID")
     is_system = models.BooleanField(default=False, db_column="IsSystem")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    nature = models.CharField(max_length=10, choices=NATURE_CHOICES, blank=True, default="", db_column="Nature")
     done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:

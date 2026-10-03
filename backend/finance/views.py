@@ -1134,3 +1134,30 @@ def ledger_statement(request):
         "rows": rows, "total_debit": total_debit, "total_credit": total_credit,
         "closing_balance": closing_amount, "closing_balance_type": closing_type,
     })
+
+
+def _report_date_range(params):
+    from_date = params.get("from") or None
+    to_date = params.get("to") or None
+    return from_date, to_date
+
+
+@api_view(["GET"])
+def trial_balance_report(request):
+    from .accounting_reports import trial_balance
+    from_date, to_date = _report_date_range(request.query_params)
+    return Response(trial_balance(from_date, to_date))
+
+
+@api_view(["GET"])
+def profit_and_loss_report(request):
+    from .accounting_reports import profit_and_loss
+    from_date, to_date = _report_date_range(request.query_params)
+    return Response(profit_and_loss(from_date, to_date))
+
+
+@api_view(["GET"])
+def balance_sheet_report(request):
+    from .accounting_reports import balance_sheet
+    from_date, to_date = _report_date_range(request.query_params)
+    return Response(balance_sheet(from_date, to_date))

@@ -341,7 +341,7 @@ class GroupSerializer(DoneBySerializerMixin, AllFields):
 
     class Meta(AllFields.Meta):
         model = Group
-        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "done_by_staff", "done_by_staff_name", "created_by", "create_date", "modified_by", "modified_date")
+        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "nature", "done_by_staff", "done_by_staff_name", "created_by", "create_date", "modified_by", "modified_date")
         read_only_fields = ("is_system", "created_by", "create_date", "modified_by", "modified_date")
 
     def validate_group_name(self, value):
