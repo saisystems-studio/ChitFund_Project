@@ -15,7 +15,7 @@ const rowsOf = data => data?.results ?? data ?? [];
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 const dateLabel = value => value ? new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 const LEDGER_OPTIONS = ["Sundry Debtors", "Sundry Creditors", "Indirect Expense", "Direct Expense", "Income"];
-const ACCOUNT_GROUPS = ["Cash in Hand", "Bank Accounts"];
+const ACCOUNT_GROUPS = ["Cash-in-Hand", "Bank Accounts"];
 const SUNDRY_GROUPS = ["Sundry Debtors", "Sundry Creditors"];
 const apiError = (e, fallback) => { const data = e.response?.data; if (typeof data?.detail === "string") return data.detail; if (data && typeof data === "object") { const messages = Object.values(data).flat().filter(x => typeof x === "string"); if (messages.length) return messages.join(" "); } return e.response ? `${fallback} (server error ${e.response.status})` : `${fallback} Check that the server is running.`; };
 const balanceOf = item => Number(item.balance ?? Number(item.installment_amount || 0) - Number(item.paid_amount || 0));
@@ -36,7 +36,7 @@ export default function CollectionEntry({ api, auth, go }) {
   const totalCashAmount = cashRows.reduce((sum, row) => sum + row.amount, 0) + Number(coinsAmount || 0);
   useEffect(() => { Promise.all([api.get("/customers/", { ...auth, params: { page_size: 1000 } }), api.get("/finance/loans/", { ...auth, params: { page_size: 1000 } })]).then(([c, l]) => { setCustomers(rowsOf(c.data)); setLoans(rowsOf(l.data)); }).catch(() => setError("Unable to load collection data.")); api.get("/finance/ledgers/", auth).then(({ data }) => { const all = rowsOf(data); const rows = all.filter(x => ACCOUNT_GROUPS.includes(x.group)); setAccounts(rows); setSundryLedgers(all.filter(x => SUNDRY_GROUPS.includes(x.group))); const cash = rows.find(x => x.name.trim().toLowerCase() === "cash"); if (cash) setAccountId(current => current || String(cash.id)); }).catch(() => setError("Unable to load accounts.")); }, []);
   const selectedAccount = accounts.find(x => String(x.id) === String(accountId));
-  const isCashAccount = selectedAccount?.group === "Cash in Hand";
+  const isCashAccount = selectedAccount?.group === "Cash-in-Hand";
   const modeOptions = !accountId ? [] : isCashAccount ? [["Cash", "Cash"]] : PAYMENT_MODE_OPTIONS.filter(([modeValue]) => modeValue !== "Cash");
   const customer = customers.find(x => String(x.id) === String(customerId));
   const customerLoans = loans.filter(x => String(x.customer?.id ?? x.customer_id) === String(customerId) && x.status !== "Completed");

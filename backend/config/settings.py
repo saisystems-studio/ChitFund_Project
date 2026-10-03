@@ -16,8 +16,7 @@ ALLOWED_HOSTS = [item.strip() for item in os.getenv("ALLOWED_HOSTS", "127.0.0.1,
 INSTALLED_APPS = [
     "django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes",
     "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles",
-    "corsheaders", "rest_framework", "rest_framework.authtoken", "django_filters", "customers", "accounts", "finance",
-]
+    "corsheaders", "rest_framework", "rest_framework.authtoken", "django_filters", "customers", "accounts", "finance","staff",]
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware", "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware", "django.middleware.common.CommonMiddleware",
@@ -30,27 +29,45 @@ TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates", "DIR
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Microsoft SQL Server only. Windows Authentication; no username/password.
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "mssql",
+#         "NAME": os.getenv("DB_NAME", "ChitFund_db"),
+#         "USER": os.getenv("DB_USER", ""),
+#         "PASSWORD": os.getenv("DB_PASSWORD", ""),
+#         "HOST": os.getenv("DB_HOST", "127.0.0.1"),
+#         "PORT": os.getenv("DB_PORT", "1433"),
+#         "OPTIONS": {
+#             "driver": os.getenv(
+#                 "ODBC_DRIVER",
+#                 "ODBC Driver 17 for SQL Server"
+#             ),
+#             "extra_params": (
+#                 "TrustServerCertificate=yes;"
+#                 "Encrypt=no;"
+#             ),
+#         },
+#     }
+# }
 DATABASES = {
     "default": {
         "ENGINE": "mssql",
-        "NAME": os.getenv("DB_NAME", "chitfunddd_db"),
+        "NAME": os.getenv("DB_NAME", "ChitFund_db"),
         "USER": "",
         "PASSWORD": "",
-        "HOST": os.getenv("DB_HOST", r".\SQLEXPRESS"),
-        "PORT": os.getenv("DB_PORT", ""),
+        "HOST": r"localhost\SQLEXPRESS",
+        "PORT": "",
         "OPTIONS": {
-            "driver": os.getenv(
-                "ODBC_DRIVER",
-                "ODBC Driver 17 for SQL Server"
-            ),
+            "driver": "ODBC Driver 17 for SQL Server",
             "extra_params": (
-                "Trusted_Connection=yes;"
                 "TrustServerCertificate=yes;"
                 "Encrypt=no;"
             ),
         },
     }
 }
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True

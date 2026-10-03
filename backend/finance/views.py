@@ -60,7 +60,7 @@ class FinanceViewSet(viewsets.ModelViewSet):
 
 
 class LedgerViewSet(FinanceViewSet):
-    queryset = Ledger.objects.all()
+    queryset = Ledger.objects.select_related("group_detail", "done_by_staff").all()
     serializer_class = LedgerSerializer
     delete_label = "ledger"
     pagination_class = None
@@ -69,7 +69,7 @@ class LedgerViewSet(FinanceViewSet):
 
 class GroupViewSet(FinanceViewSet):
     pagination_class = None
-    queryset = Group.objects.all()
+    queryset = Group.objects.select_related("done_by_staff").all()
     serializer_class = GroupSerializer
     delete_label = "group"
 
@@ -106,7 +106,7 @@ def adjustment_types(request):
 
 class LoanTypeViewSet(FinanceViewSet):
     pagination_class = None
-    queryset = LoanType.objects.all(); serializer_class = LoanTypeSerializer
+    queryset = LoanType.objects.select_related("done_by_staff").all(); serializer_class = LoanTypeSerializer
 
     @staticmethod
     def _ensure_defaults():
@@ -124,8 +124,8 @@ class LoanTypeViewSet(FinanceViewSet):
         self._ensure_defaults()
         # Selection requests expose usable master records; deletion removes records permanently.
         if self.request.query_params.get("include_inactive") == "true" or self.action != "list":
-            return LoanType.objects.all()
-        return LoanType.objects.filter(is_active=True, name__in=("Chit", "Interest", "Mortgage"))
+            return LoanType.objects.select_related("done_by_staff").all()
+        return LoanType.objects.select_related("done_by_staff").filter(is_active=True, name__in=("Chit", "Interest", "Mortgage"))
 
     def create(self, request, *args, **kwargs):
         return Response({"detail": "Only the fixed Chit, Interest and Mortgage loan types are available."}, status=405)
@@ -144,7 +144,7 @@ class LoanInstallmentViewSet(FinanceViewSet):
 
 class MortgageViewSet(FinanceViewSet):
     pagination_class = None
-    queryset = Mortgage.objects.all()
+    queryset = Mortgage.objects.select_related("done_by_staff").all()
     serializer_class = MortgageSerializer
 
     @action(detail=False, methods=["get", "post"])
@@ -195,7 +195,7 @@ class MortgageViewSet(FinanceViewSet):
 
 class ChitGroupViewSet(FinanceViewSet):
     pagination_class = None
-    queryset = ChitGroup.objects.prefetch_related("installments"); serializer_class = ChitGroupSerializer
+    queryset = ChitGroup.objects.select_related("done_by_staff").prefetch_related("installments"); serializer_class = ChitGroupSerializer
 
     def get_queryset(self):
         # Active groups first; deactivated groups stay listed at the bottom.
@@ -529,7 +529,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
             return Response({"detail": "Enter a valid payment date and amount."}, status=400)
         account = None
         if request.data.get("account_id"):
-            account = Ledger.objects.filter(pk=request.data.get("account_id"), group__in=("Cash in Hand", "Bank Accounts")).first() if str(request.data.get("account_id")).isdigit() else None
+            account = Ledger.objects.filter(pk=request.data.get("account_id"), group__in=("Cash-in-Hand", "Bank Accounts")).first() if str(request.data.get("account_id")).isdigit() else None
             if account is None:
                 return Response({"detail": "Select a valid Cash or Bank account."}, status=400)
         # The Ledger entry is recorded alongside the collection; it never changes installment dues or loan outstanding.
@@ -607,7 +607,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
 
 class HolidayMasterViewSet(FinanceViewSet):
     pagination_class = None
-    queryset = HolidayMaster.objects.all(); serializer_class = HolidayMasterSerializer
+    queryset = HolidayMaster.objects.select_related("done_by_staff").all(); serializer_class = HolidayMasterSerializer
 
     delete_label = "holiday"
 
@@ -1055,7 +1055,7 @@ def customer_wise_report(request):
     return Response({"customers": customers, "results": list(grouped.values())})
 
 
-LEDGER_REPORT_GROUPS = {"cash": "Cash in Hand", "bank": "Bank Accounts"}
+LEDGER_REPORT_GROUPS = {"cash": "Cash-in-Hand", "bank": "Bank Accounts"}
 
 
 def _signed(value):

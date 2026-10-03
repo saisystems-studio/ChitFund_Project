@@ -12,7 +12,7 @@ from finance.delete_utils import delete_response
 
 class CustomerViewSet(viewsets.ModelViewSet):
     pagination_class = None
-    queryset = Customer.objects.filter(is_active=True)
+    queryset = Customer.objects.select_related("group", "done_by_staff").filter(is_active=True)
     serializer_class = CustomerSerializer
     search_fields = ("customer_code", "full_name", "primary_mobile")
     ordering_fields = ("full_name", "customer_code", "created_at")
@@ -52,7 +52,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         serializer.save(customer_code=f"CUS_{number:03d}")
 
     def get_queryset(self):
-        queryset = Customer.objects.filter(is_active=True)
+        queryset = Customer.objects.select_related("group", "done_by_staff").filter(is_active=True)
         role = self.request.query_params.get("role")
         search = self.request.query_params.get("search")
         if role: queryset = queryset.filter(role=role.upper())

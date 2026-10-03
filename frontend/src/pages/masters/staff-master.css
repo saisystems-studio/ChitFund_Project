@@ -1,0 +1,73 @@
+.staff-page{width:100%;max-width:1400px;margin:0 auto;color:#17324d}
+.staff-page svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+.staff-breadcrumb{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:15px}
+.staff-breadcrumb button{padding:0;border:0;background:none;font:inherit;cursor:pointer}
+.staff-back{display:grid;place-items:center;color:#174d7c}
+.staff-back svg{width:18px;height:18px}
+.staff-crumb{color:#176db3}
+.staff-crumb:hover{text-decoration:underline}
+.staff-sep{width:14px!important;height:14px!important;color:#17324d}
+.staff-breadcrumb strong{color:#102a43;font-weight:700}
+
+.staff-card{padding:14px;border:1px solid #dde7f1;border-radius:8px;background:#fff;box-shadow:0 4px 16px rgba(18,59,99,.06)}
+.staff-card+.staff-card{margin-top:16px}
+.staff-card-title{margin:0;padding:10px 14px;border-left:3px solid #174d7c;border-radius:3px;background:#f1f7fd;color:#102a43;font-size:17px;font-weight:700}
+
+.staff-modal-backdrop{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(15,39,66,.24);padding:16px}
+.staff-modal{box-sizing:border-box;width:min(560px,100%);max-height:calc(100dvh - 28px);overflow:auto;padding:14px;border:1px solid #dde7f1;border-radius:8px;background:#fff;box-shadow:0 22px 65px rgba(15,39,66,.25)}
+
+.staff-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:16px 14px 18px;border:1px solid #e6eef6;border-top:0;border-radius:0 0 6px 6px}
+.staff-field{display:grid;gap:7px;min-width:0;color:#17324d;font-size:13px;font-weight:700}
+.staff-field i{color:#d94a57;font-style:normal}
+.staff-input{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border:1px solid #cfdcea;border-radius:6px;background:#fff;color:#4a6580;transition:border-color .15s,box-shadow .15s}
+.staff-input:focus-within{border-color:#176db3;box-shadow:0 0 0 3px rgba(23,109,179,.1)}
+.staff-input input,.staff-input select,.staff-input textarea{flex:1;min-width:0;height:100%;padding:0;border:0;outline:0;background:transparent;color:#17324d;font:inherit;font-size:13px;font-weight:500}
+.staff-input input::placeholder,.staff-input textarea::placeholder{color:#8196aa}
+.staff-input select{cursor:pointer}
+.staff-input:has(textarea){height:auto;padding:9px 12px;align-items:flex-start}
+.staff-input textarea{min-height:64px;resize:vertical;padding:0}
+
+.staff-actions{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.staff-actions button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;min-width:110px;padding:0 18px;border:1px solid #176db3;border-radius:6px;background:#fff;color:#174d7c;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.staff-actions button:hover{background:#f1f7fd}
+.staff-actions .staff-save{min-width:130px;border-color:#123a63;background:#123a63;color:#fff}
+.staff-actions .staff-save:hover{background:#174d7c}
+.staff-actions .staff-save:disabled{opacity:.6;cursor:not-allowed}
+
+.staff-list-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}
+.staff-list-head .staff-card-title{background:none;padding:6px 14px}
+.staff-search{display:flex;align-items:center;gap:8px;width:min(420px,100%);height:38px;padding:0 12px;border:1px solid #cfdcea;border-radius:6px;color:#607b95}
+.staff-search:focus-within{border-color:#176db3}
+.staff-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#17324d;font:inherit;font-size:13px}
+
+/* One border per field: the wrapper owns the border and focus ring; inner controls never draw their own. */
+.staff-page .staff-input input,.staff-page .staff-input select,.staff-page .staff-input textarea,
+.staff-page .staff-search input{margin:0;border:0!important;outline:0!important;box-shadow:none!important;background-color:transparent}
+.staff-page .staff-input input:focus,.staff-page .staff-input input:focus-visible,
+.staff-page .staff-input select:focus,.staff-page .staff-input select:focus-visible,
+.staff-page .staff-input textarea:focus,.staff-page .staff-input textarea:focus-visible,
+.staff-page .staff-search input:focus,.staff-page .staff-search input:focus-visible{border:0!important;outline:0!important;box-shadow:none!important}
+.staff-page .staff-input,.staff-page .staff-search{box-sizing:border-box;border:1px solid #cfdcea;transition:border-color .15s,box-shadow .15s}
+.staff-page .staff-input:focus-within,.staff-page .staff-search:focus-within{border-color:#176db3;box-shadow:0 0 0 3px rgba(23,109,179,.12)}
+
+.staff-table-wrap{overflow:visible;border:1px solid #e1eaf3;border-radius:6px}
+.staff-table{width:100%;min-width:0;table-layout:fixed;border-collapse:collapse}
+.staff-table th{padding:9px 10px;background:#123a63;color:#fff;font-size:12px;font-weight:700;letter-spacing:.3px;text-align:left;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.staff-table th:last-child{border-right:0}
+.staff-table td{padding:8px 10px;border-bottom:1px solid #edf2f7;color:#17324d;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.staff-table tbody tr:last-child td{border-bottom:0}
+.staff-table tbody tr:hover td{background:#f5f9fd}
+.staff-empty{padding:28px;text-align:center;color:#607b95;font-size:13px}
+.staff-status{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:.4px}
+.staff-status.active{background:#e6f8f0;color:#1a8a5f}
+.staff-status.inactive{background:#fdeceb;color:#c23b3b}
+
+.staff-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;color:#17324d;font-size:13px}
+.staff-pager div{display:flex;gap:6px}
+.staff-pager button{min-width:36px;height:34px;padding:0 12px;border:1px solid #e1eaf3;border-radius:6px;background:#fff;color:#17324d;font:inherit;font-size:13px;cursor:pointer}
+.staff-pager button:disabled{color:#a3b3c2;cursor:not-allowed}
+.staff-pager button.active{border-color:#123a63;background:#123a63;color:#fff;font-weight:700}
+
+@media(max-width:900px){.staff-fields{grid-template-columns:1fr;gap:14px}.staff-list-head{flex-direction:column;align-items:stretch}.staff-search{width:100%}}
+@media(max-width:600px){.staff-actions{flex-direction:column-reverse}.staff-actions button{width:100%}.staff-pager{flex-direction:column;align-items:flex-start}}

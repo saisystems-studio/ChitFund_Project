@@ -24,7 +24,7 @@ class CollectionAccountTests(TestCase):
         self.assertEqual(response.status_code, 201, response.data)
         self.loan = response.data
         self.url = f"/api/finance/customer-loan-installments/{self.loan['installments'][0]['id']}/collect/"
-        self.cash = Ledger.objects.create(name='Cash', group='Cash in Hand')
+        self.cash = Ledger.objects.create(name='Cash', group='Cash-in-Hand')
 
     def collect(self, **extra):
         return self.client.post(self.url, {'payment_date': timezone.localdate().isoformat(), 'customer_paid_amount': '10', 'payment_mode': 'Cash', **extra}, format='json')

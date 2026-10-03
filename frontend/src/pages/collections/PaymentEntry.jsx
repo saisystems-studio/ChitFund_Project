@@ -23,7 +23,7 @@ export default function PaymentEntry({ api, auth, go }) {
   const cashRows = CASH_DENOMINATIONS.map(value => ({ value, qty: denomQty[value] || "", amount: Number(denomQty[value] || 0) * value }));
   const totalCashAmount = cashRows.reduce((sum, row) => sum + row.amount, 0) + Number(coinsAmount || 0);
   const selectedAccount = accounts.find(item => String(item.id) === String(form.account));
-  const isCashAccount = selectedAccount?.group === "Cash in Hand";
+  const isCashAccount = selectedAccount?.group === "Cash-in-Hand";
   const modeOptions = !form.account ? [] : isCashAccount ? [["Cash", "Cash"]] : PAYMENT_MODE_OPTIONS.filter(([modeValue]) => modeValue !== "Cash");
   const [voucherBusy, setVoucherBusy] = useState(null);
   const [savedEntry, setSavedEntry] = useState(null);
