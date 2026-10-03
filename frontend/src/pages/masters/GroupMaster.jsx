@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import SearchableDropdown from "../../components/SearchableDropdown/SearchableDropdown";
-import StaffDropdown from "../../components/StaffDropdown/StaffDropdown";
 import RowActions from "../../components/RowActions";
 import confirmDelete from "../../utils/confirmDelete";
 import { actionToast } from "../../utils/actionToast";
 import apiErrorMessage from "../../utils/apiErrorMessage";
 import "./group-master.css";
 
-const blank = () => ({ parent_group_id: "", group_name: "", done_by_staff: "" });
+const blank = () => ({ parent_group_id: "", group_name: "" });
 
 // Depth-first order so sub-groups sort under their parent in the Group Tag
 // dropdown; the hierarchy is driven entirely by parent_group_id, never by name.
@@ -46,10 +45,9 @@ export default function GroupMaster({ api, auth, go, view = "add" }) {
     if (saving) return;
     if (!form.parent_group_id) return setError("Group Tag is required.");
     if (!form.group_name.trim()) return setError("Group Name is required.");
-    if (!form.done_by_staff) return setError("Done By is required.");
     setSaving(true);
     try {
-      const payload = { parent_group_id: form.parent_group_id, group_name: form.group_name.trim(), done_by_staff: form.done_by_staff };
+      const payload = { parent_group_id: form.parent_group_id, group_name: form.group_name.trim() };
       if (editing) await api.put(`/finance/groups/${editing}/`, payload, auth);
       else await api.post("/finance/groups/", payload, auth);
       reset();
@@ -71,10 +69,6 @@ export default function GroupMaster({ api, auth, go, view = "add" }) {
     <label className="group-field">
       <span>Group Name <i>*</i></span>
       <span className="group-input"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg><input required maxLength={150} placeholder="Enter group name" value={form.group_name} onChange={event => update("group_name", event.target.value)}/></span>
-    </label>
-    <label className="group-field">
-      <span>Done By <i>*</i></span>
-      <StaffDropdown api={api} auth={auth} value={form.done_by_staff} onChange={value => update("done_by_staff", value)} placeholder="Select staff" allowClear/>
     </label>
   </div>;
   return <div className="group-page">
@@ -103,7 +97,7 @@ export default function GroupMaster({ api, auth, go, view = "add" }) {
             <td>{String(index + 1).padStart(2, "0")}</td>
             <td>{nameById.get(item.parent_group_id) ?? "—"}</td>
             <td>{item.group_name}</td>
-            <td><RowActions onEdit={() => { setEditing(item.id); setForm({ parent_group_id: item.parent_group_id || "", group_name: item.group_name, done_by_staff: item.done_by_staff || "" }); }} onDelete={() => remove(item)}/></td>
+            <td><RowActions onEdit={() => { setEditing(item.id); setForm({ parent_group_id: item.parent_group_id || "", group_name: item.group_name }); }} onDelete={() => remove(item)}/></td>
           </tr>)}</tbody>
         </table>
         {!rows.length && <div className="group-empty">No groups found.</div>}

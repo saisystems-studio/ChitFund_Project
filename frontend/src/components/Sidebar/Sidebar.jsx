@@ -12,6 +12,33 @@ import CompanyProfileForm from "./CompanyProfileForm";
 // table. Mortgage, Holiday and Loan Type are list-first pages with a
 // modal Add/Edit, so their Add and List entries legitimately share one
 // route -- the modal itself still never shows a list.
+//
+// Reports is the only group with a second accordion level: one category
+// (General/Loan/Accounts) open at a time, nested inside the single open
+// top-level group. Existing report routes are reused as-is; Trial Balance /
+// Balance Sheet / Profit & Loss have no report built yet, so they route to
+// the same WorkInProgress placeholder already used for "Daily Report".
+const reportCategories = [
+  ["generalReports", "General Reports", [
+    ["Today Report", "/today-collection"],
+    ["Collection Entry History", "/collection-list"],
+    ["Collection History", "/reports/collections/history"],
+    ["Payment History", "/payment-list"],
+  ]],
+  ["loanReports", "Loan Reports", [
+    ["Active Loans", "/active-loans"],
+    ["Mortgage Report", "/reports/mortgage"],
+    ["Customer Wise Report", "/reports/customer-wise"],
+  ]],
+  ["accountsReports", "Accounts Reports", [
+    ["Cash Ledger", "/reports/cash-balance"],
+    ["Bank Ledger", "/reports/bank-balance"],
+    ["Pending & Outstanding", "/reports/collections/pending"],
+    ["Trial Balance Report", "/reports/trial-balance"],
+    ["Balance Sheet Report", "/reports/balance-sheet"],
+    ["Profit & Loss Report", "/reports/profit-loss"],
+  ]],
+];
 const groups = [
   ["masters", "MASTERS", [
     ["Add Customer", "/customers/new"],
@@ -20,7 +47,7 @@ const groups = [
     ["Add Chit Group", "/chit-groups/new"],
     ["Add Mortgage", "/mortgage-master"],
     ["Add Holiday", "/holiday-master"],
-    ["Add Loan Type", "/loan-types"],
+    ["Loan Type", "/loan-types"],
     ["Add Staff", "/staff"],
   ]],
   ["masterList", "MASTER LIST", [
@@ -30,11 +57,10 @@ const groups = [
     ["Chit Group List", "/chit-groups"],
     ["Mortgage Rate History", "/mortgage-master"],
     ["Holiday List", "/holiday-master"],
-    ["Loan Type List", "/loan-types"],
     ["Staff List", "/staff/list"],
   ]],
   ["transactions", "TRANSACTIONS", [["Loan Application", "/loan-application"], ["Collection Entry", "/collection-entry"], ["Payment Entry", "/payment-entry"]]],
-  ["reports", "REPORTS", [["Today Report", "/today-collection"], ["Active Loan", "/active-loans"], ["Customer-wise Report", "/reports/customer-wise"], ["Mortgage Report", "/reports/mortgage"], ["Cash Ledger", "/reports/cash-balance"], ["Bank Ledger", "/reports/bank-balance"], ["Pending & Outstanding", "/reports/collections/pending"], ["Collection Entry History", "/collection-list"], ["Collection History", "/reports/collections/history"], ["Payment History", "/payment-list"]]],
+  ["reports", "REPORTS", reportCategories.flatMap(([, , links]) => links)],
 ];
 
 function LegacySidebar({ route, go, user, onLogout, theme, onToggleTheme, onUserUpdate }) {
@@ -49,11 +75,34 @@ function LegacySidebar({ route, go, user, onLogout, theme, onToggleTheme, onUser
 const sidebarIcons = { dashboard: "⌂", masters: "▣", masterList: "☰", loans: "◈", transactions: "₹", reports: "▥" };
 export default function Sidebar({ route, go, user, token, onLogout, theme, onToggleTheme, onUserUpdate, collapsed, onToggleCollapse, mobile = false, mobileOpen = false, onMobileClose }) {
   const { profile } = useCompanyProfile();
-  const activeGroup = groups.find(([key, , links]) => links.some(([, path]) => route === path || route.startsWith(`${path}/`)))?.[0];
-  const [expanded, setExpanded] = useState(() => ({ masters: activeGroup === "masters", masterList: activeGroup === "masterList", transactions: activeGroup === "transactions", reports: activeGroup === "reports" }));
+  // A few Master List entries (Mortgage Rate History, Holiday List, Loan
+  // Type) intentionally share one route with their Masters counterpart
+  // (e.g. "/mortgage-master" is both "Add Mortgage" and "Mortgage Rate
+  // History"), so route alone can't always say which group a click came
+  // from -- groups.find() would always pick "masters" first. `lastClicked`
+  // remembers which group the most recent sidebar click actually belonged
+  // to, and wins whenever it still matches the current route; a fresh page
+  // load has no click yet, so it correctly falls back to route-matching.
+  const groupForRoute = r => groups.find(([key, , links]) => links.some(([, path]) => r === path || r.startsWith(`${path}/`)))?.[0];
+  const activeGroup = groupForRoute(route);
+  const [lastClicked, setLastClicked] = useState(null);
+  const groupMatchesRoute = (key, r) => groups.find(([groupKey]) => groupKey === key)?.[2]?.some(([, path]) => r === path || r.startsWith(`${path}/`));
+  const resolvedGroup = lastClicked && groupMatchesRoute(lastClicked, route) ? lastClicked : activeGroup;
+  // Strict accordion: exactly one of the four groups is expanded at a time.
+  // Re-derived from `route` (not `resolvedGroup`) so every navigation --
+  // even between two links inside the same group -- recomputes this,
+  // instead of only firing when the active *group* identity changes (which
+  // would skip same-group moves).
+  const [expanded, setExpanded] = useState(() => ({ masters: resolvedGroup === "masters", masterList: resolvedGroup === "masterList", transactions: resolvedGroup === "transactions", reports: resolvedGroup === "reports" }));
+  // Same strict-accordion rule, one level deeper, only inside Reports: the
+  // active category (if any) is derived from the route; otherwise none of
+  // the 3 categories is expanded until the user picks one.
+  const activeReportCategory = reportCategories.find(([, , links]) => links.some(([, path]) => route === path || route.startsWith(`${path}/`)))?.[0] || null;
+  const [expandedCategory, setExpandedCategory] = useState(() => activeReportCategory);
+  const toggleCategory = key => setExpandedCategory(current => current === key ? null : key);
   const [popup, setPopup] = useState(null);
   const [flyout, setFlyout] = useState(null);
-  useEffect(() => { if (activeGroup) setExpanded(value => ({ ...value, [activeGroup]: true })); }, [activeGroup]);
+  useEffect(() => { setExpanded({ masters: resolvedGroup === "masters", masterList: resolvedGroup === "masterList", transactions: resolvedGroup === "transactions", reports: resolvedGroup === "reports" }); setExpandedCategory(activeReportCategory); }, [route, lastClicked]);
   useEffect(() => { const close = event => { if (event.key === "Escape") { setPopup(null); setFlyout(null); } }; window.addEventListener("keydown", close); return () => window.removeEventListener("keydown", close); }, []);
   useEffect(() => { if (popup !== "menu") return undefined; const closeOutside = event => { if (!event.target.closest?.('[class*="adminMenu"]') && !event.target.closest?.('[class*="adminIdentity"]')) setPopup(null); }; document.addEventListener("pointerdown", closeOutside); return () => document.removeEventListener("pointerdown", closeOutside); }, [popup]);
   useEffect(() => { if (!flyout) return undefined; const closeOutside = event => { if (!event.target.closest?.('[class*="flyout"]') && !event.target.closest?.('[class*="groupButton"]')) setFlyout(null); }; document.addEventListener("pointerdown", closeOutside); return () => document.removeEventListener("pointerdown", closeOutside); }, [flyout]);
@@ -78,8 +127,28 @@ export default function Sidebar({ route, go, user, token, onLogout, theme, onTog
     active?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [route, expanded]);
   const toggleGroup = (key, event) => { if (collapsed) { const rect = event.currentTarget.getBoundingClientRect(); setFlyout(current => current?.key === key ? null : { key, top: Math.max(16, Math.min(rect.top, window.innerHeight - 220)) }); } else setExpanded(value => ({ masters: key === "masters" ? !value.masters : false, masterList: key === "masterList" ? !value.masterList : false, transactions: key === "transactions" ? !value.transactions : false, reports: key === "reports" ? !value.reports : false })); };
-  const navigate = path => { setFlyout(null); setExpanded({ masters: false, masterList: false, transactions: false, reports: false }); go(path); onMobileClose?.(); };
-  return <>{mobile && mobileOpen && <button type="button" className="mobile-sidebar-backdrop" aria-label="Close menu" onClick={onMobileClose}/>}<aside className={`${styles.sidebar} ${collapsed ? extra.collapsed : ""} ${mobile ? styles.mobileSidebar : ""} ${mobile && mobileOpen ? styles.mobileOpen : ""}`}><button type="button" className={styles.brand} onClick={() => navigate("/dashboard")} title="Dashboard"><span><CompanyLogo /></span>{!collapsed && <div><strong title={profile.company_name || "Finance Collection"}>{profile.company_name || "Finance Collection"}</strong><small>Management workspace</small></div>}</button><nav className={styles.sidebarMenu} aria-label="Main navigation"><a title="Dashboard" className={`${styles.direct} ${route === "/dashboard" ? styles.active : ""}`} onClick={() => navigate("/dashboard")}><span className={extra.navIcon}>{sidebarIcons.dashboard}</span>{!collapsed && <span>Dashboard</span>}</a>{groups.map(([key, label, links]) => <div className={styles.group} key={key}><button type="button" title={collapsed ? label : undefined} aria-haspopup={links.length ? "menu" : undefined} aria-expanded={collapsed ? flyout?.key === key : expanded[key]} className={styles.groupButton} onClick={event => toggleGroup(key, event)}><span className={extra.navIcon}>{sidebarIcons[key]}</span>{!collapsed && <span>{label}</span>}{!collapsed && <span className={`${styles.chevron} ${expanded[key] ? styles.open : ""}`}>›</span>}</button>{!collapsed && expanded[key] && <div className={styles.submenu}>{links.map(([name, path]) => <a key={`${path}-${name}`} className={route === path || route.startsWith(`${path}/`) ? styles.active : ""} onClick={() => navigate(path)}>{name}</a>)}</div>}</div>)}</nav><div className={styles.footer}><div className={styles.adminLine}><div className={styles.adminHover}><button type="button" className={styles.adminIdentity} onClick={() => { setFlyout(null); setPopup("menu"); }} aria-label="Open admin menu"><span className={styles.avatar}>A</span>{!collapsed && <span className={extra.adminText}><b>{user?.username || "admin"}</b><small>{user?.is_admin ? "Administrator" : "User"}</small></span>}</button>{collapsed && <span className={extra.collapsedTooltip}>Profile</span>}</div>{collapsed ? <button type="button" className={styles.signOut} onClick={onLogout} title="Sign Out">↪</button> : <button type="button" className={styles.signOut} onClick={onLogout}>Sign Out</button>}</div></div>{flyout && <SidebarFlyout label={groups.find(([key]) => key === flyout.key)?.[1]} links={groups.find(([key]) => key === flyout.key)?.[2] || []} top={flyout.top} route={route} onNavigate={navigate}/>} {popup === "menu" && <AdminMenu user={user} onProfile={() => setPopup("profile")} onSettings={() => setPopup("settings")} onClose={() => setPopup(null)}/>} {popup === "profile" && <ProfilePopup user={user} onClose={() => setPopup(null)} onChangePassword={() => setPopup("password")}/>} {popup === "settings" && <SettingsPopup user={user} token={token} theme={theme} onToggleTheme={onToggleTheme} onClose={() => setPopup(null)}/>} {popup === "password" && <ChangePasswordPopup onClose={() => setPopup(null)}/>}</aside></>;
+  const navigate = (path, groupKey) => { setFlyout(null); setLastClicked(groupKey || null); go(path); onMobileClose?.(); };
+  return <>{mobile && mobileOpen && <button type="button" className="mobile-sidebar-backdrop" aria-label="Close menu" onClick={onMobileClose}/>}<aside className={`${styles.sidebar} ${collapsed ? extra.collapsed : ""} ${mobile ? styles.mobileSidebar : ""} ${mobile && mobileOpen ? styles.mobileOpen : ""}`}><button type="button" className={styles.brand} onClick={() => navigate("/dashboard")} title="Dashboard"><span><CompanyLogo /></span>{!collapsed && <div><strong title={profile.company_name || "Finance Collection"}>{profile.company_name || "Finance Collection"}</strong><small>Management workspace</small></div>}</button><nav className={styles.sidebarMenu} aria-label="Main navigation"><a title="Dashboard" className={`${styles.direct} ${route === "/dashboard" ? styles.active : ""}`} onClick={() => navigate("/dashboard")}><span className={extra.navIcon}>{sidebarIcons.dashboard}</span>{!collapsed && <span>Dashboard</span>}</a>{groups.map(([key, label, links]) => <GroupSection key={key} groupKey={key} label={label} links={links} collapsed={collapsed} isExpanded={expanded[key]} isFlyoutActive={flyout?.key === key} onToggle={event => toggleGroup(key, event)} route={route} navigate={navigate} expandedCategory={expandedCategory} onToggleCategory={toggleCategory} icon={sidebarIcons[key]}/>)}</nav><div className={styles.footer}><div className={styles.adminLine}><div className={styles.adminHover}><button type="button" className={styles.adminIdentity} onClick={() => { setFlyout(null); setPopup("menu"); }} aria-label="Open admin menu"><span className={styles.avatar}>A</span>{!collapsed && <span className={extra.adminText}><b>{user?.username || "admin"}</b><small>{user?.is_admin ? "Administrator" : "User"}</small></span>}</button>{collapsed && <span className={extra.collapsedTooltip}>Profile</span>}</div>{collapsed ? <button type="button" className={styles.signOut} onClick={onLogout} title="Sign Out">↪</button> : <button type="button" className={styles.signOut} onClick={onLogout}>Sign Out</button>}</div></div>{flyout && <SidebarFlyout label={groups.find(([key]) => key === flyout.key)?.[1]} links={groups.find(([key]) => key === flyout.key)?.[2] || []} top={flyout.top} route={route} onNavigate={path => navigate(path, flyout.key)}/>} {popup === "menu" && <AdminMenu user={user} onProfile={() => setPopup("profile")} onSettings={() => setPopup("settings")} onClose={() => setPopup(null)}/>} {popup === "profile" && <ProfilePopup user={user} onClose={() => setPopup(null)} onChangePassword={() => setPopup("password")}/>} {popup === "settings" && <SettingsPopup user={user} token={token} theme={theme} onToggleTheme={onToggleTheme} onClose={() => setPopup(null)}/>} {popup === "password" && <ChangePasswordPopup onClose={() => setPopup(null)}/>}</aside></>;
+}
+
+function GroupSection({ groupKey, label, links, collapsed, isExpanded, isFlyoutActive, onToggle, route, navigate, expandedCategory, onToggleCategory, icon }) {
+  const isActiveLink = path => route === path || route.startsWith(`${path}/`);
+  return <div className={styles.group}>
+    <button type="button" title={collapsed ? label : undefined} aria-haspopup={links.length ? "menu" : undefined} aria-expanded={collapsed ? isFlyoutActive : isExpanded} className={styles.groupButton} onClick={onToggle}>
+      <span className={extra.navIcon}>{icon}</span>
+      {!collapsed && <span>{label}</span>}
+      {!collapsed && <span className={`${styles.chevron} ${isExpanded ? styles.open : ""}`}>›</span>}
+    </button>
+    {!collapsed && isExpanded && (groupKey === "reports"
+      ? <div className={styles.submenu}>{reportCategories.map(([categoryKey, categoryLabel, categoryLinks]) => <div className={styles.subGroup} key={categoryKey}>
+          <button type="button" className={styles.subGroupButton} aria-expanded={expandedCategory === categoryKey} onClick={() => onToggleCategory(categoryKey)}>
+            <span>{categoryLabel}</span>
+            <span className={`${styles.chevron} ${expandedCategory === categoryKey ? styles.open : ""}`}>›</span>
+          </button>
+          {expandedCategory === categoryKey && <div className={styles.nestedSubmenu}>{categoryLinks.map(([name, path]) => <a key={`${path}-${name}`} className={isActiveLink(path) ? styles.active : ""} onClick={() => navigate(path, groupKey)}>{name}</a>)}</div>}
+        </div>)}</div>
+      : <div className={styles.submenu}>{links.map(([name, path]) => <a key={`${path}-${name}`} className={isActiveLink(path) ? styles.active : ""} onClick={() => navigate(path, groupKey)}>{name}</a>)}</div>)}
+  </div>;
 }
 
 function SidebarFlyout({ label, links, top, route, onNavigate }) {

@@ -8,6 +8,7 @@ from rest_framework import serializers, mixins, viewsets
 from rest_framework.response import Response
 
 from accounts.permissions import CanWriteFinanceData
+from staff.serializers import DoneBySerializerMixin
 from .models import CollectionAllocation, CollectionTransaction, CustomerLoanDetails, PaymentEntry
 
 ZERO = Decimal('0.00')
@@ -22,7 +23,7 @@ class CollectionAllocationSerializer(serializers.ModelSerializer):
         fields = ('installment_id', 'installment_number', 'amount')
 
 
-class CollectionTransactionSerializer(serializers.ModelSerializer):
+class CollectionTransactionSerializer(DoneBySerializerMixin, serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     loan_no = serializers.CharField(source='loan.loan_no', read_only=True)
     allocations = CollectionAllocationSerializer(many=True, read_only=True)

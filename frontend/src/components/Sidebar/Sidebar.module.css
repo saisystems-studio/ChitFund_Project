@@ -84,3 +84,13 @@
   background:transparent;
 }
 .companyProfile textarea{display:block;box-sizing:border-box;width:100%;min-height:52px;margin-top:5px;padding:7px 9px;border:1px solid #cfe0ef;border-radius:6px;font:inherit;font-size:12px;resize:vertical}
+
+/* Reports' nested second accordion level (General / Loan / Accounts). */
+.subGroup{margin:2px 0}
+.subGroupButton{display:flex;width:100%;box-sizing:border-box;align-items:center;justify-content:space-between;gap:6px;border:1px solid transparent;background:transparent;color:#d8edff;border-radius:6px;padding:7px 11px 7px 20px;font:inherit;font-size:11px;font-weight:800;letter-spacing:.3px;line-height:1.2;cursor:pointer;text-align:left}
+.subGroupButton:hover{color:#fff;background:rgba(100,210,255,.1);border-color:rgba(150,235,255,.8)}
+.nestedSubmenu{display:flex;flex-direction:column;gap:2px;margin-top:2px}
+.nestedSubmenu a{display:flex;width:100%;box-sizing:border-box;align-items:center;border:1px solid transparent;background:transparent;color:#fff;text-decoration:none;border-radius:7px;padding:8px 11px 8px 38px;font:inherit;font-size:12px;line-height:1.2;cursor:pointer;text-align:left}
+.nestedSubmenu a:hover{color:#fff;background:rgba(100,210,255,.1);border-color:rgba(150,235,255,.8)}
+@media (min-width:768px) and (max-width:1024px){.subGroupButton{font-size:10px;padding:7px 10px 7px 18px}.nestedSubmenu a{font-size:10px;padding-left:32px}}
+@media(max-width:767px){.mobileSidebar:not(.mobileOpen) .subGroup{display:none}}

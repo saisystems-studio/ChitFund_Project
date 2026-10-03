@@ -104,6 +104,7 @@ class CustomerLoanDetails(AuditModel):
     outstanding_amount = models.DecimalField(**MONEY, db_column="OutstandingAmount")
     loan_status = models.CharField(max_length=20, default="ACTIVE", db_column="LoanStatus")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "CustomerLoanDetails_tbl"
@@ -214,6 +215,7 @@ class CollectionTransaction(AuditModel):
     LEDGER_GROUPS = [(name, name) for name in ("Sundry Debtors", "Sundry Creditors", "Indirect Expense", "Direct Expense", "Income")]
     ledger_group = models.CharField(max_length=30, blank=True, default="", choices=LEDGER_GROUPS, db_column="LedgerGroup")
     ledger_amount = models.DecimalField(**MONEY, db_column="LedgerAmount")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "CollectionTransaction_tbl"
@@ -371,6 +373,7 @@ class PaymentEntry(AuditModel):
     cheque_number = models.CharField(max_length=50, blank=True)
     cheque_date = models.DateField(null=True, blank=True)
     notes = models.CharField(max_length=500, blank=True, default='')
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         ordering = ('-date', '-id')

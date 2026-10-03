@@ -13,9 +13,9 @@ import TransactionEditModal, { transactionEndpoint } from "./TransactionEditModa
 import "./transaction-list.css";
 
 const lists = {
-  loan: { title: "Loan List", entry: "Loan Application", route: "/loan-application", endpoint: "/finance/loans/?status=ALL", headers: ["Date", "Loan No", "Customer", "Loan Type", "Total Amount", "Outstanding"] },
-  collection: { title: "Collection Entry History", entry: "Collection Entry", route: "/collection-entry", endpoint: "/finance/collection-history/", headers: ["Date", "Receipt No", "Customer", "Loan No", "Amount", "Mode"] },
-  payment: { title: "Payment History", entry: "Payment Entry", route: "/payment-entry", endpoint: "/finance/payment-entries/", headers: ["Date", "Particulars", "Voucher No", "DR Amount", "CR Amount"] },
+  loan: { title: "Loan List", entry: "Loan Application", route: "/loan-application", endpoint: "/finance/loans/?status=ALL", headers: ["Date", "Loan No", "Customer", "Loan Type", "Total Amount", "Outstanding", "Done By"] },
+  collection: { title: "Collection Entry History", entry: "Collection Entry", route: "/collection-entry", endpoint: "/finance/collection-history/", headers: ["Date", "Receipt No", "Customer", "Loan No", "Amount", "Done By", "Mode"] },
+  payment: { title: "Payment History", entry: "Payment Entry", route: "/payment-entry", endpoint: "/finance/payment-entries/", headers: ["Date", "Particulars", "Voucher No", "Done By", "DR Amount", "CR Amount"] },
 };
 const dateLabel = value => value ? String(value).slice(0, 10).split("-").reverse().join("/") : "—";
 
@@ -56,11 +56,11 @@ export default function TransactionList({ api, auth, go, kind }) {
     finally { setBusy(null); }
   };
   const values = entry => kind === "loan"
-    ? [dateLabel(entry.application_date || entry.create_date), entry.loan_no, entry.customer?.name, entry.loan_type?.name, formatINR(entry.total_amount), formatINR(entry.outstanding_amount)]
+    ? [dateLabel(entry.application_date || entry.create_date), entry.loan_no, entry.customer?.name, entry.loan_type?.name, formatINR(entry.total_amount), formatINR(entry.outstanding_amount), entry.done_by_staff_name || "—"]
     : kind === "collection"
-      ? [dateLabel(entry.collection_date), `RV-${String(entry.id).padStart(6, "0")}`, entry.customer_name, entry.loan_no, formatINR(entry.collected_amount), entry.payment_mode]
+      ? [dateLabel(entry.collection_date), `RV-${String(entry.id).padStart(6, "0")}`, entry.customer_name, entry.loan_no, formatINR(entry.collected_amount), entry.done_by_staff_name || "—", entry.payment_mode]
       // Payment Entries always draw down Cash/Bank, so every row posts to CR Amount; DR Amount is reserved for a future debit-type voucher.
-      : [dateLabel(entry.date), entry.ledger_name || entry.ledger_group || "—", paymentVoucherNo(entry), "—", formatINR(entry.amount)];
+      : [dateLabel(entry.date), entry.ledger_name || entry.ledger_group || "—", paymentVoucherNo(entry), entry.done_by_staff_name || "—", "—", formatINR(entry.amount)];
   const visible = entries.filter(entry => values(entry).join(" ").toLowerCase().includes(search.trim().toLowerCase()));
   const output = async (entry, action) => {
     if (busy) return;
@@ -81,7 +81,7 @@ export default function TransactionList({ api, auth, go, kind }) {
     {error && <div role="alert" className="collection-entry-error">{error}</div>}
     <section className="panel list-container transaction-list"><div className="table-wrap"><table className={kind === "payment" ? "payment-history-table" : undefined}>
       <thead><tr><th>S.No</th>{config.headers.map(header => <th key={header} className={kind === "payment" && header.endsWith("Amount") ? "num" : undefined}>{header}</th>)}<th className="transaction-action-head">Action</th></tr></thead>
-      <tbody>{visible.map((entry, index) => { const outputColumn = config.headers.length - 1; return <tr key={entry.id} tabIndex={kind === "loan" ? undefined : 0}><td>{index + 1}</td>{values(entry).map((value, column) => <td key={column} className={[kind === "collection" && column === outputColumn ? "transaction-output-cell" : "", kind === "payment" && column >= 3 ? "num" : ""].filter(Boolean).join(" ") || undefined}>{value ?? "—"}
+      <tbody>{visible.map((entry, index) => { const outputColumn = config.headers.length - 1; return <tr key={entry.id} tabIndex={kind === "loan" ? undefined : 0}><td>{index + 1}</td>{values(entry).map((value, column) => <td key={column} className={[kind === "collection" && column === outputColumn ? "transaction-output-cell" : "", kind === "payment" && column >= 4 ? "num" : ""].filter(Boolean).join(" ") || undefined}>{value ?? "—"}
         {kind === "collection" && column === outputColumn && <span className="transaction-output-actions"><button disabled={Boolean(busy)} onClick={() => output(entry, "pdf")}>PDF</button><button disabled={Boolean(busy)} onClick={() => output(entry, "print")}>Print</button></span>}
       </td>)}<td className="transaction-row-action-cell">{kind === "loan" ? <RowActions onEdit={() => go(`/loan-application/${entry.id}/edit`)} onDelete={() => removeLoan(entry)}/> : kind === "payment" ? <RowActions onPdf={() => output(entry, "pdf")} onPrint={() => output(entry, "print")} disabled={Boolean(busy)} onEdit={() => { if (!busy) setEditing(entry.id); }} onDelete={() => remove(entry)}/> : <RowActions onEdit={() => { if (!busy) setEditing(entry.id); }} onDelete={() => remove(entry)}/>}</td></tr>; })}</tbody>
     </table>{!visible.length && <div className="empty">{loading ? "Loading entries..." : error ? "Entries could not be loaded." : "No entries found."}</div>}</div>

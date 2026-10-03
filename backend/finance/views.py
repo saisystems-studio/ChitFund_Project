@@ -418,7 +418,7 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             interest_amount = (amount * percentage / Decimal("100")).quantize(Decimal("0.01"))
             total_payable = amount + interest_amount
             per_installment = (total_payable / duration).quantize(Decimal("0.01"))
-            common = {"customer": customer_id, "loan_type": loan_type.pk, "loan_amount": amount, "loan_start_date": start_date, "total_amount": total_payable, "paid_amount": 0, "penalty_amount": 0, "outstanding_amount": total_payable, "loan_status": "ACTIVE", "is_active": True}
+            common = {"customer": customer_id, "loan_type": loan_type.pk, "loan_amount": amount, "loan_start_date": start_date, "total_amount": total_payable, "paid_amount": 0, "penalty_amount": 0, "outstanding_amount": total_payable, "loan_status": "ACTIVE", "is_active": True, "done_by_staff": payload.get("done_by_staff")}
             loan = self.get_serializer(data=common); loan.is_valid(raise_exception=True); loan = loan.save()
             yearly = periodicity in ("Annual", "Other", "Others")
             collection_month = payload.get("interest_collection_month") or (start_date.month if yearly else None)
@@ -456,7 +456,7 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             rate = product.current_rate if product else Decimal('0')
             market_value = ((quantity or Decimal('0')) * rate).quantize(Decimal("0.01"))
             daily_interest = (amount * percentage / Decimal("100") / Decimal("365")).quantize(Decimal("0.01"))
-            common = {"customer": customer_id, "loan_type": loan_type.pk, "loan_amount": amount, "loan_start_date": start_date, "total_amount": amount + daily_interest, "paid_amount": 0, "penalty_amount": 0, "outstanding_amount": amount + daily_interest, "loan_status": "ACTIVE", "is_active": True}
+            common = {"customer": customer_id, "loan_type": loan_type.pk, "loan_amount": amount, "loan_start_date": start_date, "total_amount": amount + daily_interest, "paid_amount": 0, "penalty_amount": 0, "outstanding_amount": amount + daily_interest, "loan_status": "ACTIVE", "is_active": True, "done_by_staff": payload.get("done_by_staff")}
             loan = self.get_serializer(data=common)
             loan.is_valid(raise_exception=True)
             loan = loan.save()
@@ -589,6 +589,7 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
                 cheque_date=cheque_date, adjustment_type=details.get("adjustment_type", ""),
                 adjustment_amount=penalty, discount_amount=discount, account=account,
                 ledger_group=ledger_group, ledger_amount=ledger_amount, ledger=ledger,
+                done_by_staff_id=details.get("done_by_staff") or None,
             )
             CollectionAllocation.objects.bulk_create([CollectionAllocation(transaction=collection, installment=row, amount=applied) for row, applied in allocated_rows])
         for row in all_rows:
@@ -803,7 +804,9 @@ def _collection_row(row, today):
         "payment_status": status, "status": status, "is_overdue": overdue,
         "days_overdue": max(0, (today - row.due_date).days) if overdue else 0,
         "payment_mode": transactions[-1].payment_mode if transactions else "",
-        "collection_date": transactions[-1].collection_date if transactions else None}
+        "collection_date": transactions[-1].collection_date if transactions else None,
+        "done_by_staff": transactions[-1].done_by_staff_id if transactions else None,
+        "done_by_staff_name": transactions[-1].done_by_staff.staff_name if transactions and transactions[-1].done_by_staff else None}
 
 
 def _collection_queryset():
@@ -876,7 +879,7 @@ def collections_create(request):
     payment_date = request.data.get("collection_date") or timezone.localdate()
     try: payment_date = date.fromisoformat(str(payment_date))
     except ValueError: return Response({"detail": "Collection date is invalid."}, status=400)
-    collection = CollectionTransaction.objects.create(installment=installment, loan=installment.loan, customer=installment.loan.customer, collection_amount=amount, collection_date=payment_date, payment_mode=request.data.get("payment_mode", "Cash"), reference_no=request.data.get("reference_no", ""), remarks=request.data.get("remarks", ""))
+    collection = CollectionTransaction.objects.create(installment=installment, loan=installment.loan, customer=installment.loan.customer, collection_amount=amount, collection_date=payment_date, payment_mode=request.data.get("payment_mode", "Cash"), reference_no=request.data.get("reference_no", ""), remarks=request.data.get("remarks", ""), done_by_staff_id=request.data.get("done_by_staff") or None)
     CollectionAllocation.objects.create(transaction=collection, installment=installment, amount=amount)
     new_paid = paid + amount; new_balance = max(Decimal("0.00"), installment.installment_amount + installment.penalty_amount - new_paid)
     installment.paid_amount = new_paid; installment.outstanding_amount = new_balance; installment.paid_date = payment_date if new_balance <= 0 else installment.paid_date; installment.payment_status = "PAID" if new_balance <= 0 else "PARTIAL"; installment.save(update_fields=("paid_amount", "outstanding_amount", "paid_date", "payment_status", "modified_date"))
@@ -885,7 +888,7 @@ def collections_create(request):
 
 @api_view(["GET"])
 def collection_history(request):
-    transactions = CollectionTransaction.objects.select_related("installment", "loan", "loan__customer", "loan__loan_type").order_by("-collection_date", "-id")
+    transactions = CollectionTransaction.objects.select_related("installment", "loan", "loan__customer", "loan__loan_type", "done_by_staff").order_by("-collection_date", "-id")
     search = request.query_params.get("search", "").strip().lower()
     mode = request.query_params.get("payment_mode", "").strip().lower()
     history_status = request.query_params.get("status", "").strip().upper()
@@ -904,7 +907,7 @@ def collection_history(request):
             continue
         if history_status and history_status != "ALL" and row["payment_status"] != history_status and not (history_status == "OVERDUE" and row["is_overdue"]):
             continue
-        results.append({"id": item.id, "collection_date": item.collection_date, "due_date": item.installment.due_date, "customer_name": item.customer.full_name, "customer": item.customer.full_name, "loan_name": item.loan.loan_type.name, "loan_no": item.loan.loan_no, "due_amount": item.installment.installment_amount, "scheduled": item.installment.installment_amount, "scheduled_amount": item.installment.installment_amount, "collected_amount": item.collection_amount, "paid": item.collection_amount, "paid_amount": item.collection_amount, "total_paid": row["total_paid"], "balance": row["balance"], "status": row["payment_status"], "payment_mode": item.payment_mode, "reference_no": item.reference_no, "remarks": item.remarks})
+        results.append({"id": item.id, "collection_date": item.collection_date, "due_date": item.installment.due_date, "customer_name": item.customer.full_name, "customer": item.customer.full_name, "loan_name": item.loan.loan_type.name, "loan_no": item.loan.loan_no, "due_amount": item.installment.installment_amount, "scheduled": item.installment.installment_amount, "scheduled_amount": item.installment.installment_amount, "collected_amount": item.collection_amount, "paid": item.collection_amount, "paid_amount": item.collection_amount, "total_paid": row["total_paid"], "balance": row["balance"], "status": row["payment_status"], "payment_mode": item.payment_mode, "reference_no": item.reference_no, "remarks": item.remarks, "done_by_staff": item.done_by_staff_id, "done_by_staff_name": item.done_by_staff.staff_name if item.done_by_staff else None})
     return Response({"count": len(results), "results": results})
 
 
