@@ -11,6 +11,7 @@ from .models import (
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings,
     CollectionTransaction, AdjustmentTypeMaster, MortgageRate, Ledger, PaymentEntry, Group,
 )
+from staff.serializers import DoneBySerializerMixin
 
 
 class AllFields(serializers.ModelSerializer):
@@ -18,7 +19,7 @@ class AllFields(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class LoanTypeSerializer(AllFields):
+class LoanTypeSerializer(DoneBySerializerMixin, AllFields):
     # The database column is NVARCHAR/TEXT, so never let DRF represent the
     # raw JSON string through ListField. This field is input-only; the parsed
     # list is added explicitly in to_representation().
@@ -81,7 +82,7 @@ class LoanInstallmentSerializer(AllFields):
     class Meta(AllFields.Meta): model = LoanInstallment
 
 
-class MortgageSerializer(AllFields):
+class MortgageSerializer(DoneBySerializerMixin, AllFields):
     rate_date = serializers.DateField(required=False, write_only=True)
     rate_history = serializers.SerializerMethodField()
 
@@ -138,7 +139,7 @@ class ChitGroupInstallmentDetailSerializer(AllFields):
     class Meta(AllFields.Meta): model = ChitGroupInstallmentDetail
 
 
-class ChitGroupSerializer(AllFields):
+class ChitGroupSerializer(DoneBySerializerMixin, AllFields):
     installments = ChitGroupInstallmentDetailSerializer(many=True, required=False)
     template_installments = serializers.SerializerMethodField()
     # Keep the existing frontend field name while persisting only GrandTotal.
@@ -288,7 +289,7 @@ class CustomerLoanInstallmentDetailsSerializer(AllFields):
     class Meta(AllFields.Meta): model = CustomerLoanInstallmentDetails
 
 
-class HolidayMasterSerializer(AllFields):
+class HolidayMasterSerializer(DoneBySerializerMixin, AllFields):
     class Meta(AllFields.Meta): model = HolidayMaster
 
 
@@ -300,7 +301,12 @@ class LoanHolidaySettingsSerializer(AllFields):
     class Meta(AllFields.Meta): model = LoanHolidaySettings
 
 
-class LedgerSerializer(AllFields):
+class LedgerSerializer(DoneBySerializerMixin, AllFields):
+    # Not required at the field level: the new hierarchical Group dropdown
+    # sends group_detail instead, and validate() derives this legacy string
+    # from it. Older/API callers may still post `group` directly.
+    group = serializers.ChoiceField(choices=Ledger.GROUPS, required=False)
+
     class Meta(AllFields.Meta):
         model = Ledger
         read_only_fields = ('created_by', 'modified_by')
@@ -311,8 +317,21 @@ class LedgerSerializer(AllFields):
             raise serializers.ValidationError('Name is required.')
         return value
 
+    def validate(self, attrs):
+        # group_detail (the precise Group_tbl node chosen in the UI) is the
+        # source of truth when present; `group` (legacy root-name string) is
+        # derived from it so existing cash/bank balance reports and signals
+        # keep working. Callers that still post `group` directly (no
+        # group_detail) keep working exactly as before.
+        group_detail = attrs.get("group_detail", getattr(self.instance, "group_detail", None))
+        if group_detail is not None:
+            attrs["group"] = group_detail.root().name
+        elif not attrs.get("group", getattr(self.instance, "group", None)):
+            raise serializers.ValidationError({"group": "Group is required."})
+        return attrs
 
-class GroupSerializer(AllFields):
+
+class GroupSerializer(DoneBySerializerMixin, AllFields):
     # The client works with IDs only; parent_group_id is the single source of
     # truth for the hierarchy link (never the parent's display name), and
     # group_name/parent_group_id mirror the Group_tbl column names so other
@@ -322,7 +341,7 @@ class GroupSerializer(AllFields):
 
     class Meta(AllFields.Meta):
         model = Group
-        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "created_by", "create_date", "modified_by", "modified_date")
+        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "done_by_staff", "done_by_staff_name", "created_by", "create_date", "modified_by", "modified_date")
         read_only_fields = ("is_system", "created_by", "create_date", "modified_by", "modified_date")
 
     def validate_group_name(self, value):

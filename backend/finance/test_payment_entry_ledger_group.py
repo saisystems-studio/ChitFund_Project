@@ -27,7 +27,7 @@ class PaymentEntryLedgerGroupTests(TestCase):
 
     def test_invalid_ledger_or_account_is_rejected(self):
         income = Ledger.objects.create(name='Interest', group='Income')
-        for invalid in ({'ledger_group': ''}, {'ledger_group': 'Cash in Hand'}, {'account': None}, {'account': income.pk}, {'cheque_number': ''}):
+        for invalid in ({'ledger_group': ''}, {'ledger_group': 'Cash-in-Hand'}, {'account': None}, {'account': income.pk}, {'cheque_number': ''}):
             response = self.client.post('/api/finance/payment-entries/', {**self.payload, **invalid}, format='json')
             self.assertEqual(response.status_code, 400, (invalid, response.data))
         self.assertFalse(PaymentEntry.objects.exists())

@@ -14,6 +14,9 @@
 .group-card+.group-card{margin-top:16px}
 .group-card-title{margin:0;padding:10px 14px;border-left:3px solid #174d7c;border-radius:3px;background:#f1f7fd;color:#102a43;font-size:17px;font-weight:700}
 
+.group-modal-backdrop{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(15,39,66,.24);padding:16px}
+.group-modal{box-sizing:border-box;width:min(560px,100%);max-height:calc(100dvh - 28px);overflow:auto;padding:14px;border:1px solid #dde7f1;border-radius:8px;background:#fff;box-shadow:0 22px 65px rgba(15,39,66,.25)}
+
 .group-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;padding:16px 14px 18px;border:1px solid #e6eef6;border-top:0;border-radius:0 0 6px 6px}
 .group-field{display:grid;gap:7px;min-width:0;color:#17324d;font-size:13px;font-weight:700}
 .group-field i{color:#d94a57;font-style:normal}
@@ -22,7 +25,7 @@
 .group-input input{flex:1;min-width:0;height:100%;padding:0;border:0;outline:0;background:transparent;color:#17324d;font:inherit;font-size:13px;font-weight:500}
 .group-input input::placeholder{color:#8196aa}
 
-.group-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+.group-actions{display:flex;justify-content:center;gap:10px;margin-top:14px}
 .group-actions button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;min-width:110px;padding:0 18px;border:1px solid #176db3;border-radius:6px;background:#fff;color:#174d7c;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
 .group-actions button:hover{background:#f1f7fd}
 .group-actions .group-save{min-width:130px;border-color:#123a63;background:#123a63;color:#fff}

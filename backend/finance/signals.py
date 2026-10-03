@@ -20,4 +20,4 @@ def sync_customer_ledger(sender, instance, **kwargs):
                 ledger.name = instance.full_name
                 ledger.save(update_fields=["name"])
         else:
-            Ledger.objects.create(customer=instance, name=instance.full_name, group=group)
+            Ledger.objects.create(customer=instance, name=instance.full_name, group=group, group_detail=instance.group)

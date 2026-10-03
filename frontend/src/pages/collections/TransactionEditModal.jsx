@@ -4,7 +4,7 @@ import { formatINR } from "../../utils/currency";
 import "./transaction-list.css";
 
 const groups = ["Sundry Debtors", "Sundry Creditors", "Indirect Expense", "Direct Expense", "Income"];
-const accountGroups = ["Cash in Hand", "Bank Accounts"];
+const accountGroups = ["Cash-in-Hand", "Bank Accounts"];
 const paymentFields = ["ledger", "ledger_group", "account", "accounts", "amount", "payment_mode", "date", "upi_id", "transaction_utr", "bank_name", "cheque_number", "cheque_date", "notes"];
 const collectionFields = ["collection_amount", "collection_date", "payment_mode", "account", "reference_no", "remarks", "upi_id", "bank_name", "cheque_number", "cheque_date", "adjustment_type", "adjustment_amount", "discount_amount", "ledger", "ledger_group", "ledger_amount"];
 export const transactionEndpoint = (kind, id) => `/finance/${kind === "collection" ? "collection-transactions" : "payment-entries"}/${id}/`;

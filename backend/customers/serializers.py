@@ -1,9 +1,17 @@
 import re
 from datetime import date
 from rest_framework import serializers
+from staff.serializers import DoneBySerializerMixin
 from .models import Customer
 
-class CustomerSerializer(serializers.ModelSerializer):
+# Customer Type is no longer a field the user picks; role is derived from
+# whichever root (Sundry Debtors/Sundry Creditors) the chosen Group descends
+# from, so the Ledger auto-sync signal and existing role-based reports keep
+# working unchanged.
+ROLE_BY_ROOT_NAME = {"Sundry Debtors": "BORROWER", "Sundry Creditors": "LENDER"}
+
+
+class CustomerSerializer(DoneBySerializerMixin, serializers.ModelSerializer):
     role_display = serializers.CharField(source="get_role_display", read_only=True)
     # Display-only; the stored relationship is always customer.group_id (Group_tbl.id), never this name.
     group_name = serializers.SerializerMethodField()
@@ -11,7 +19,7 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = "__all__"
-        read_only_fields = ("id", "customer_code", "created_at", "updated_at", "role_display", "group_name")
+        read_only_fields = ("id", "customer_code", "created_at", "updated_at", "role", "role_display", "group_name")
 
     def get_group_name(self, obj):
         return obj.group.name if obj.group_id else None
@@ -31,11 +39,6 @@ class CustomerSerializer(serializers.ModelSerializer):
         value = " ".join(value.strip().split())
         if len(value) < 2 or not re.fullmatch(r"[A-Za-z .'-]+", value):
             raise serializers.ValidationError("Enter a valid name with at least 2 letters.")
-        return value
-
-    def validate_role(self, value):
-        if value not in {item[0] for item in Customer.Role.choices}:
-            raise serializers.ValidationError("Select Debtor, Creditor or Debtor & Creditor.")
         return value
 
     def validate_dob(self, value):
@@ -87,7 +90,7 @@ class CustomerSerializer(serializers.ModelSerializer):
         if not self.partial:
             required = {
                 "full_name": "Customer name is required.",
-                "role": "Customer role is required.",
+                "group": "Group is required.",
                 "primary_mobile": "Phone number is required.",
                 "address": "Address is required.",
                 "district": "District is required.",
@@ -97,6 +100,11 @@ class CustomerSerializer(serializers.ModelSerializer):
             missing = {field: message for field, message in required.items() if not attrs.get(field)}
             if missing:
                 raise serializers.ValidationError(missing)
+        group = attrs.get("group", getattr(self.instance, "group", None))
+        if group is not None:
+            role = ROLE_BY_ROOT_NAME.get(group.root().name)
+            if role:
+                attrs["role"] = role
         phone = attrs.get("primary_mobile", getattr(self.instance, "primary_mobile", ""))
         same = attrs.get("is_whatsapp_same_as_phone", getattr(self.instance, "is_whatsapp_same_as_phone", False))
         whatsapp = attrs.get("whatsapp_number", getattr(self.instance, "whatsapp_number", ""))

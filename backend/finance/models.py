@@ -16,7 +16,6 @@ class AuditModel(models.Model):
     class Meta:
         abstract = True
 
-
 class LoanType(AuditModel):
     id = models.AutoField(primary_key=True, db_column="ID")
     name = models.CharField(max_length=100, unique=True, db_column="LoanTypeName")
@@ -27,6 +26,7 @@ class LoanType(AuditModel):
     due_month = models.PositiveSmallIntegerField(null=True, blank=True, db_column="DueMonth")
     due_day = models.PositiveSmallIntegerField(null=True, blank=True, db_column="DueDay")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "LoanType_tbl"
@@ -50,6 +50,7 @@ class Mortgage(AuditModel):
     unit = models.CharField(max_length=50, db_column="Unit")
     current_rate = models.DecimalField(**MONEY, db_column="CurrentRate")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "Mortgage_tbl"
@@ -69,6 +70,7 @@ class ChitGroup(AuditModel):
     collection_month = models.PositiveSmallIntegerField(null=True, blank=True, db_column="CollectionMonth")
     grand_total = models.DecimalField(**MONEY, db_column="GrandTotal")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "ChitGroup_tbl"
@@ -247,6 +249,7 @@ class HolidayMaster(AuditModel):
     state_region = models.CharField(max_length=150, blank=True, default="")
     description = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "HolidayMaster_tbl"
@@ -307,11 +310,18 @@ class MortgageLoanHistory(models.Model):
 
 class Ledger(AuditModel):
     GROUPS = [(name, name) for name in ('Sundry Debtors', 'Sundry Creditors', 'Indirect Expense',
-                                      'Direct Expense', 'Income', 'Cash in Hand', 'Bank Accounts')]
+                                      'Direct Expense', 'Income', 'Cash-in-Hand', 'Bank Accounts')]
     customer = models.ForeignKey('customers.Customer', null=True, blank=True, on_delete=models.SET_NULL, related_name='ledgers')
     name = models.CharField(max_length=150)
+    # Legacy root-level classification, kept for existing report/signal code
+    # that filters ledgers by this string; auto-synced from group_detail.
     group = models.CharField(max_length=30, choices=GROUPS)
+    # Precise Group_tbl node the ledger is tagged to (any depth); `group`
+    # above is derived from this node's root ancestor, never set directly
+    # by the UI anymore.
+    group_detail = models.ForeignKey("Group", null=True, blank=True, on_delete=models.SET_NULL, related_name="ledgers_detail", db_column="GroupDetailID")
     opening_balance = models.DecimalField(**MONEY)
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         ordering = ('name', 'id')
@@ -326,17 +336,27 @@ class Group(AuditModel):
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True, related_name="children", db_column="ParentGroupID")
     is_system = models.BooleanField(default=False, db_column="IsSystem")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "Group_tbl"
         ordering = ("name", "id")
         constraints = [models.UniqueConstraint(fields=("parent", "name"), name="uniq_group_parent_name")]
 
+    def root(self):
+        """Walk up to the top-most ancestor (the is_system root)."""
+        node = self
+        seen = {node.id}
+        while node.parent_id is not None and node.parent_id not in seen:
+            node = node.parent
+            seen.add(node.id)
+        return node
+
 
 class PaymentEntry(AuditModel):
     PAYMENT_MODES = [('Cash', 'Cash'), ('UPI', 'UPI'), ('Cheque', 'Cheque'), ('NEFT', 'NEFT/IMPS/RGST')]
     LEDGER_GROUPS = [(name, name) for name in ('Sundry Debtors', 'Sundry Creditors', 'Indirect Expense', 'Direct Expense', 'Income')]
-    ACCOUNT_GROUPS = ('Cash in Hand', 'Bank Accounts')
+    ACCOUNT_GROUPS = ('Cash-in-Hand', 'Bank Accounts')
     # ledger/accounts are kept for earlier entries; new entries use ledger_group and account.
     ledger = models.ForeignKey(Ledger, on_delete=models.PROTECT, related_name='payments', null=True, blank=True)
     accounts = models.CharField(max_length=10, choices=[('Card', 'Card'), ('Credit', 'Credit')], blank=True, default='')

@@ -61,6 +61,7 @@ class Customer(models.Model):
     # Sundry Creditors and their descendants). Existing rows stay NULL; role
     # remains the source of truth for Debtor/Creditor/Both classification.
     group = models.ForeignKey("finance.Group", null=True, blank=True, on_delete=models.SET_NULL, related_name="customers", db_column="GroupID")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
     address = models.TextField(blank=True, db_column="Address")
     city = models.CharField(max_length=80, blank=True, db_column="City")
     district = models.CharField(max_length=80, blank=True, db_column="District")
