@@ -3,13 +3,12 @@ import styles from "./CustomerForm.module.css";
 import { actionToast } from "../../utils/actionToast";
 import DistrictDropdown from "../../components/DistrictDropdown";
 import GroupDropdown from "../../components/GroupDropdown/GroupDropdown";
-import StaffDropdown from "../../components/StaffDropdown/StaffDropdown";
 import "./CustomerFormCompact.css";
 import "./CustomerWhatsapp.css";
 import "./CustomerFormGrid.css";
 import PageBreadcrumb from "../../components/PageBreadcrumb";
 
-const empty = { customer_code: "", full_name: "", dob: "", gender: "", occupation: "", monthly_income: "", group: "", done_by_staff: "", email: "", primary_mobile: "", alternate_mobile: "", whatsapp_number: "", is_whatsapp_same_as_phone: false, aadhaar_number: "", pan_number: "", address: "", district: "", state: "", country: "India", pincode: "", is_active: true };
+const empty = { customer_code: "", full_name: "", dob: "", gender: "", occupation: "", monthly_income: "", group: "", email: "", primary_mobile: "", alternate_mobile: "", whatsapp_number: "", is_whatsapp_same_as_phone: false, aadhaar_number: "", pan_number: "", address: "", district: "", state: "", country: "India", pincode: "", is_active: true };
 const CUSTOMER_DRAFT_KEY = "chitufund:draft:add-customer";
 const loadDraft = () => {
   try {
@@ -32,7 +31,7 @@ const validators = {
   address: value => value.trim().length < 5 ? "Enter a complete address." : "",
   pincode: value => value && !/^\d{6}$/.test(value) ? "Pincode must contain 6 digits." : ""
 };
-const required = new Set(["full_name", "primary_mobile", "address", "district", "state", "group", "done_by_staff"]);
+const required = new Set(["full_name", "primary_mobile", "address", "district", "state", "group"]);
 
 export default function CustomerFormStepper({ api, auth, go }) {
   const [form, setForm] = useState(loadDraft);
@@ -54,7 +53,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
 
   const focus = key => refs.current[key]?.focus();
   const nextKey = key => {
-    const order = ["full_name", "email", "primary_mobile", "is_whatsapp_same_as_phone", "whatsapp_number", "alternate_mobile", "dob", "gender", "occupation", "monthly_income", "group", "done_by_staff", "address", "district", "state", "pincode", "aadhaar_number", "pan_number"];
+    const order = ["full_name", "email", "primary_mobile", "is_whatsapp_same_as_phone", "whatsapp_number", "alternate_mobile", "dob", "gender", "occupation", "monthly_income", "group", "address", "district", "state", "pincode", "aadhaar_number", "pan_number"];
     const index = order.indexOf(key);
     return index >= 0 ? order[index + 1] : undefined;
   };
@@ -69,9 +68,9 @@ export default function CustomerFormStepper({ api, auth, go }) {
   const validate = () => {
     const next = {};
     ["full_name", "email", "primary_mobile", "alternate_mobile", "whatsapp_number", "aadhaar_number", "pan_number", "dob", "monthly_income", "address", "pincode"].forEach(key => { const message = validators[key]?.(String(form[key] || "")); if (message) next[key] = message; });
-    required.forEach(key => { if (!String(form[key] || "").trim()) next[key] = key === "district" ? "District is required." : key === "state" ? "State is required." : key === "country" ? "Country is required." : key === "group" ? "Group is required." : key === "done_by_staff" ? "Done By is required." : `${key === "aadhaar_number" ? "Aadhar Number" : key === "pan_number" ? "PAN Number" : key === "dob" ? "Date of Birth" : key} is required.`; });
+    required.forEach(key => { if (!String(form[key] || "").trim()) next[key] = key === "district" ? "District is required." : key === "state" ? "State is required." : key === "country" ? "Country is required." : key === "group" ? "Group is required." : `${key === "aadhaar_number" ? "Aadhar Number" : key === "pan_number" ? "PAN Number" : key === "dob" ? "Date of Birth" : key} is required.`; });
     setErrors(next);
-    const first = ["full_name", "email", "primary_mobile", "alternate_mobile", "whatsapp_number", "address", "district", "state", "pincode", "aadhaar_number", "pan_number", "dob", "group", "done_by_staff"].find(key => next[key]);
+    const first = ["full_name", "email", "primary_mobile", "alternate_mobile", "whatsapp_number", "address", "district", "state", "pincode", "aadhaar_number", "pan_number", "dob", "group"].find(key => next[key]);
     if (first) setTimeout(() => focus(first), 0);
     return !Object.keys(next).length;
   };
@@ -81,7 +80,7 @@ export default function CustomerFormStepper({ api, auth, go }) {
     if (saving || !validate()) { if (!saving) actionToast("Unable to save customer. Please check the highlighted fields.", false); return; }
     setSaving(true); setNotice(""); setSaveError("");
     try {
-      const { data } = await api.post("/customers/", { ...form, dob: form.dob || null, monthly_income: form.monthly_income === "" ? null : form.monthly_income, group: form.group || null, done_by_staff: form.done_by_staff || null }, auth);
+      const { data } = await api.post("/customers/", { ...form, dob: form.dob || null, monthly_income: form.monthly_income === "" ? null : form.monthly_income, group: form.group || null }, auth);
       actionToast("Customer saved successfully.");
       try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {}
       const next = await api.get("/customers/next-code/", auth);
@@ -115,7 +114,6 @@ export default function CustomerFormStepper({ api, auth, go }) {
     {field("dob", "DOB", { type: "date" })}{field("gender", "Gender", { children: <select value={form.gender} onChange={event => set("gender", event.target.value)} onKeyDown={event => keyDown(event, "gender")}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select> })}{field("occupation", "Occupation")}
     {field("monthly_income", "Monthly Income", { type: "number", min: "0", step: "0.01" })}
     {field("group", "Group", { children: <GroupDropdown api={api} auth={auth} rootNames={["Sundry Debtors", "Sundry Creditors"]} value={form.group || ""} onChange={value => set("group", value)} onEnterNext={() => moveNext("group")} placeholder="Select Group" allowClear/> })}
-    {field("done_by_staff", "Done By", { children: <StaffDropdown api={api} auth={auth} value={form.done_by_staff || ""} onChange={value => set("done_by_staff", value)} onEnterNext={() => moveNext("done_by_staff")} placeholder="Select staff" allowClear/> })}
     {field("address", "Address", { type: "textarea" })}
     {location("district", "District", "district", "state", item => setForm(current => ({ ...current, district: item.name, state: item.state, country: item.country, pincode: item.pincode || "" })))}
     {location("state", "State", "state", "pincode", item => set("state", item.name))}

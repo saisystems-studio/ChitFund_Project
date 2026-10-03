@@ -9,7 +9,6 @@ import { formatINRNumber } from "../../../utils/currency";
 import { actionToast } from "../../../utils/actionToast";
 import { downloadChitPdf } from "../../../utils/chitPdf";
 import PageBreadcrumb from "../../../components/PageBreadcrumb";
-import StaffDropdown from "../../../components/StaffDropdown/StaffDropdown";
 
 // Pad valid amounts without rounding values that existing validation should reject.
 const formatInstallmentAmount = value => {
@@ -127,7 +126,6 @@ export default function ChitGroupForm({ api, auth, go, id }) {
     event.preventDefault();
     if (saving) return;
     if (rows.length !== count) { setError(`Installment schedule must contain all ${count} rows.`); return; }
-    if (!form.done_by_staff) { setError("Done By is required."); return; }
     setSaving(true); setError("");
     try {
       const payload = { ...form, start_date: startDate || null, end_date: form.end_date || null, collection_date: form.collection_date || null, total_amount: targetTotalPaise / 100, duration: count, installments: rows.map(row => ({ installment_number: row.number, schedule_value: row.schedule, installment_amount: row.amount === "" ? 0 : row.amount })) };
@@ -178,7 +176,6 @@ export default function ChitGroupForm({ api, auth, go, id }) {
         <label>Duration Type <span className="required-star">*</span><div className={styles.radios}>{[["DAY", "Days"], ["MONTH", "Months"], ["YEAR", "Years"]].map(([value, text]) => <label key={value}><input type="radio" checked={form.duration_type === value} onChange={() => set("duration_type", value)} />{text}</label>)}</div></label>
         <label>Start Date<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></label>
         <label>Collection Date{collectionDateControl}</label>
-        <label>Done By <span className="required-star">*</span><StaffDropdown api={api} auth={auth} value={form.done_by_staff || ""} onChange={value => set("done_by_staff", value)} placeholder="Select staff" allowClear/></label>
       </div></section>
       <section className={styles.scheduleSection}><div className={styles.sectionHead}><h2>CHIT PLAN TABLE</h2><button type="button" disabled={!original.current} title={!original.current ? "Save the group before exporting its PDF" : "Export saved group details"} onClick={() => downloadChitPdf(original.current, profile)}>PDF</button></div><div className={styles.tableWrap}><table><thead><tr><th>S.No</th><th>Installment</th><th>Installment Amount</th></tr></thead><tbody>{rows.map(row => { const index = row.number - 1; return <tr key={row.number}><td>{row.number}</td><td>{row.schedule}</td><td className="installment-amount-cell" onClick={() => activateAmount(index)}><input className="installment-amount-input" ref={element => { amountRefs.current[index] = element; }} type="number" min="0" step="0.01" value={focusedAmount === index ? row.amount : formatInstallmentAmount(row.amount)} onFocus={event => { const value = formatInstallmentAmount(event.currentTarget.value); setFocusedAmount(index); setAmounts(current => { const next = [...current]; next[index] = value; return next; }); event.currentTarget.select(); }} onChange={e => setAmounts(current => { const next = [...current]; next[index] = e.target.value; return next; })} onBlur={e => { commitAmount(index, e.target.value); setFocusedAmount(null); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); commitAmount(index, e.target.value, e.shiftKey ? -1 : 1); } else if (e.key === "Escape") { e.preventDefault(); setAmounts(current => { const next = [...current]; next[index] = originalAmount; return next; }); setActiveAmount(null); } }} /></td></tr>; })}</tbody></table></div></section>
       <div className={styles.actions}><button type="button" onClick={() => go("/chit-groups")}>Cancel</button><button type="button" onClick={reset}>Reset</button><button className={styles.primary} disabled={saving}>{saving ? "Saving..." : "Save Chit Group"}</button></div>

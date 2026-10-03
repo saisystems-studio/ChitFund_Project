@@ -104,6 +104,7 @@ class CustomerLoanDetails(AuditModel):
     outstanding_amount = models.DecimalField(**MONEY, db_column="OutstandingAmount")
     loan_status = models.CharField(max_length=20, default="ACTIVE", db_column="LoanStatus")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "CustomerLoanDetails_tbl"
@@ -214,6 +215,7 @@ class CollectionTransaction(AuditModel):
     LEDGER_GROUPS = [(name, name) for name in ("Sundry Debtors", "Sundry Creditors", "Indirect Expense", "Direct Expense", "Income")]
     ledger_group = models.CharField(max_length=30, blank=True, default="", choices=LEDGER_GROUPS, db_column="LedgerGroup")
     ledger_amount = models.DecimalField(**MONEY, db_column="LedgerAmount")
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         db_table = "CollectionTransaction_tbl"
@@ -331,11 +333,18 @@ class Group(AuditModel):
     """Self-referencing chart-of-accounts group tree (unlimited depth).
     Root groups are seeded as system records; every other group must chain
     up to one of them via parent_id, never by storing the parent's name."""
+    # Accounting classification (Asset/Liability/Income/Expense) is only
+    # ever set on root (is_system) groups -- every descendant inherits its
+    # root's nature, since e.g. any sub-group under "Fixed Assets" is still
+    # an asset. Reports resolve a ledger's nature via root().nature, never
+    # by matching a group/ledger name.
+    NATURE_CHOICES = [("ASSET", "Asset"), ("LIABILITY", "Liability"), ("INCOME", "Income"), ("EXPENSE", "Expense")]
     id = models.AutoField(primary_key=True, db_column="ID")
     name = models.CharField(max_length=150, db_column="GroupName")
     parent = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True, related_name="children", db_column="ParentGroupID")
     is_system = models.BooleanField(default=False, db_column="IsSystem")
     is_active = models.BooleanField(default=True, db_column="IsActive")
+    nature = models.CharField(max_length=10, choices=NATURE_CHOICES, blank=True, default="", db_column="Nature")
     done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
@@ -371,6 +380,7 @@ class PaymentEntry(AuditModel):
     cheque_number = models.CharField(max_length=50, blank=True)
     cheque_date = models.DateField(null=True, blank=True)
     notes = models.CharField(max_length=500, blank=True, default='')
+    done_by_staff = models.ForeignKey("staff.Staff", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", db_column="DoneByStaffID")
 
     class Meta:
         ordering = ('-date', '-id')

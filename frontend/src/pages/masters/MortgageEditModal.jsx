@@ -1,5 +1,4 @@
 import CustomSelect from "../../components/CustomSelect";
-import StaffDropdown from "../../components/StaffDropdown/StaffDropdown";
 import "./MortgageEditModal.css";
 
 function Icon({ name }) {
@@ -37,7 +36,6 @@ export default function MortgageEditModal({ api, auth, form, update, units, addU
           <Field label="Quantity" icon="unit"><input type="number" min="0" step="0.01" value={form.quantity ?? ""} onChange={event => update("quantity", event.target.value)}/></Field>
           <Field label="Current Rate" icon="rate"><input type="number" min="0" step="0.01" inputMode="decimal" value={form.current_rate} onChange={event => update("current_rate", event.target.value)}/></Field>
           <Field label="Date" icon="calendar"><input type="date" required value={form.rate_date || ""} onChange={event => update("rate_date", event.target.value)}/></Field>
-          <Field label="Done By" icon="tag" required><StaffDropdown api={api} auth={auth} value={form.done_by_staff || ""} onChange={value => update("done_by_staff", value)} placeholder="Select staff" allowClear/></Field>
         </div>
       </div>
       <footer className="mortgage-edit-footer">

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import apiErrorMessage from "../../utils/apiErrorMessage";
 import { formatINR } from "../../utils/currency";
+import StaffDropdown from "../../components/StaffDropdown/StaffDropdown";
 import "./transaction-list.css";
 
 const groups = ["Sundry Debtors", "Sundry Creditors", "Indirect Expense", "Direct Expense", "Income"];
 const accountGroups = ["Cash-in-Hand", "Bank Accounts"];
-const paymentFields = ["ledger", "ledger_group", "account", "accounts", "amount", "payment_mode", "date", "upi_id", "transaction_utr", "bank_name", "cheque_number", "cheque_date", "notes"];
-const collectionFields = ["collection_amount", "collection_date", "payment_mode", "account", "reference_no", "remarks", "upi_id", "bank_name", "cheque_number", "cheque_date", "adjustment_type", "adjustment_amount", "discount_amount", "ledger", "ledger_group", "ledger_amount"];
+const paymentFields = ["ledger", "ledger_group", "account", "accounts", "amount", "payment_mode", "date", "upi_id", "transaction_utr", "bank_name", "cheque_number", "cheque_date", "notes", "done_by_staff"];
+const collectionFields = ["collection_amount", "collection_date", "payment_mode", "account", "reference_no", "remarks", "upi_id", "bank_name", "cheque_number", "cheque_date", "adjustment_type", "adjustment_amount", "discount_amount", "ledger", "ledger_group", "ledger_amount", "done_by_staff"];
 export const transactionEndpoint = (kind, id) => `/finance/${kind === "collection" ? "collection-transactions" : "payment-entries"}/${id}/`;
 
 export default function TransactionEditModal({ api, auth, kind, id, onClose, onSaved }) {
@@ -31,7 +32,7 @@ export default function TransactionEditModal({ api, auth, kind, id, onClose, onS
     if (saving || !form) return;
     setSaving(true); setError("");
     const payload = Object.fromEntries((collection ? collectionFields : paymentFields).filter(key => key in form).map(key => [key, form[key]]));
-    for (const key of ["account", "ledger", "cheque_date"]) if (payload[key] === "") payload[key] = null;
+    for (const key of ["account", "ledger", "cheque_date", "done_by_staff"]) if (payload[key] === "") payload[key] = null;
     try { await api.patch(transactionEndpoint(kind, id), payload, auth); onSaved(); }
     catch (requestError) { setError(apiErrorMessage(requestError, "Unable to update this entry.")); }
     finally { setSaving(false); }
@@ -56,6 +57,7 @@ export default function TransactionEditModal({ api, auth, kind, id, onClose, onS
             {field("Amount", collection ? "collection_amount" : "amount", "number", true)}
             {chooseLedger("Account", "account", ledgers.filter(item => accountGroups.includes(item.group) || item.id === form.account))}
             <label>Payment Mode<select required value={form.payment_mode || ""} onChange={event => update("payment_mode", event.target.value)}><option value="">Select Payment Mode</option>{modes.map(mode => <option key={mode}>{mode}</option>)}</select></label>
+            <label>Done By<StaffDropdown api={api} auth={auth} value={form.done_by_staff || ""} onChange={value => update("done_by_staff", value)} placeholder="Select staff" allowClear/></label>
             {chooseLedger("Ledger", "ledger", ledgers.filter(item => groups.includes(item.group) || item.id === form.ledger))}
             <label>Ledger Group<select value={form.ledger_group || ""} onChange={event => update("ledger_group", event.target.value)}><option value="">Select Ledger Group</option>{groups.map(group => <option key={group}>{group}</option>)}</select></label>
             {!collection && form.accounts && <label>Legacy Account<select value={form.accounts} onChange={event => update("accounts", event.target.value)}><option>Card</option><option>Credit</option></select></label>}

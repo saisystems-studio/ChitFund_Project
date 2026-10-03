@@ -190,7 +190,7 @@ class ChitGroupSerializer(DoneBySerializerMixin, AllFields):
         return attrs
 
 
-class CustomerLoanDetailsSerializer(AllFields):
+class CustomerLoanDetailsSerializer(DoneBySerializerMixin, AllFields):
     class Meta(AllFields.Meta):
         model = CustomerLoanDetails
         read_only_fields = ('doc_no', 'application_date')
@@ -341,7 +341,7 @@ class GroupSerializer(DoneBySerializerMixin, AllFields):
 
     class Meta(AllFields.Meta):
         model = Group
-        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "done_by_staff", "done_by_staff_name", "created_by", "create_date", "modified_by", "modified_date")
+        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "nature", "done_by_staff", "done_by_staff_name", "created_by", "create_date", "modified_by", "modified_date")
         read_only_fields = ("is_system", "created_by", "create_date", "modified_by", "modified_date")
 
     def validate_group_name(self, value):
@@ -367,7 +367,7 @@ class GroupSerializer(DoneBySerializerMixin, AllFields):
         return attrs
 
 
-class PaymentEntrySerializer(AllFields):
+class PaymentEntrySerializer(DoneBySerializerMixin, AllFields):
     ledger_name = serializers.CharField(source='ledger.name', read_only=True, default=None)
     account_name = serializers.CharField(source='account.name', read_only=True, default=None)
 

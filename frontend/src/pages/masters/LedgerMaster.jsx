@@ -5,12 +5,11 @@ import { formatINR } from "../../utils/currency";
 import { actionToast } from "../../utils/actionToast";
 import apiErrorMessage from "../../utils/apiErrorMessage";
 import GroupDropdown from "../../components/GroupDropdown/GroupDropdown";
-import StaffDropdown from "../../components/StaffDropdown/StaffDropdown";
 import "../collections/collection-entry.css";
 import "./ledger-master.css";
 
 const pageSize = 10;
-const blank = () => ({ name: "", group_detail: "", done_by_staff: "", opening_balance: "0" });
+const blank = () => ({ name: "", group_detail: "", opening_balance: "0" });
 // Convention: a positive Opening Balance is Dr, a negative one is Cr.
 const balanceType = value => Number(value || 0) < 0 ? "CR" : "DR";
 const BalanceBadge = ({ value }) => <span className={`ledger-balance-type ${balanceType(value).toLowerCase()}`}>{balanceType(value)}</span>;
@@ -29,7 +28,6 @@ export default function LedgerMaster({ api, auth, go, view = "add" }) {
     event.preventDefault();
     if (saving) return;
     if (!form.name.trim() || !form.group_detail) return setError("Name and Group are required.");
-    if (!form.done_by_staff) return setError("Done By is required.");
     setSaving(true);
     try {
       const payload = { ...form, name: form.name.trim(), opening_balance: form.opening_balance || "0" };
@@ -62,10 +60,6 @@ export default function LedgerMaster({ api, auth, go, view = "add" }) {
       <span>Opening Balance</span>
       <span className="ledger-input ledger-money"><b>₹</b><input type="number" step="0.01" placeholder="0.00" value={form.opening_balance} onChange={event => update("opening_balance", event.target.value)}/><BalanceBadge value={form.opening_balance}/></span>
     </label>
-    <label className="ledger-field">
-      <span>Done By <i>*</i></span>
-      <StaffDropdown api={api} auth={auth} value={form.done_by_staff} onChange={value => update("done_by_staff", value)} placeholder="Select staff" allowClear/>
-    </label>
   </div>;
   return <div className="ledger-page">
     <nav className="ledger-breadcrumb" aria-label="Breadcrumb">
@@ -92,7 +86,7 @@ export default function LedgerMaster({ api, auth, go, view = "add" }) {
       </header>
       <div className="ledger-table-wrap"><table className="ledger-table">
         <thead><tr><th>S.No</th><th>Name</th><th>Group</th><th className="num">Opening Balance</th><th>Action</th></tr></thead>
-        <tbody>{rows.map((item, index) => <tr key={item.id}><td>{String(first + index).padStart(2, "0")}</td><td>{item.name}</td><td>{item.group}</td><td className="num">{formatINR(Math.abs(item.opening_balance))} <BalanceBadge value={item.opening_balance}/></td><td><RowActions onEdit={() => { setEditing(item.id); setForm({ name: item.name, group_detail: item.group_detail || "", done_by_staff: item.done_by_staff || "", opening_balance: item.opening_balance }); }} onDelete={() => remove(item)}/></td></tr>)}</tbody>
+        <tbody>{rows.map((item, index) => <tr key={item.id}><td>{String(first + index).padStart(2, "0")}</td><td>{item.name}</td><td>{item.group}</td><td className="num">{formatINR(Math.abs(item.opening_balance))} <BalanceBadge value={item.opening_balance}/></td><td><RowActions onEdit={() => { setEditing(item.id); setForm({ name: item.name, group_detail: item.group_detail || "", opening_balance: item.opening_balance }); }} onDelete={() => remove(item)}/></td></tr>)}</tbody>
       </table>{!filtered.length && <div className="ledger-empty">No ledgers found.</div>}</div>
       <footer className="ledger-pager">
         <span>Showing {first} to {last} of {filtered.length} entries</span>
