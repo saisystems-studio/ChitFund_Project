@@ -29,6 +29,9 @@
 .ledger-money b{display:grid;place-items:center;align-self:stretch;width:46px;border-right:1px solid #cfdcea;background:#f3f7fb;color:#17324d;font-weight:600}
 .ledger-money input{padding-right:12px}
 .ledger-money .ledger-balance-type{flex:0 0 auto;margin-right:10px}
+.ledger-money .ledger-balance-type-select{flex:0 0 auto;width:60px;height:28px;margin:0 6px 0 0;padding:0 6px;border:1px solid #cfdcea;border-radius:14px;background:#f3f7fb;color:#17324d;font:inherit;font-size:11px;font-weight:800;letter-spacing:.3px;text-align:center;text-align-last:center;cursor:pointer}
+.ledger-money .ledger-balance-type-select.dr{background:#e6f8f0;color:#1a8a5f;border-color:#bfe8d4}
+.ledger-money .ledger-balance-type-select.cr{background:#fdeceb;color:#c23b3b;border-color:#f6cfcb}
 
 .ledger-balance-type{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:.4px;vertical-align:middle}
 .ledger-balance-type.dr{background:#e6f8f0;color:#1a8a5f}

@@ -9,10 +9,14 @@ import "../collections/collection-entry.css";
 import "./ledger-master.css";
 
 const pageSize = 10;
-const blank = () => ({ name: "", group_detail: "", opening_balance: "0" });
+const blank = () => ({ name: "", group_detail: "", opening_balance: "0", opening_balance_type: "DR" });
 // Convention: a positive Opening Balance is Dr, a negative one is Cr.
 const balanceType = value => Number(value || 0) < 0 ? "CR" : "DR";
 const BalanceBadge = ({ value }) => <span className={`ledger-balance-type ${balanceType(value).toLowerCase()}`}>{balanceType(value)}</span>;
+// The input only ever shows/collects the magnitude; DR/CR is the explicit
+// dropdown next to it, not a sign the user has to type.
+const splitBalance = value => ({ opening_balance: String(Math.abs(Number(value || 0))), opening_balance_type: balanceType(value) });
+const signedBalance = form => (form.opening_balance_type === "CR" ? -1 : 1) * Math.abs(Number(form.opening_balance || 0));
 
 export default function LedgerMaster({ api, auth, go, view = "add" }) {
   const isListView = view === "list";
@@ -30,7 +34,8 @@ export default function LedgerMaster({ api, auth, go, view = "add" }) {
     if (!form.name.trim() || !form.group_detail) return setError("Name and Group are required.");
     setSaving(true);
     try {
-      const payload = { ...form, name: form.name.trim(), opening_balance: form.opening_balance || "0" };
+      const { opening_balance_type, ...rest } = form;
+      const payload = { ...rest, name: form.name.trim(), opening_balance: String(signedBalance(form)) };
       if (editing) await api.put(`/finance/ledgers/${editing}/`, payload, auth);
       else await api.post("/finance/ledgers/", payload, auth);
       reset(); setSuccess("Ledger saved successfully."); load();
@@ -58,7 +63,7 @@ export default function LedgerMaster({ api, auth, go, view = "add" }) {
     </label>
     <label className="ledger-field">
       <span>Opening Balance</span>
-      <span className="ledger-input ledger-money"><b>₹</b><input type="number" step="0.01" placeholder="0.00" value={form.opening_balance} onChange={event => update("opening_balance", event.target.value)}/><BalanceBadge value={form.opening_balance}/></span>
+      <span className="ledger-input ledger-money"><b>₹</b><input type="number" min="0" step="0.01" placeholder="0.00" value={form.opening_balance} onChange={event => update("opening_balance", event.target.value)}/><select className={`ledger-balance-type-select ${(form.opening_balance_type || "DR").toLowerCase()}`} aria-label="Opening Balance type" value={form.opening_balance_type || "DR"} onChange={event => update("opening_balance_type", event.target.value)}><option value="DR">DR</option><option value="CR">CR</option></select></span>
     </label>
   </div>;
   return <div className="ledger-page">
@@ -86,7 +91,7 @@ export default function LedgerMaster({ api, auth, go, view = "add" }) {
       </header>
       <div className="ledger-table-wrap"><table className="ledger-table">
         <thead><tr><th>S.No</th><th>Name</th><th>Group</th><th className="num">Opening Balance</th><th>Action</th></tr></thead>
-        <tbody>{rows.map((item, index) => <tr key={item.id}><td>{String(first + index).padStart(2, "0")}</td><td>{item.name}</td><td>{item.group}</td><td className="num">{formatINR(Math.abs(item.opening_balance))} <BalanceBadge value={item.opening_balance}/></td><td><RowActions onEdit={() => { setEditing(item.id); setForm({ name: item.name, group_detail: item.group_detail || "", opening_balance: item.opening_balance }); }} onDelete={() => remove(item)}/></td></tr>)}</tbody>
+        <tbody>{rows.map((item, index) => <tr key={item.id}><td>{String(first + index).padStart(2, "0")}</td><td>{item.name}</td><td>{item.group}</td><td className="num">{formatINR(Math.abs(item.opening_balance))} <BalanceBadge value={item.opening_balance}/></td><td><RowActions onEdit={() => { setEditing(item.id); setForm({ name: item.name, group_detail: item.group_detail || "", ...splitBalance(item.opening_balance) }); }} onDelete={() => remove(item)}/></td></tr>)}</tbody>
       </table>{!filtered.length && <div className="ledger-empty">No ledgers found.</div>}</div>
       <footer className="ledger-pager">
         <span>Showing {first} to {last} of {filtered.length} entries</span>
