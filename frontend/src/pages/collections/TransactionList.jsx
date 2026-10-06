@@ -13,9 +13,9 @@ import TransactionEditModal, { transactionEndpoint } from "./TransactionEditModa
 import "./transaction-list.css";
 
 const lists = {
-  loan: { title: "Loan List", entry: "Loan Application", route: "/loan-application", endpoint: "/finance/loans/?status=ALL", headers: ["Date", "Loan No", "Customer", "Loan Type", "Total Amount", "Outstanding", "Done By"] },
-  collection: { title: "Collection Entry History", entry: "Collection Entry", route: "/collection-entry", endpoint: "/finance/collection-history/", headers: ["Date", "Receipt No", "Customer", "Loan No", "Amount", "Done By", "Mode"] },
-  payment: { title: "Payment History", entry: "Payment Entry", route: "/payment-entry", endpoint: "/finance/payment-entries/", headers: ["Date", "Particulars", "Voucher No", "Done By", "DR Amount", "CR Amount"] },
+  loan: { title: "Loan List", entry: "Loan Application", route: "/loan-application", endpoint: "/finance/loans/?status=ALL", headers: ["Date", "Loan No", "Customer", "Loan Type", "Total Amount", "Outstanding", "Salesman"] },
+  collection: { title: "Collection Entry History", entry: "Collection Entry", route: "/collection-entry", endpoint: "/finance/collection-history/", headers: ["Date", "Receipt No", "Customer", "Loan No", "Amount", "Salesman", "Mode"] },
+  payment: { title: "Payment History", entry: "Payment Entry", route: "/payment-entry", endpoint: "/finance/payment-entries/", headers: ["Date", "Particulars", "Voucher No", "Salesman", "DR Amount", "CR Amount"] },
 };
 const dateLabel = value => value ? String(value).slice(0, 10).split("-").reverse().join("/") : "—";
 

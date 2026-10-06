@@ -975,7 +975,125 @@ def loan_wise_report(request):
 
 @api_view(["GET"])
 def customer_wise_report(request):
-    """Read-only customer-wise loan report across all loan types."""
+    """Customer ledger: Opening Balance first, every scheduled Chit/Interest/Mortgage
+    installment due as a Debit (never reduced by a collection), every actual collection
+    as a separate Credit, running as a day-book per customer."""
+    from customers.models import Customer
+    params = request.query_params
+    try:
+        from_date = date.fromisoformat(params["from"]) if params.get("from") else None
+        to_date = date.fromisoformat(params["to"]) if params.get("to") else None
+    except ValueError:
+        return Response({"detail": "Enter valid report dates."}, status=400)
+
+    loans = CustomerLoanDetails.objects.select_related(
+        "customer", "loan_type", "chit_details__chit_group",
+    ).prefetch_related("installment_details", "collection_transactions").order_by("customer__full_name", "id")
+    customer_param = params.get("customer", "").strip()
+    if customer_param and customer_param.upper() != "ALL":
+        loans = loans.filter(customer_id=customer_param)
+    kind = params.get("loan_type", "").strip()
+    if kind and kind.upper() != "ALL":
+        loans = loans.filter(loan_type__name__iexact=kind)
+    loan_id = params.get("loan_id", "").strip()
+    if loan_id:
+        loans = loans.filter(pk=loan_id)
+
+    zero = Decimal("0.00")
+    buckets = {}
+
+    def bucket_for(customer):
+        return buckets.setdefault(customer.id, {
+            "customer": {"id": customer.id, "code": customer.customer_code, "name": customer.full_name, "phone": customer.primary_mobile},
+            "entries": [],
+        })
+
+    if customer_param and customer_param.upper() != "ALL":
+        selected = Customer.objects.filter(pk=customer_param).first()
+        if selected:
+            bucket_for(selected)
+
+    today = timezone.localdate()
+    # Chit/Interest/Mortgage schedules are generated and persisted for the loan's whole
+    # future tenure the moment it's created, but a ledger only posts a due once it has
+    # actually accrued — so cap at today unless the caller explicitly asks past it with `to`.
+    due_cutoff = to_date if to_date else today
+    for loan in loans:
+        entry = bucket_for(loan.customer)
+        chit = getattr(loan, "chit_details", None)
+        group = chit.chit_group if chit else None
+        kind_name = loan.loan_type.name
+        if group:
+            particulars = f"Chit Installment - {group.name}"
+        else:
+            particulars = f"{kind_name} Loan Installment"
+        for row in loan.installment_details.all():
+            if row.due_date > due_cutoff:
+                continue
+            if from_date and row.due_date < from_date:
+                continue
+            entry["entries"].append({
+                "date": row.due_date, "sort": (row.due_date, 0, loan.id, row.installment_number),
+                "particulars": f"{particulars} (Inst #{row.installment_number})",
+                "voucher_no": loan.doc_no or loan.loan_no or "",
+                "debit": row.installment_amount or zero, "credit": zero,
+            })
+        for item in loan.collection_transactions.all():
+            if item.collection_date > due_cutoff:
+                continue
+            if from_date and item.collection_date < from_date:
+                continue
+            entry["entries"].append({
+                "date": item.collection_date, "sort": (item.collection_date, 1, loan.id, item.id),
+                "particulars": "Receipt", "voucher_no": f"RV-{item.id:06d}",
+                "debit": zero, "credit": item.collection_amount or zero,
+            })
+
+    ledger_balance = {}
+    if buckets:
+        for row in Ledger.objects.filter(customer_id__in=buckets.keys()):
+            ledger_balance[row.customer_id] = ledger_balance.get(row.customer_id, zero) + (row.opening_balance or zero)
+
+    results = []
+    for customer_id, entry in buckets.items():
+        rows = []
+        debit_total = credit_total = zero
+        if not loan_id:
+            # Opening Balance is a customer-level ledger fact, not tied to any one loan —
+            # only included in the merged (no loan_id) view, never repeated per loan.
+            opening = ledger_balance.get(customer_id, zero)
+            opening_debit = opening if opening >= 0 else zero
+            opening_credit = -opening if opening < 0 else zero
+            rows.append({
+                "date": None, "particulars": "Opening Balance", "voucher_no": "",
+                "debit": opening_debit, "credit": opening_credit, "total": opening_debit + opening_credit,
+                "is_opening": True,
+            })
+            debit_total, credit_total = opening_debit, opening_credit
+        for item in sorted(entry["entries"], key=lambda row: row["sort"]):
+            debit_total += item["debit"]
+            credit_total += item["credit"]
+            rows.append({
+                "date": item["date"], "particulars": item["particulars"], "voucher_no": item["voucher_no"],
+                "debit": item["debit"], "credit": item["credit"], "total": item["debit"] + item["credit"],
+                "is_opening": False,
+            })
+        results.append({
+            "customer": entry["customer"], "rows": rows,
+            "totals": {"debit": debit_total, "credit": credit_total, "total": debit_total + credit_total},
+        })
+    results.sort(key=lambda item: item["customer"]["name"])
+
+    customers = [{"id": row.id, "code": row.customer_code, "name": row.full_name}
+                 for row in Customer.objects.order_by("full_name", "id").only("id", "customer_code", "full_name")]
+    return Response({"customers": customers, "results": results})
+
+
+@api_view(["GET"])
+def group_wise_report(request):
+    """Read-only customer-wise loan report across all loan types, grouped by customer with
+    full per-loan schedule/payment detail. Powers Group-wise Report, which slices this same
+    rich payload down to one Chit Group's member customers/loans on the client."""
     from customers.models import Customer
     params = request.query_params
     try:

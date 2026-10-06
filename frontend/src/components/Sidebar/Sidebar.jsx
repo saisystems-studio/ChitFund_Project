@@ -27,8 +27,10 @@ const reportCategories = [
   ]],
   ["loanReports", "Loan Reports", [
     ["Active Loans", "/active-loans"],
+    ["Completed Loans", "/reports/completed-loans"],
     ["Mortgage Report", "/reports/mortgage"],
-    ["Customer Wise Report", "/reports/customer-wise"],
+    ["Customer-wise Report", "/reports/customer"],
+    ["Group-wise Report", "/reports/group-wise"],
   ]],
   ["accountsReports", "Accounts Reports", [
     ["Cash Ledger", "/reports/cash-balance"],

@@ -21,25 +21,17 @@ const formatInstallmentAmount = value => {
 
 export default function ChitGroupForm({ api, auth, go, id }) {
   const { profile } = useCompanyProfile();
-  const draftKey = "chitufund:draft:chit-group:new";
-  const readDraft = () => { if (id) return null; try { const saved = JSON.parse(sessionStorage.getItem(draftKey) || "null"); return saved && typeof saved === "object" ? saved : null; } catch { return null; } };
-  const draft = useRef(readDraft()).current;
-  const [form, setForm] = useState(() => ({ code: "", name: "", duration: 1, duration_type: "DAY", collection_day: 1, collection_month: 1, total_amount: "", end_date: "", ...(draft?.form || {}) }));
-  const [amounts, setAmounts] = useState(() => Array.isArray(draft?.amounts) ? draft.amounts : []);
+  const [form, setForm] = useState(() => ({ code: "", name: "", duration: 1, duration_type: "DAY", collection_day: 1, collection_month: 1, total_amount: "", end_date: "" }));
+  const [amounts, setAmounts] = useState([]);
   const [savedSchedules, setSavedSchedules] = useState([]);
-  const [startDate, setStartDate] = useState(() => draft?.startDate || "");
+  const [startDate, setStartDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [totalFocused, setTotalFocused] = useState(false);
   const [focusedAmount, setFocusedAmount] = useState(null);
   const amountRefs = useRef({});
   const original = useRef(null);
-
-  useEffect(() => {
-    if (id) return;
-    try { sessionStorage.setItem(draftKey, JSON.stringify({ form, amounts, startDate })); } catch {}
-  }, [id, form, amounts, startDate]);
-  const clearDraft = () => { try { sessionStorage.removeItem(draftKey); } catch {} };
+  const clearDraft = () => {};
 
   useEffect(() => {
     if (id) {

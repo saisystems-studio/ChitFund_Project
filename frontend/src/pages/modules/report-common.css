@@ -1,0 +1,184 @@
+/* Shared "professional accounting report" look reused across Customer Report,
+   Completed Loans, Group-wise Report, and the Active Loans toolbar. */
+.rpt-page{
+  --rpt-ink:#102a43;--rpt-ink-2:#4f6a84;--rpt-muted:#7890a5;--rpt-border:#e5e7eb;--rpt-soft:#f3f7fb;
+  --rpt-primary:#123a63;--rpt-accent:#176db3;--rpt-good:#0b7a2f;--rpt-warn:#a86a00;--rpt-bad:#b83950;
+  width:100%;max-width:1440px;margin:0 auto;color:var(--rpt-ink);font-size:13px
+}
+.rpt-page svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+.rpt-breadcrumb{display:flex;align-items:center;gap:10px;margin:0 0 10px;color:#1d4f7d;font-size:15px}
+.rpt-breadcrumb>svg{width:14px;height:14px;color:var(--rpt-ink)}
+.rpt-breadcrumb strong{color:var(--rpt-ink);font-weight:700}
+.rpt-back{display:grid;place-items:center;padding:0;border:0;background:none;color:#174d7c;cursor:pointer}
+.rpt-back svg{width:18px;height:18px}
+.rpt-crumb-link{border:0;background:none;padding:0;color:#1d4f7d;font:inherit;cursor:pointer}
+.rpt-crumb-link:hover{text-decoration:underline}
+
+/* Header row: breadcrumb left, compact toolbar right, sharing the same top line on desktop. */
+.rpt-header-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin:0 0 16px}
+.rpt-header-row .rpt-breadcrumb{margin:0}
+
+/* Customer-wise Report's always-visible ledger container: header/rows at top, a flexible
+   blank area, and the Opening/Transactions/Closing summary pinned at the bottom — even
+   when empty, so the page never collapses to a one-line "select a customer" message. */
+.rpt-ledger-card{display:flex;flex-direction:column;min-height:520px}
+.rpt-ledger-card .rpt-table-wrap{flex:1 1 auto}
+.rpt-ledger-footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;padding:12px 16px;border-top:1px solid var(--rpt-border);background:var(--rpt-soft)}
+.rpt-ledger-footer>div{display:flex;flex-direction:column;gap:3px}
+.rpt-ledger-footer>div:nth-child(2){align-items:center;text-align:center}
+.rpt-ledger-footer>div:last-child{align-items:flex-end;text-align:right}
+.rpt-ledger-footer small{color:var(--rpt-ink-2);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.rpt-ledger-footer strong{color:var(--rpt-ink);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+
+.rpt-toolbar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-end;gap:9px}
+.rpt-loading,.rpt-error{align-self:center;font-size:12px;white-space:nowrap}
+.rpt-error{color:var(--rpt-bad)}
+
+.rpt-field{display:flex;flex-direction:column;gap:3px;color:var(--rpt-ink-2);font-size:12px;font-weight:600}
+.rpt-field select,.rpt-field input{height:37px;padding:0 9px;border:1px solid #d7dce2;border-radius:6px;background:#fff;color:var(--rpt-ink);font:inherit;font-size:12.5px;font-weight:500;outline:0;max-width:100%}
+.rpt-field select:focus,.rpt-field input:focus{border-color:var(--rpt-accent);box-shadow:0 0 0 3px rgba(23,109,179,.1)}
+.rpt-field-sm select,.rpt-field-sm input{width:140px}
+.rpt-field-md select,.rpt-field-md input{width:170px}
+.rpt-field-lg select,.rpt-field-lg input{width:200px}
+.rpt-field-period select{width:150px}
+.rpt-field-status select{width:140px}
+.rpt-field-customer{width:190px}
+.rpt-field-loan{width:190px}
+.rpt-field-group{width:180px}
+.rpt-field-date input{width:128px}
+
+.rpt-clear{align-self:flex-end;height:37px;padding:0 2px;border:0;background:none;color:var(--rpt-accent);font:inherit;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer;white-space:nowrap}
+.rpt-clear:hover{color:#0f5590}
+
+/* Decorative dropdown caret for SearchableDropdown instances that otherwise look like a
+   plain search textbox when closed. Hidden once a value is picked, where the component's
+   own clear (×) button already occupies that same corner. */
+.rpt-dropdown-wrap{position:relative}
+.rpt-dropdown-wrap::after{content:"";position:absolute;right:11px;top:50%;width:6px;height:6px;margin-top:-4px;border-right:1.5px solid var(--rpt-ink-2);border-bottom:1.5px solid var(--rpt-ink-2);transform:rotate(45deg);pointer-events:none}
+.rpt-dropdown-wrap.has-value::after{display:none}
+
+/* A toolbar that keeps every filter plus a trailing control (e.g. Performance) on one
+   row at desktop widths, never wrapping, with the trailing control pinned to the far
+   right regardless of how many filters are shown; wraps normally on small screens. */
+.rpt-toolbar-pinned{flex-wrap:wrap}
+.rpt-toolbar-pinned-end{margin-left:auto;flex:0 0 auto;height:37px}
+@media(min-width:768px){
+  .rpt-toolbar-pinned{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .rpt-toolbar-pinned::-webkit-scrollbar{display:none}
+  .rpt-toolbar-pinned>.rpt-field,.rpt-toolbar-pinned>.rpt-clear{flex:0 0 auto}
+  /* Active Loans' breadcrumb/toolbar sit directly inside its existing two-column
+     grid (active-loans-final.css), previously keyed to .page-breadcrumb/
+     .active-loans-toolbar; place the new rpt-* markup into those same slots. */
+  .active-loans-page>.rpt-breadcrumb{grid-column:1;grid-row:1;align-self:center;margin:0;white-space:nowrap}
+  .active-loans-page>.rpt-toolbar{grid-column:2;grid-row:1;margin:0}
+}
+
+/* Generic white card */
+.rpt-card{border:1px solid var(--rpt-border);border-radius:9px;background:#fff;box-shadow:0 1px 4px rgba(16,24,40,.05);padding:14px 16px;margin:0 0 10px}
+.rpt-table-card{padding:0}
+.rpt-empty{padding:40px 16px;text-align:center;color:var(--rpt-muted);border:1px solid var(--rpt-border);border-radius:8px;background:#fff}
+
+/* Compact summary stat cards */
+.rpt-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:0 0 10px}
+.rpt-stat{padding:10px 12px;border:1px solid var(--rpt-border);border-radius:8px;background:#fff}
+.rpt-stat small{display:block;color:var(--rpt-ink-2);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.rpt-stat strong{display:block;margin-top:5px;color:var(--rpt-ink);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Accounting-statement table */
+.rpt-table-wrap{overflow:visible}
+.rpt-table{width:100%;table-layout:fixed;min-width:0;border-collapse:collapse}
+.rpt-table th{height:41px;padding:0 10px;background:var(--rpt-primary);color:#fff;font-size:10px;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.rpt-table td{height:39px;padding:0 10px;border-bottom:1px solid #f0f2f5;background:#fff;color:#1b2b3d;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.rpt-table tbody tr:hover td{background:#f8fafc}
+.rpt-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.rpt-table .center{text-align:center}
+.rpt-empty-row td{height:auto;padding:28px 16px;text-align:center;white-space:normal}
+.rpt-empty-row strong{display:block;color:var(--rpt-ink);font-size:13px;font-weight:700}
+.rpt-empty-row span{display:block;margin-top:4px;color:var(--rpt-muted);font-size:12px}
+.rpt-footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid var(--rpt-border);font-size:12px;color:var(--rpt-ink-2)}
+.rpt-footer-pages{display:flex;align-items:center;gap:4px}
+.rpt-footer-pages button{height:28px;min-width:28px;padding:0 8px;border:1px solid var(--rpt-border);border-radius:5px;background:#fff;color:var(--rpt-ink-2);font:inherit;font-size:12px;cursor:pointer}
+.rpt-footer-pages button.current{background:var(--rpt-primary);color:#fff;border-color:var(--rpt-primary)}
+.rpt-footer-pages button:disabled{opacity:.45;cursor:not-allowed}
+.rpt-opening-row td{background:#f7f8fa!important;font-weight:600}
+.rpt-receipt-row td:first-child{box-shadow:inset 3px 0 #9aa5b1}
+.rpt-overall-row td{padding:8px 10px;background:var(--rpt-soft);color:var(--rpt-ink);font-weight:700;border-top:2px solid #cfdcea;border-bottom:0}
+.rpt-overall-row td:first-child{text-transform:uppercase;font-size:10.5px;letter-spacing:.03em}
+
+.rpt-link-name{border:0;background:none;padding:0;color:var(--rpt-accent);font:inherit;font-weight:700;cursor:pointer}
+.rpt-link-name:hover{text-decoration:underline}
+
+.rpt-pill{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:5px;font-size:10.5px;font-weight:700}
+.rpt-pill.active{background:#eaf2fb;color:#1d5f91}
+.rpt-pill.completed{background:#e3f5e8;color:var(--rpt-good)}
+.rpt-pill.overdue{background:#fde7e9;color:var(--rpt-bad)}
+
+/* Compact customer header (Individual Customer-wise Report) — one single-row card:
+   customer details | opening balance | loan number | performance, vertically centered. */
+.rpt-customer-card{padding:14px 18px}
+.rpt-customer-row{display:grid;grid-template-columns:minmax(260px,1.4fr) minmax(110px,.6fr) minmax(240px,1fr) auto;align-items:center;gap:22px}
+.rpt-customer-col{min-width:0}
+.rpt-customer-col small{display:block;color:var(--rpt-ink-2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.rpt-customer-col strong{display:block;margin-top:3px;color:var(--rpt-ink);font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpt-customer-id h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--rpt-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpt-customer-sub{margin:3px 0 0;color:var(--rpt-ink-2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpt-customer-col-loan .rpt-field{gap:3px}
+.rpt-customer-col-loan select,.rpt-customer-col-loan input{width:100%}
+
+.rpt-perf-wrap{position:relative}
+.rpt-perf-toggle{display:inline-flex;align-items:center;gap:6px;height:37px;padding:0 12px;border:1px solid var(--rpt-border);border-radius:6px;background:#fff;color:var(--rpt-accent);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.rpt-perf-toggle:hover{background:#f6fafd}
+.rpt-perf-toggle.open{border-color:var(--rpt-accent);background:#eef6fc}
+/* Floating overlay — positioned out of flow so opening it never resizes the header card. */
+.rpt-perf-popover{position:absolute;z-index:40;top:calc(100% + 6px);right:0;width:240px;padding:10px 12px;border:1px solid var(--rpt-border);border-radius:8px;background:#fff;box-shadow:0 10px 26px rgba(15,39,66,.14)}
+.rpt-perf-popover strong{display:block;margin-bottom:6px;color:var(--rpt-ink);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.rpt-perf-popover dl{display:grid;gap:5px;margin:0}
+.rpt-perf-popover dl>div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rpt-perf-popover dt{color:var(--rpt-ink-2);font-size:12px}
+.rpt-perf-popover dd{margin:0;color:var(--rpt-ink);font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+
+.rpt-inline-metrics{display:flex;flex-wrap:wrap;align-items:center;gap:0;font-size:12.5px;color:var(--rpt-ink-2)}
+.rpt-inline-metrics>span{display:inline-flex;align-items:center;gap:5px;padding:0 12px;border-left:1px solid var(--rpt-border);white-space:nowrap}
+.rpt-inline-metrics>span:first-child{padding-left:0;border-left:0}
+.rpt-inline-metrics b{color:var(--rpt-ink);font-weight:700;font-variant-numeric:tabular-nums}
+
+
+.rpt-loan-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.rpt-loan-head-id{display:flex;align-items:baseline;gap:8px}
+.rpt-loan-head-id strong{font-size:15px;color:var(--rpt-ink)}
+.rpt-loan-head-id span{color:var(--rpt-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.rpt-loan-plan{margin:2px 0 8px;color:var(--rpt-ink-2);font-size:12.5px}
+.rpt-ledger-customer-head{margin:0;padding:12px 16px 10px;color:var(--rpt-ink-2);font-size:12.5px}
+.rpt-ledger-customer-head strong{color:var(--rpt-ink);font-size:14px;letter-spacing:.02em}
+
+@media(max-width:760px){
+  .rpt-customer-row{grid-template-columns:1fr 1fr;grid-template-areas:"id id" "ob loan" "perf perf";row-gap:10px}
+  .rpt-customer-id{grid-area:id}
+  .rpt-customer-row>.rpt-customer-col:nth-of-type(2){grid-area:ob}
+  .rpt-customer-col-loan{grid-area:loan}
+  .rpt-perf-wrap{grid-area:perf;align-self:stretch}
+  .rpt-perf-toggle{width:100%;justify-content:space-between}
+  .rpt-perf-popover{left:0;right:0;width:auto}
+}
+
+@media(max-width:860px){
+  .rpt-header-row{align-items:flex-start}
+  .rpt-toolbar{width:100%;justify-content:flex-start;gap:8px}
+  .rpt-field{flex:1 1 130px}
+  .rpt-field-sm select,.rpt-field-sm input,.rpt-field-md select,.rpt-field-md input,.rpt-field-lg select,.rpt-field-lg input,
+  .rpt-field-period select,.rpt-field-status select,.rpt-field-customer,.rpt-field-loan,.rpt-field-group,.rpt-field-date input{width:100%}
+}
+@media(max-width:600px){
+  .rpt-table-wrap{overflow-x:auto}
+  .rpt-table{min-width:560px}
+}
+
+/* Scrolling: the report scrolls inside the main content area (scrollbar hidden), matching
+   the rest of the Reports pages. */
+.app-shell .main-content:has(> .rpt-page){display:block!important;height:100vh!important;max-height:100vh!important;overflow-y:auto!important;overflow-x:hidden!important;scroll-behavior:smooth;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none}
+.app-shell .main-content:has(> .rpt-page)::-webkit-scrollbar{display:none;width:0;height:0}
+.app-shell .main-content>.rpt-page{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;padding-bottom:24px}
+#root .rpt-page .scrollable-grid{max-height:none!important;overflow-y:visible!important}
+#root .rpt-page .rpt-table-wrap.scrollable-grid{overflow-x:auto}
+#root .rpt-page .rpt-table-wrap{scrollbar-width:thin}

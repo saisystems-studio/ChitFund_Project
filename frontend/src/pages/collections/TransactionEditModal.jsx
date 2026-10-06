@@ -57,7 +57,7 @@ export default function TransactionEditModal({ api, auth, kind, id, onClose, onS
             {field("Amount", collection ? "collection_amount" : "amount", "number", true)}
             {chooseLedger("Account", "account", ledgers.filter(item => accountGroups.includes(item.group) || item.id === form.account))}
             <label>Payment Mode<select required value={form.payment_mode || ""} onChange={event => update("payment_mode", event.target.value)}><option value="">Select Payment Mode</option>{modes.map(mode => <option key={mode}>{mode}</option>)}</select></label>
-            <label>Done By<StaffDropdown api={api} auth={auth} value={form.done_by_staff || ""} onChange={value => update("done_by_staff", value)} placeholder="Select staff" allowClear/></label>
+            <label>Salesman<StaffDropdown api={api} auth={auth} value={form.done_by_staff || ""} onChange={value => update("done_by_staff", value)} placeholder="Select staff" allowClear/></label>
             {chooseLedger("Ledger", "ledger", ledgers.filter(item => groups.includes(item.group) || item.id === form.ledger))}
             <label>Ledger Group<select value={form.ledger_group || ""} onChange={event => update("ledger_group", event.target.value)}><option value="">Select Ledger Group</option>{groups.map(group => <option key={group}>{group}</option>)}</select></label>
             {!collection && form.accounts && <label>Legacy Account<select value={form.accounts} onChange={event => update("accounts", event.target.value)}><option>Card</option><option>Credit</option></select></label>}

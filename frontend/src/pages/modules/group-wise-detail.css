@@ -118,54 +118,42 @@
 .cwr-status.pending,.cwr-status.partial{background:#fff3d6;color:#8a5a00}
 .cwr-status.overdue{background:#fde7e9;color:#b83950}
 
-/* Histogram view */
-.cwr-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.cwr-chart{padding:14px 16px 16px}
-.cwr-chart.wide{grid-column:1/-1}
-.cwr-chart>header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:8px 16px;margin-bottom:12px}
-.cwr-chart h2{margin:0;color:var(--cwr-ink);font-size:14px;font-weight:700}
-.cwr-chart header p{margin:2px 0 0;color:var(--cwr-muted);font-size:12px}
-.cwr-legend{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--cwr-ink-2);font-size:12px}
-.cwr-legend span{display:inline-flex;align-items:center;gap:6px}
-.cwr-legend i,.cwr-legend-table i,.cwr-tooltip i{display:inline-block;width:10px;height:10px;border-radius:2px;flex:0 0 auto}
-i.chit{background:var(--cwr-chit)}i.interest{background:var(--cwr-interest)}i.mortgage{background:var(--cwr-mortgage)}i.collected{background:var(--cwr-collected)}i.pending{background:var(--cwr-pending)}
-.cwr-bars{display:grid;gap:2px}
-.cwr-bar-row{display:grid;grid-template-columns:minmax(90px,170px) minmax(0,1fr) 88px;align-items:center;gap:10px;min-height:28px;padding:2px 4px;border-radius:5px;outline:0;cursor:default}
-.cwr-bar-row:hover,.cwr-bar-row:focus-visible{background:#f2f6fa}
-.cwr-bars.grouped .cwr-bar-row{min-height:34px}
-.cwr-bar-label{overflow:hidden;color:var(--cwr-ink);font-size:12.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
-.cwr-bar-value{color:var(--cwr-ink-2);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cwr-bar-value.pair{display:grid;gap:1px;font-size:11px;line-height:14px}
-.cwr-bar-value.pair em{font-style:normal}
-.cwr-track{position:relative;height:100%;min-height:24px;display:flex;align-items:center}
-.cwr-grid{position:absolute;inset:0;pointer-events:none}
-.cwr-grid span{position:absolute;top:0;bottom:0;border-left:1px solid #edf1f5}
-.cwr-stack{position:relative;display:flex;gap:2px;height:14px;min-width:2px;border-radius:0 4px 4px 0;overflow:hidden}
-.cwr-stack span{flex-basis:0;min-width:2px}
-.cwr-stack .chit,.cwr-split .chit{background:var(--cwr-chit)}.cwr-stack .interest,.cwr-split .interest{background:var(--cwr-interest)}.cwr-stack .mortgage,.cwr-split .mortgage{background:var(--cwr-mortgage)}
-.cwr-pair{position:relative;display:grid;gap:2px;width:100%}
-.cwr-pair span{display:block;height:11px;min-width:2px;border-radius:0 4px 4px 0}
-.cwr-pair .collected,.cwr-split .collected{background:var(--cwr-collected)}.cwr-pair .pending,.cwr-split .pending{background:var(--cwr-pending)}
-.cwr-axis-row{display:grid;grid-template-columns:minmax(90px,170px) minmax(0,1fr) 88px;gap:10px;margin-top:6px;padding:0 4px}
-.cwr-axis-name{color:var(--cwr-muted);font-size:11px;align-self:center}
-.cwr-axis{position:relative;height:16px;border-top:1px solid #cfdcea}
-.cwr-axis span{position:absolute;top:3px;transform:translateX(-50%);color:var(--cwr-muted);font-size:10.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cwr-axis span:first-child{transform:none}
-.cwr-axis span:last-child{transform:translateX(-100%)}
-.cwr-split{display:flex;gap:2px;height:22px;margin:4px 0 12px;border-radius:4px;overflow:hidden;background:var(--cwr-soft)}
-.cwr-split span{flex-basis:0;min-width:3px;outline:0;cursor:default}
-.cwr-split span:hover,.cwr-split span:focus-visible{filter:brightness(1.1)}
-.cwr-legend-table{width:100%;border-collapse:collapse}
-.cwr-legend-table th{padding:6px 8px;color:var(--cwr-muted);font-size:10.5px;font-weight:700;text-align:left;text-transform:uppercase;border-bottom:1px solid #e6eef6}
-.cwr-legend-table td{padding:7px 8px;border-bottom:1px solid #f0f4f8;font-size:12.5px}
-.cwr-legend-table td:first-child{display:flex;align-items:center;gap:8px;font-weight:600}
-.cwr-hero{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
-.cwr-hero strong{color:var(--cwr-ink);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
-.cwr-hero span{color:var(--cwr-ink-2);font-size:12.5px}
-.cwr-tooltip{position:fixed;z-index:1000;display:grid;gap:4px;min-width:190px;max-width:240px;padding:9px 11px;border:1px solid #d6e2ee;border-radius:7px;background:#fff;box-shadow:0 10px 26px rgba(15,39,66,.16);color:var(--cwr-ink);font-size:12px;pointer-events:none}
-.cwr-tooltip b{margin-bottom:2px;font-size:12.5px}
-.cwr-tooltip span{display:flex;align-items:center;gap:7px;color:var(--cwr-ink-2)}
-.cwr-tooltip em{margin-left:auto;padding-left:12px;color:var(--cwr-ink);font-style:normal;font-weight:700;font-variant-numeric:tabular-nums}
+/* Group-wise outer accordion (adapted from the old per-customer accordion, now one level up) */
+.cwr-group{padding:0 14px;transition:box-shadow .2s,border-color .2s}
+.cwr-group.open{border-color:#c9dcef;box-shadow:0 6px 20px rgba(18,59,99,.09)}
+.cwr-group-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;width:100%;margin:0;padding:12px 0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.cwr-group-head>div{flex:1 1 220px;min-width:0}
+.cwr-group-head:hover h2{color:var(--cwr-accent)}
+.cwr-group-head:focus-visible{outline:2px solid #8ec5f5;outline-offset:2px;border-radius:6px}
+.cwr-group.open .cwr-group-head{border-bottom:1px solid #e6eef6}
+.cwr-group-head h2{margin:0;font-size:16px;color:var(--cwr-ink);transition:color .15s}
+.cwr-group-arrow{display:grid;place-items:center;width:28px;height:28px;border-radius:6px;background:#eef3f8;color:var(--cwr-accent);font-size:11px;transition:transform .15s,background .15s,color .15s}
+.cwr-group.open .cwr-group-arrow{background:var(--cwr-accent);color:#fff;transform:rotate(180deg)}
+.cwr-group-panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .25s ease}
+.cwr-group.open .cwr-group-panel{grid-template-rows:1fr}
+.cwr-group-panel-inner{min-height:0;overflow:hidden}
+.cwr-group.open .cwr-group-panel-inner{padding-bottom:14px}
+.cwr-customer-name-link{border:0;background:none;padding:0;color:var(--cwr-accent);font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+.cwr-customer-name-link:hover{text-decoration:underline}
+.cwr-group-head dl,.cwr-customer-head dl{display:flex;gap:22px;margin:0}
+.cwr-group-head dl div,.cwr-customer-head dl div{text-align:right}
+.cwr-group-head dt,.cwr-customer-head dt{color:var(--cwr-muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.cwr-group-head dd,.cwr-customer-head dd{margin:2px 0 0;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.cwr-group-head dd.collected,.cwr-customer-head dd.collected{color:#0b7a2f}.cwr-group-head dd.pending,.cwr-customer-head dd.pending{color:#a86a00}
+.cwr-group-head>div>span,.cwr-group-head h2+span{display:block;color:var(--cwr-muted);font-size:12px}
+
+/* Customer section nested inside an expanded Group */
+.cwr-group-customer{padding:12px 0;border-top:1px solid #e6eef6}
+.cwr-group-customer:first-child{border-top:0;padding-top:0}
+.cwr-group-customer-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;margin-bottom:8px}
+.cwr-group-customer-head h3{margin:0;font-size:14px;color:var(--cwr-ink)}
+.cwr-group-customer-head h3 em{color:var(--cwr-ink-2);font-size:12px;font-style:normal;font-weight:600}
+.cwr-group-customer-head>div:first-child span{display:block;margin-top:2px;color:var(--cwr-muted);font-size:12px}
+.cwr-group-customer-head dl{display:flex;gap:18px;margin:0}
+.cwr-group-customer-head dl div{text-align:right}
+.cwr-group-customer-head dt{color:var(--cwr-muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.cwr-group-customer-head dd{margin:2px 0 0;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.cwr-group-customer-head dd.collected{color:#0b7a2f}.cwr-group-customer-head dd.pending{color:#a86a00}
 
 @media(max-width:1200px){.cwr-summary{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.cwr-head-top{flex-direction:column}.cwr-head-actions{width:100%;justify-content:space-between}}

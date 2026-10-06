@@ -53,7 +53,7 @@ export default function PaymentEntry({ api, auth, go }) {
     event.preventDefault();
     if (saving) return;
     if (!form.ledger_group || !form.account || !form.date || !(Number(form.amount) > 0)) return setError("Ledger, Accounts, Date and an Amount greater than zero are required.");
-    if (!form.done_by_staff) return setError("Done By is required.");
+    if (!form.done_by_staff) return setError("Salesman is required.");
     const required = form.payment_mode === "UPI" ? ["upi_id", "transaction_utr"] : form.payment_mode === "Cheque" ? ["cheque_number", "cheque_date", "bank_name"] : form.payment_mode === "NEFT" ? ["transaction_utr", "bank_name"] : [];
     if (required.some(key => !String(details[key] || "").trim())) return setError("Complete the required payment details.");
     setSaving(true);
@@ -78,7 +78,7 @@ export default function PaymentEntry({ api, auth, go }) {
         <div className="collection-entry-fields">
           <Field label="Ledger" required><select value={form.ledger} onChange={event => { const id = event.target.value; const picked = sundryLedgers.find(item => String(item.id) === id); setForm(current => ({ ...current, ledger: id, ledger_group: picked?.group || "" })); }}><option value="">Select Ledger</option>{sundryLedgers.map(item => <option key={item.id} value={item.id}>{item.name} - {item.group}</option>)}</select></Field>
           <Field label="Accounts" required><select value={form.account} onChange={event => update("account", event.target.value)}><option value="">Select Accounts</option>{accounts.map(item => <option value={item.id} key={item.id}>{item.name}</option>)}</select></Field>
-          <Field label="Done By" required><StaffDropdown api={api} auth={auth} value={form.done_by_staff} onChange={value => update("done_by_staff", value)} placeholder="Select staff" allowClear/></Field>
+          <Field label="Salesman" required><StaffDropdown api={api} auth={auth} value={form.done_by_staff} onChange={value => update("done_by_staff", value)} placeholder="Select staff" allowClear/></Field>
           <Field label="Amount" required><div className="currency-input"><span>₹</span><input type="number" min="0.01" step="0.01" value={form.amount} onChange={event => update("amount", event.target.value)} placeholder="0.00"/></div></Field>
           <div className="payment-mode-row"><Field label="Payment Mode" required><PaymentModeSelect value={form.payment_mode} modes={modeOptions} onChange={value => { update("payment_mode", value); if (value === "Cash") setCashPopupOpen(true); else setDetails({}); }}/>{form.payment_mode === "Cash" && totalCashAmount > 0 && <button type="button" className="cash-denom-chip" onClick={() => setCashPopupOpen(true)}>{formatINR(totalCashAmount)} entered · Edit</button>}</Field><DynamicFields mode={form.payment_mode} details={details} setDetail={setDetail}/></div>
           <Field label="Notes" className="entry-notes"><div className="notes-wrap"><textarea rows="3" maxLength="200" value={form.notes} onChange={event => update("notes", event.target.value)} placeholder="Enter notes..."/><small>{form.notes.length} / 200</small></div></Field>

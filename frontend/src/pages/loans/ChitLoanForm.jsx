@@ -26,7 +26,6 @@ const getLocalToday = () => {
 export default function ChitLoanForm({ api, auth, go, id = null }) {
   const [applicationDate, setApplicationDate] = useState(getLocalToday);
   useEffect(() => { if (!id) api.get("/finance/loans/application-date/", auth).then(({ data }) => setApplicationDate(data.application_date)).catch(() => {}); }, [id]);
-  const draftKey = `chitufund:draft:loan-application:${id || "new"}`;
   const [customers, setCustomers] = useState([]), [groups, setGroups] = useState([]), [holidays, setHolidays] = useState([]), [loanTypes, setLoanTypes] = useState([]), [installments, setInstallments] = useState([]), [mortgageProducts, setMortgageProducts] = useState([]);
   const [customer, setCustomer] = useState(""), [selectedLoanTypeId, setSelectedLoanTypeId] = useState(""), [groupId, setGroupId] = useState("");
   const [doneByStaff, setDoneByStaff] = useState("");
@@ -40,7 +39,6 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
   const [interestDurationUnit, setInterestDurationUnit] = useState("MONTH");
   const [schedule, setSchedule] = useState([]), [endDate, setEndDate] = useState(""), [showHolidays, setShowHolidays] = useState(false), [error, setError] = useState(""), [saving, setSaving] = useState(false), [loadingEdit, setLoadingEdit] = useState(Boolean(id)), [editPeriodicity, setEditPeriodicity] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(true), [accordionOpen, setAccordionOpen] = useState(null);
-  const draftRestored = useRef(false);
   // The unselected loan-type view still uses this preview component. Keep its
   // legacy boolean interface backed by the mutually-exclusive accordion state.
   const schedulePreviewOpen = accordionOpen === "schedule";
@@ -49,37 +47,8 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
     return next ? "schedule" : null;
   });
 
-  useEffect(() => {
-    if (id) { draftRestored.current = true; return; }
-    try {
-      const saved = sessionStorage.getItem(draftKey), draft = saved ? JSON.parse(saved) : null;
-      if (draft && typeof draft === "object" && !Array.isArray(draft)) {
-        setCustomer(typeof draft.customer === "string" ? draft.customer : "");
-        setSelectedLoanTypeId(typeof draft.selectedLoanTypeId === "string" ? draft.selectedLoanTypeId : "");
-        setGroupId(typeof draft.groupId === "string" ? draft.groupId : "");
-        setPeriodic(draft.periodic ?? null);
-        setWeekDays(Array.isArray(draft.weekDays) ? draft.weekDays : [2]);
-        setInterestWeekday(draft.interestWeekday ?? null);
-        setInterestDate(typeof draft.interestDate === "string" ? draft.interestDate : "1");
-        setInterestMonth(typeof draft.interestMonth === "string" ? draft.interestMonth : "1");
-        setSelectedHolidays(Array.isArray(draft.selectedHolidays) ? draft.selectedHolidays : []);
-        setForm(draft.form && typeof draft.form === "object" && !Array.isArray(draft.form) ? { amount: "", startDate: getLocalToday(), includeSunday: false, ...draft.form, startDate: toApiDate(draft.form.startDate || getLocalToday()) } : { amount: "", startDate: getLocalToday(), includeSunday: false });
-        setInterestPercentage(typeof draft.interestPercentage === "string" ? draft.interestPercentage : "");
-        setMortgageProductId(typeof draft.mortgageProductId === "string" ? draft.mortgageProductId : "");
-        setMortgageQuantity(typeof draft.mortgageQuantity === "string" ? draft.mortgageQuantity : "");
-        setMortgageInterest(typeof draft.mortgageInterest === "string" ? draft.mortgageInterest : "");
-        setInterestDuration(typeof draft.interestDuration === "string" ? draft.interestDuration : "12");
-        setInterestDurationUnit(typeof draft.interestDurationUnit === "string" ? draft.interestDurationUnit : "MONTH");
-      }
-    } catch {}
-    draftRestored.current = true;
-  }, [id, draftKey]);
-  useEffect(() => {
-    if (id || !draftRestored.current) return;
-    try { sessionStorage.setItem(draftKey, JSON.stringify({ customer, selectedLoanTypeId, groupId, mortgageProductId, mortgageQuantity, mortgageInterest, periodic, weekDays, interestWeekday, interestDate, interestMonth, selectedHolidays, form, interestPercentage, interestDuration, interestDurationUnit })); } catch {}
-  }, [id, draftKey, customer, selectedLoanTypeId, groupId, mortgageProductId, mortgageQuantity, mortgageInterest, periodic, weekDays, interestWeekday, interestDate, interestMonth, selectedHolidays, form, interestPercentage, interestDuration, interestDurationUnit]);
   const resetForm = () => {
-    clearLoanDraft(); try { sessionStorage.removeItem("chitufund:draft:loan-application:new"); } catch {} setSavedMortgage(null); setCustomer(""); setSelectedLoanTypeId(""); setGroupId("");
+    setSavedMortgage(null); setCustomer(""); setSelectedLoanTypeId(""); setGroupId("");
     setMortgageProductId(""); setMortgageQuantity(""); setMortgageInterest("");
     setPeriodic(null); setWeekDays([2]); setInterestWeekday(null); setInterestDate("1"); setInterestMonth("1");
     setSelectedHolidays([]); setForm({ amount: "", startDate: getLocalToday(), includeSunday: false });
@@ -87,7 +56,7 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
     setSchedule([]); setEndDate(""); setShowHolidays(false); setError(""); setEditPeriodicity(""); setAccordionOpen(null); setDetailsOpen(true);
     if (id) go("/loan-application");
   };
-  const clearLoanDraft = () => { try { sessionStorage.removeItem(draftKey); } catch {} };
+  const clearLoanDraft = () => {};
 
   useEffect(() => {
     if (!detailsOpen) return undefined;
@@ -168,7 +137,7 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
       if (mortgageQuantity !== "" && Number(mortgageQuantity) <= 0) return setError("Enter a valid Quantity.");
       if (Number(form.amount) <= 0) return setError("Enter a valid Loan Amount.");
       if (Number(mortgageInterest) <= 0) return setError("Enter a valid Rate of Interest.");
-      if (!doneByStaff) return setError("Done By is required.");
+      if (!doneByStaff) return setError("Salesman is required.");
       setSaving(true); setError("");
       try {
         const payload = { customer_id: customer, loan_type_id: selectedLoanTypeId, mortgage_product_id: mortgageProductId, quantity: mortgageQuantity, amount: form.amount, interest_percentage: mortgageInterest, start_date: toApiDate(form.startDate || getLocalToday()), done_by_staff: doneByStaff };
@@ -187,7 +156,7 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
       if (periodicName === "Weekly" && interestWeekday === null) return setError("Select a Collection Day for weekly payments.");
       if (periodicName === "Monthly" && !interestDate) return setError("Select a Collection Date for monthly payments.");
       if (periodicName === "Annual" && (!interestMonth || !interestDate)) return setError("Select Collection Month and Date for annual payments.");
-      if (!doneByStaff) return setError("Done By is required.");
+      if (!doneByStaff) return setError("Salesman is required.");
       setSaving(true); setError("");
       try {
         const payload = { customer_id: customer, loan_type_id: selectedLoanTypeId, amount: interestPrincipal, start_date: toApiDate(form.startDate), periodicity: periodicityValue, interest_percentage: interestPercentage, interest_duration: interestCount, interest_duration_type: interestDurationUnit, interest_collection_day: periodicName === "Weekly" ? interestWeekday : periodicName === "Monthly" || periodicName === "Annual" ? interestDate : null, interest_collection_month: periodicName === "Annual" ? interestMonth : null, include_sunday: form.includeSunday, done_by_staff: doneByStaff };
@@ -202,7 +171,7 @@ export default function ChitLoanForm({ api, auth, go, id = null }) {
     if (!templateRows.length) return setError("Save the Chit Group installment template before saving the loan.");
     if (!form.amount || Number(form.amount) <= 0) return setError("The selected Chit Group has no Chit Amount.");
     if (!form.startDate) return setError("Select a loan start date before saving.");
-    if (!doneByStaff) return setError("Done By is required.");
+    if (!doneByStaff) return setError("Salesman is required.");
     setSaving(true);
     setError("");
     try {
@@ -272,7 +241,7 @@ function ChitLoanLayout({ api, auth, applicationDate, go, resetForm, clearLoanDr
     {error && <div className="exact-error">{error}</div>}
     <form onSubmit={saveLoan}>
       <section className="clean-panel"><h2>Loan Details</h2>
-        <div className="clean-top-grid chit-three-grid"><Field label="Customer Name" required><select value={customer} onChange={event => setCustomer(event.target.value)}><option value="">Select Customer</option>{customers.map(item => <option key={item.id} value={item.id}>{item.full_name || item.name}</option>)}</select></Field><Field label="Loan Type" required><select value={selectedLoanTypeId} onChange={event => { setSelectedLoanTypeId(String(event.target.value)); setGroupId(""); }}><option value="">Select Loan Type</option>{loanTypes.map(item => <option key={item.id} value={String(item.id)}>{item.name || item.loan_type_name}</option>)}</select></Field><Field label="Chit Group" required><select value={groupId} onChange={event => { const next = selectableGroups.find(item => String(item.id) === event.target.value); setGroupId(event.target.value); update("amount", String(next?.grand_total ?? next?.total_amount ?? "")); update("startDate", toApiDate(next?.start_date)); }}><option value="">Search Chit Group...</option>{selectableGroups.map(item => <option key={item.id} value={item.id}>{item.name || item.chit_group_name} - {item.duration} {item.duration_type === "DAY" ? "Days" : "Months"}</option>)}</select></Field><Field label="Done By" required><StaffDropdown api={api} auth={auth} value={doneByStaff} onChange={setDoneByStaff} placeholder="Select staff" allowClear/></Field></div>
+        <div className="clean-top-grid chit-three-grid"><Field label="Customer Name" required><select value={customer} onChange={event => setCustomer(event.target.value)}><option value="">Select Customer</option>{customers.map(item => <option key={item.id} value={item.id}>{item.full_name || item.name}</option>)}</select></Field><Field label="Loan Type" required><select value={selectedLoanTypeId} onChange={event => { setSelectedLoanTypeId(String(event.target.value)); setGroupId(""); }}><option value="">Select Loan Type</option>{loanTypes.map(item => <option key={item.id} value={String(item.id)}>{item.name || item.loan_type_name}</option>)}</select></Field><Field label="Chit Group" required><select value={groupId} onChange={event => { const next = selectableGroups.find(item => String(item.id) === event.target.value); setGroupId(event.target.value); update("amount", String(next?.grand_total ?? next?.total_amount ?? "")); update("startDate", toApiDate(next?.start_date)); }}><option value="">Search Chit Group...</option>{selectableGroups.map(item => <option key={item.id} value={item.id}>{item.name || item.chit_group_name} - {item.duration} {item.duration_type === "DAY" ? "Days" : "Months"}</option>)}</select></Field><Field label="Salesman" required><StaffDropdown api={api} auth={auth} value={doneByStaff} onChange={setDoneByStaff} placeholder="Select staff" allowClear/></Field></div>
         <div className="clean-top-grid chit-three-grid"><Field label="Chit Start Date" required><LoanDateInput value={form.startDate} onChange={value => update("startDate", value)}/></Field><Field label="Chit End Date"><LoanDateInput value={calculateChitEndDate(form.startDate, group?.duration, group?.duration_type)} readOnly/></Field><Field label="Chit Amount"><input value={form.amount ? formatINR(form.amount) : ""} readOnly/></Field></div>
         {group && !templateRows.length && <div className="template-warning">This Chit Group does not have an installment template. Edit the Chit Group and save its installment schedule first.</div>}
         <div className="loan-accordion-row"><AccordionControl label="Holiday" open={accordionOpen === "holiday"} onToggle={() => setAccordionOpen(value => value === "holiday" ? null : "holiday")}/><AccordionControl label="Schedule Preview" open={accordionOpen === "schedule"} onToggle={() => setAccordionOpen(value => value === "schedule" ? null : "schedule")}/></div>
@@ -306,7 +275,7 @@ function InterestLoanLayout({ api, auth, applicationDate, go, resetForm, clearLo
     {error && <div className="exact-error">{error}</div>}
     <form onSubmit={saveLoan}>
       <section className="clean-panel"><h2>Loan Details</h2>
-        <div className="clean-top-grid"><Field label="Customer" required><select value={customer} onChange={event => setCustomer(event.target.value)}><option value="">Select Customer</option>{customers.map(item => <option key={item.id} value={item.id}>{item.full_name || item.name}</option>)}</select></Field><Field label="Loan Type" required><select value={selectedLoanTypeId} onChange={event => setSelectedLoanTypeId(String(event.target.value))}><option value="">Select Loan Type</option>{loanTypes.map(item => <option key={item.id} value={String(item.id)}>{item.name || item.loan_type_name}</option>)}</select></Field><Field label="Done By" required><StaffDropdown api={api} auth={auth} value={doneByStaff} onChange={setDoneByStaff} placeholder="Select staff" allowClear/></Field></div>
+        <div className="clean-top-grid"><Field label="Customer" required><select value={customer} onChange={event => setCustomer(event.target.value)}><option value="">Select Customer</option>{customers.map(item => <option key={item.id} value={item.id}>{item.full_name || item.name}</option>)}</select></Field><Field label="Loan Type" required><select value={selectedLoanTypeId} onChange={event => setSelectedLoanTypeId(String(event.target.value))}><option value="">Select Loan Type</option>{loanTypes.map(item => <option key={item.id} value={String(item.id)}>{item.name || item.loan_type_name}</option>)}</select></Field><Field label="Salesman" required><StaffDropdown api={api} auth={auth} value={doneByStaff} onChange={setDoneByStaff} placeholder="Select staff" allowClear/></Field></div>
         <div className="interest-top-row"><Field label="Loan Amount" required><input type="number" min="0" step="0.01" value={form.amount} onChange={event => update("amount", event.target.value)}/></Field><Field label="Interest Percent" required><div className="percent-input"><input type="number" min="0" step="0.01" value={interestPercentage} onChange={event => setInterestPercentage(event.target.value)}/><b>%</b></div></Field><div className="collection-plan-field"><span className="collection-plan-label">Collection Plan <i>*</i></span><PlanOptions {...{ allowed, allInstallments: installments, periodic, choosePeriodic }}/></div><div className="clean-conditional-fields interest-collection-date">{periodicName === "Weekly" ? <div className="interest-schedule-field"><b>Collection Date <i>*</i></b><div className="interest-weekdays">{weekdays.map(([letter, name], index) => <button type="button" title={name} className={interestWeekday === index ? "selected" : ""} onClick={() => setInterestWeekday(index)} key={`${name}-${index}`}>{letter}</button>)}</div></div> : periodicName === "Monthly" ? <Field label="Collection Date" required><select value={interestDate} onChange={event => setInterestDate(event.target.value)}>{Array.from({ length: 31 }, (_, index) => <option value={index + 1} key={index + 1}>{index + 1}</option>)}</select></Field> : periodicName === "Annual" ? <><Field label="Collection Month" required><select value={interestMonth} onChange={event => setInterestMonth(event.target.value)}>{Array.from({ length: 12 }, (_, index) => <option value={index + 1} key={index + 1}>{new Date(2000, index, 1).toLocaleString("en-IN", { month: "long" })}</option>)}</select></Field><Field label="Collection Date" required><select value={interestDate} onChange={event => setInterestDate(event.target.value)}>{Array.from({ length: 31 }, (_, index) => <option value={index + 1} key={index + 1}>{index + 1}</option>)}</select></Field></> : <Field label="Collection Date"><input value={periodicName || ""} readOnly/></Field>}</div></div>
         <div className="loan-schedule-section"><h3>Loan Schedule Details</h3><div className="interest-schedule-grid interest-six-grid"><Field label="Interest Type"><select value={interestDurationUnit} onChange={event => setInterestDurationUnit(event.target.value)}><option value="DAY">Daily</option><option value="WEEK">Weeks</option><option value="MONTH">Months</option><option value="YEAR">Years</option></select></Field><Field label="Duration" required><input type="number" min="1" value={interestDuration} onChange={event => setInterestDuration(event.target.value)}/></Field><Field label="Start Date" required><LoanDateInput value={form.startDate} onChange={value => update("startDate", value)}/></Field><Calculated label="End Date" value={interestEndDate ? formatDate(interestEndDate) : "-"}/><Calculated label="Installment Amount" value={money(interestInstallment)}/><Calculated label="Payable" value={money(interestTotal)}/></div></div>
         <div className="loan-accordion-row"><AccordionControl label="Holiday" open={accordionOpen === "holiday"} onToggle={() => setAccordionOpen(value => value === "holiday" ? null : "holiday")}/><span className="schedule-preview-heading-group"><AccordionControl label="Schedule Preview" open={accordionOpen === "schedule"} onToggle={() => setAccordionOpen(value => value === "schedule" ? null : "schedule")}/><button type="button" className="schedule-preview-pdf" title="Download Schedule Preview PDF" aria-label="Download Schedule Preview PDF" disabled={pdfBusy || !interestRows.length} onClick={downloadSchedule}>{pdfBusy ? <span className="schedule-preview-pdf-spinner" aria-hidden="true"/> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M12 12v6m-3-3 3 3 3-3"/></svg>}</button></span></div>
@@ -421,7 +390,7 @@ function MortgageLoanLayout({ api, auth, applicationDate, go, resetForm, clearLo
     {error && <div className="exact-error">{error}</div>}
     <form onSubmit={saveLoan}>
       <section className="clean-panel"><h2>Mortgage Details</h2>
-        <div className="clean-top-grid"><Field label="Customer" required><select value={customer} onChange={event => setCustomer(event.target.value)}><option value="">Select Customer</option>{customers.map(item => <option key={item.id} value={item.id}>{item.full_name || item.name}</option>)}</select></Field><Field label="Loan Type" required><select value={selectedLoanTypeId} onChange={event => setSelectedLoanTypeId(String(event.target.value))}><option value="">Select Loan Type</option>{loanTypes.map(item => <option key={item.id} value={String(item.id)}>{item.name || item.loan_type_name}</option>)}</select></Field><Field label="Done By" required><StaffDropdown api={api} auth={auth} value={doneByStaff} onChange={setDoneByStaff} placeholder="Select staff" allowClear/></Field></div>
+        <div className="clean-top-grid"><Field label="Customer" required><select value={customer} onChange={event => setCustomer(event.target.value)}><option value="">Select Customer</option>{customers.map(item => <option key={item.id} value={item.id}>{item.full_name || item.name}</option>)}</select></Field><Field label="Loan Type" required><select value={selectedLoanTypeId} onChange={event => setSelectedLoanTypeId(String(event.target.value))}><option value="">Select Loan Type</option>{loanTypes.map(item => <option key={item.id} value={String(item.id)}>{item.name || item.loan_type_name}</option>)}</select></Field><Field label="Salesman" required><StaffDropdown api={api} auth={auth} value={doneByStaff} onChange={setDoneByStaff} placeholder="Select staff" allowClear/></Field></div>
         <div className="mortgage-loan-grid"><Field label="Product Name"><select value={mortgageProductId} onChange={event => setMortgageProductId(event.target.value)}><option value="">Select Product</option>{mortgageProducts.map(item => <option key={item.id} value={item.id}>{item.product_name}</option>)}</select></Field><Field label="Quantity"><input type="number" min="0" step="0.001" inputMode="decimal" value={mortgageQuantity} onChange={event => setMortgageQuantity(event.target.value)} /></Field><Field label="Unit"><input value={mortgageProduct?.unit || ""} readOnly /></Field><Field label="Current Rate"><input value={mortgageProduct ? money(mortgageProduct.current_rate) : ""} readOnly /></Field><Field label="Market Value"><input value={mortgageMarketValue ? money(mortgageMarketValue) : ""} readOnly /></Field><Field label="Loan Amount" required><input type="number" min="0" step="0.01" inputMode="decimal" value={form.amount} onChange={event => update("amount", event.target.value)} /></Field><Field label="Rate of Interest" required><div className="percent-input"><input type="number" min="0" step="0.01" inputMode="decimal" value={mortgageInterest} onChange={event => setMortgageInterest(event.target.value)} /><b>%</b></div></Field><Calculated label="Daily Interest" value={money(mortgageDailyInterest || 0)}/></div>
       </section>
       <footer className="clean-actions"><button type="button" onClick={() => { clearLoanDraft(); go("/loan-list"); }}>Cancel</button><button type="button" onClick={resetForm}>Reset</button><button type="submit" className="save" disabled={saving}>{saving ? "Saving..." : "Save"}</button></footer>
