@@ -1,19 +1,39 @@
-.ls-range{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#385975}
-.ls-range>span:first-child{white-space:nowrap}
-.ls-range span:last-child{display:flex;align-items:center;gap:6px}
-.ls-range input{width:140px;margin:0;padding:8px 10px;font-size:13px}
-.ls-range em{color:#7791aa;font-style:normal}
+/* Cash / Bank Ledger — layout comes from report-common.css (rpt-*); these are the ledger extras. */
+.ls-search input{width:230px}
 
-.ls-summary{margin:22px 0}
-.ls-summary .card small{margin-top:2px}
-
-.ls-type{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:.4px;vertical-align:middle}
+.ls-type{display:inline-block;margin-left:4px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:.4px;vertical-align:middle}
 .ls-type.dr{background:#e6f8f0;color:#1a8a5f}
 .ls-type.cr{background:#fdeceb;color:#c23b3b}
 
-.ls-panel .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.ls-panel td{vertical-align:middle}
-.ls-opening-row td{background:#f6fafd;font-weight:700;border-bottom:2px solid #e1eaf3}
-.ls-panel .footer.paginationFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 4px 6px;color:#17324d;font-size:13px}
+.ls-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ls-table td.ls-particulars{white-space:normal;padding-top:6px;padding-bottom:6px;line-height:1.35}
+.ls-opening-row td{background:var(--rpt-soft,#f6fafd);font-weight:700;border-bottom:2px solid #e1eaf3}
+.ls-count{margin:8px 2px 0;color:var(--rpt-muted,#6b7f93);font-size:12px}
 
-@media(max-width:900px){.ls-range{flex-wrap:wrap}.ls-range input{width:120px}}
+@media(max-width:900px){
+  .ls-search{flex:1 1 100%}
+  .ls-search input{width:100%}
+  /* Keep the 8 ledger columns readable: the whole card (rows + balance footer together)
+     scrolls sideways inside itself instead of squeezing text or scrolling the page. */
+  .ls-page .rpt-ledger-card{overflow-x:auto}
+  .ls-page .rpt-ledger-rows,.ls-page .rpt-ledger-summary{min-width:760px}
+  #root .ls-page .rpt-ledger-rows .rpt-table-wrap{overflow:visible}
+}
+/* Entry count now sits inside the report footer (bottom of the white container). */
+.rpt-ledger-summary .ls-count{margin:0;padding:8px 12px;border-top:1px solid var(--rpt-border,#e5e7eb)}
+
+/* Compact header (Cash Ledger and Bank Ledger share this component): one row of
+   ← Title | Search | From Date | To Date | Export, every control 40px high, aligned on the
+   inputs. The global `label` margin that inflated this row to ~89px is removed here only. */
+.ls-page>.rpt-header-row{align-items:flex-end;margin:0 0 14px}
+.ls-page>.rpt-header-row>.rpt-breadcrumb{height:40px;margin:0}
+.ls-page .rpt-toolbar{align-items:flex-end;gap:10px}
+.ls-page .rpt-toolbar>.rpt-field{margin:0;gap:3px;line-height:1.2}
+.ls-page .rpt-toolbar>.rpt-field input{box-sizing:border-box;height:40px}
+.ls-page .ls-date input{width:150px}
+.ls-page .ls-actions{display:flex;align-items:center;gap:8px;height:40px}
+.ls-page .ls-actions button[aria-haspopup="menu"]{box-sizing:border-box;height:40px;padding:0 14px;font-size:12.5px}
+@media(min-width:1200px){.ls-page>.rpt-header-row{flex-wrap:nowrap}.ls-page>.rpt-header-row>.rpt-breadcrumb{flex:0 1 auto;min-width:0}}
+@media(max-width:900px){.ls-page .ls-date{flex:1 1 140px}.ls-page .ls-date input{width:100%}}
+@media(max-width:1100px){#root .ls-page .rpt-toolbar.rpt-toolbar-pinned{flex-wrap:wrap;overflow:visible}}
+.ls-ledger{min-width:220px}

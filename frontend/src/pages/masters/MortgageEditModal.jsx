@@ -20,7 +20,7 @@ function Field({ label, icon, required, children }) {
   return <label className="mortgage-edit-field"><span>{label}{required && <> <b className="mortgage-edit-required">*</b></>}</span><div className="mortgage-edit-control"><span className="mortgage-edit-prefix"><Icon name={icon}/></span>{children}</div></label>;
 }
 
-export default function MortgageEditModal({ api, auth, form, update, units, addUnit, productGroups, addProductGroup, resetVersion, saving, onSave, onReset, onClose }) {
+export default function MortgageEditModal({ api, auth, form, update, units, addUnit, uqcs, addUqc, productGroups, addProductGroup, resetVersion, saving, onSave, onReset, onClose }) {
   return <div className="mortgage-modal-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}>
     <form className="mortgage-edit-modal" role="dialog" aria-modal="true" aria-labelledby="mortgage-edit-title" onSubmit={onSave}>
       <header className="mortgage-edit-heading">
@@ -32,7 +32,7 @@ export default function MortgageEditModal({ api, auth, form, update, units, addU
         <div className="mortgage-edit-fields">
           <Field label="Product Group" icon="group" required><CustomSelect key={`group-${form.id}-${resetVersion}`} label="product group" maxLength={50} value={form.product_group} options={productGroups} onChange={value => update("product_group", value)} onAdd={addProductGroup}/></Field>
           <Field label="Product Name" icon="tag" required><input autoFocus value={form.product_name} onChange={event => update("product_name", event.target.value)}/></Field>
-          <Field label="Unit" icon="unit" required><CustomSelect key={`${form.id}-${resetVersion}`} label="unit" maxLength={50} value={form.unit} options={units} onChange={value => update("unit", value)} onAdd={addUnit}/></Field>
+          <MortgageTaxFields key={`tax-${form.id}-${resetVersion}`} form={form} update={update} units={units} addUnit={addUnit} uqcs={uqcs} addUqc={addUqc} showTax={false}/>
           <Field label="Quantity" icon="unit"><input type="number" min="0" step="0.01" value={form.quantity ?? ""} onChange={event => update("quantity", event.target.value)}/></Field>
           <Field label="Current Rate" icon="rate"><input type="number" min="0" step="0.01" inputMode="decimal" value={form.current_rate} onChange={event => update("current_rate", event.target.value)}/></Field>
           <Field label="Date" icon="calendar"><input type="date" required value={form.rate_date || ""} onChange={event => update("rate_date", event.target.value)}/></Field>
@@ -46,3 +46,4 @@ export default function MortgageEditModal({ api, auth, form, update, units, addU
     </form>
   </div>;
 }
+import MortgageTaxFields from "./MortgageTaxFields";

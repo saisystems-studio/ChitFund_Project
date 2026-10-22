@@ -1,3 +1,4 @@
+from .test_support import ensure_cash_ledger
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -11,6 +12,7 @@ from .models import ChitGroup, ChitGroupInstallmentDetail, CollectionAllocation,
 
 class CollectionReceiptTests(TestCase):
     def setUp(self):
+        ensure_cash_ledger()
         self.client = APIClient()
         self.client.force_authenticate(User.objects.create_user('receipt-admin', is_staff=True))
         self.customer = Customer.objects.create(customer_code='RCP001', full_name='Receipt Customer', primary_mobile='9876500003', role='BORROWER',

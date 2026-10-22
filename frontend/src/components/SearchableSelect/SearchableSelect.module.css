@@ -1,0 +1,13 @@
+/* Matches SearchableDropdown's panel so every searchable list in the app looks the same. */
+.panel{position:fixed;z-index:10050;display:flex;flex-direction:column;box-sizing:border-box;overflow:hidden;margin:0;padding:4px;border:1px solid #cfe0ef;border-radius:6px;background:#fff;box-shadow:0 8px 20px #1e60961f;color:#38536f;font:12px/1.4 Arial,sans-serif;text-align:left}
+.search{position:relative;flex:0 0 auto;padding-bottom:4px;background:#fff}
+.search svg{position:absolute;left:9px;top:10px;width:14px;height:14px;fill:none;stroke:#7d93a8;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.search input{display:block;width:100%;height:34px;box-sizing:border-box;margin:0;padding:7px 10px 7px 29px;border:1px solid #cfe0ef;border-radius:6px;background:#fff;color:#203b58;font:inherit;font-size:12.5px;min-width:0}
+.search input:focus{outline:2px solid #3188d433;border-color:#3188d4}
+.list{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;margin:0;padding:0;list-style:none;scrollbar-width:none;-ms-overflow-style:none;overscroll-behavior:contain}
+.list::-webkit-scrollbar{display:none}
+.list li{padding:7px 9px;border-radius:4px;color:#38536f;cursor:pointer;overflow-wrap:anywhere}
+.list li.active{background:#edf6ff;color:#1265ae}
+.list li.selected{font-weight:700;color:#1265ae}
+.list li.disabled{color:#a9b8c6;cursor:not-allowed;background:none}
+.list .empty{color:#8a9dad;cursor:default;text-align:center}

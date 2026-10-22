@@ -43,5 +43,32 @@
 .acct-split-side.acct-debit-side h2{border-left-color:#b83950}
 .acct-plug-row td{font-style:italic;color:#71879a}
 
-@media(max-width:900px){.acct-split{grid-template-columns:1fr}}
+@media(max-width:1023px){.acct-split{grid-template-columns:1fr}}
 @media(max-width:700px){.acct-report-toolbar{flex-direction:column;align-items:stretch}.acct-report-filters{justify-content:space-between}}
+
+/* Customer-wise Report look (shared navy header, compact rows, right-aligned ₹ amounts). */
+.acct-table-wrap{border-color:#e5e7eb;border-radius:9px;background:#fff;box-shadow:0 1px 4px rgba(16,24,40,.05)}
+.acct-table{table-layout:fixed}
+.acct-table th{height:41px;padding:0 10px;background:#123a63;font-size:10px;letter-spacing:.03em;vertical-align:middle}
+/* Amount columns never shrink below a full ₹ amount (e.g. ₹12,34,56,789.00). */
+.acct-table th:not(:first-child),.acct-table td.num{width:max(20%,118px)}
+.acct-table td{height:34px;padding:0 10px;border-bottom:1px solid #f0f2f5;font-size:12px;color:#1b2b3d;vertical-align:middle;overflow:hidden;text-overflow:ellipsis}
+.acct-table tbody tr.acct-row-total td{height:36px;background:#f3f7fb;border-top:2px solid #cfdcea;font-size:13px}
+.acct-table tbody tr.acct-row-total td:first-child{color:#4f6a84;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;text-align:right}
+
+/* Full-height white containers (GLOBAL UI STANDARD): Balance Sheet / P&L keep their two
+   side-by-side tables; each side's white table fills the height and its TOTAL row sits in a
+   footer table (same fixed column widths) at the bottom. */
+#root .acct-report-page>.acct-split.data-fill{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch}
+#root .acct-report-page>.acct-split.data-fill>.acct-split-side{display:flex;flex-direction:column;min-height:0;min-width:0}
+#root .acct-report-page .acct-split-side>.data-container{display:flex!important;flex-direction:column;flex:1 0 auto;background:#fff;border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;border-bottom-width:0!important}
+.acct-total-table{flex:0 0 auto;margin-top:auto}
+@media(max-width:1023px){#root .acct-report-page>.acct-split.data-fill{display:flex!important;flex-direction:column!important}#root .acct-report-page>.acct-split.data-fill>.acct-split-side{flex:0 0 auto}#root .acct-report-page>.acct-split.data-fill>.acct-split-side:last-child{flex:1 0 auto}}
+/* Long group / ledger names wrap inside the Particulars cell instead of being cut
+   off (the inline-flex label cannot show a text ellipsis). Amount cells stay on one line. */
+.acct-table td:first-child{white-space:normal;overflow-wrap:break-word;padding-top:6px;padding-bottom:6px;line-height:1.3}
+.acct-table .acct-indent{display:flex;align-items:baseline;min-width:0}
+.acct-table .acct-indent>.acct-chevron,.acct-table .acct-indent>.acct-leaf-dot{flex:0 0 auto}
+.acct-table td.num{white-space:nowrap}
+/* Side-by-side P&L / Balance Sheet panels are half width: their 2-column tables fit without the 560px minimum. */
+.acct-split-side .acct-table{min-width:0}

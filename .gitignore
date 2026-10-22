@@ -22,9 +22,12 @@ dist/
 
 # Django
 staticfiles/
+backend/media/
 
 # OS
 .DS_Store
 Thumbs.db
 
 tmp/
+# Private identity documents must never be committed.
+backend/private_kyc/

@@ -1,0 +1,101 @@
+﻿[
+    {
+        "File":  "Balance-Sheet.xlsx",
+        "Rows":  5,
+        "HeaderColor":  6503191,
+        "NumericSample":  null,
+        "Format":  "General",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "Collection-Report.xlsx",
+        "Rows":  5,
+        "HeaderColor":  6503191,
+        "NumericSample":  null,
+        "Format":  "General",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "customer-empty.xlsx",
+        "Rows":  7,
+        "HeaderColor":  6503191,
+        "NumericSample":  0,
+        "Format":  "\"₹\"#,##0.00;[Red]-\"₹\"#,##0.00",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "customer-many.xlsx",
+        "Rows":  47,
+        "HeaderColor":  6503191,
+        "NumericSample":  50,
+        "Format":  "\"₹\"#,##0.00;[Red]-\"₹\"#,##0.00",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "customer-multiple.xlsx",
+        "Rows":  9,
+        "HeaderColor":  6503191,
+        "NumericSample":  50,
+        "Format":  "\"₹\"#,##0.00;[Red]-\"₹\"#,##0.00",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "customer-one.xlsx",
+        "Rows":  8,
+        "HeaderColor":  6503191,
+        "NumericSample":  50,
+        "Format":  "\"₹\"#,##0.00;[Red]-\"₹\"#,##0.00",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "Group-wise-Report.xlsx",
+        "Rows":  5,
+        "HeaderColor":  6503191,
+        "NumericSample":  null,
+        "Format":  "General",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "Ledger-Statement.xlsx",
+        "Rows":  5,
+        "HeaderColor":  6503191,
+        "NumericSample":  null,
+        "Format":  "General",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "Mortgage-Report.xlsx",
+        "Rows":  5,
+        "HeaderColor":  6503191,
+        "NumericSample":  null,
+        "Format":  "General",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "Profit-and-Loss.xlsx",
+        "Rows":  5,
+        "HeaderColor":  6503191,
+        "NumericSample":  null,
+        "Format":  "General",
+        "Freeze":  true,
+        "Filter":  true
+    },
+    {
+        "File":  "Trial-Balance.xlsx",
+        "Rows":  5,
+        "HeaderColor":  6503191,
+        "NumericSample":  null,
+        "Format":  "General",
+        "Freeze":  true,
+        "Filter":  true
+    }
+]

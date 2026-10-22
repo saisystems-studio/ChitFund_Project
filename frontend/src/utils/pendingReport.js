@@ -9,15 +9,16 @@ export function overdueDays(dueDate, today = localToday()) {
 }
 
 export function filterPendingRows(rows, filters, today = localToday()) {
+  const cutoff = filters.to || today;
   return rows.filter(row => {
     const due = row.due_date;
-    if (!due || due > today || Number(row.balance ?? row.outstanding ?? 0) <= 0) return false;
-    if (filters.from && due < filters.from || filters.to && due > filters.to) return false;
+    if (!due || (filters.scope !== "all_pending" && due > cutoff) || Number(row.balance ?? row.outstanding ?? 0) <= 0) return false;
+    if (filters.from && due < filters.from || filters.scope !== "all_pending" && filters.to && due > filters.to) return false;
     if (filters.customer_code && row.customer_code !== filters.customer_code) return false;
     if (filters.loan_number && row.loan_no !== filters.loan_number) return false;
     if (filters.customer_type && String(row.customer_type).toUpperCase() !== filters.customer_type) return false;
     if (filters.search && ![row.customer, row.customer_code, row.phone, row.loan_no, row.loan_type].join(" ").toLowerCase().includes(filters.search.trim().toLowerCase())) return false;
-    if (filters.status === "OVERDUE" && overdueDays(due, today) === 0) return false;
+    if (filters.status === "OVERDUE" && overdueDays(due, cutoff) === 0) return false;
     if (filters.status === "PENDING" && !["PENDING", "UPCOMING"].includes(row.status)) return false;
     if (filters.status === "PARTIAL" && !(Number(row.paid) > 0)) return false;
     if (filters.status === "PAID") return false;

@@ -124,3 +124,76 @@
 .report-receipt-spinner{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:report-receipt-spin .7s linear infinite}
 @keyframes report-receipt-spin{to{transform:rotate(360deg)}}
 [data-theme="dark"] .main-content .report-receipt-button{background:#202c38;border-color:#435363;color:#8ec5f5}
+
+/* Mobile: search takes its own row; Performance and Export wrap below it. */
+@media(max-width:767px){.report-top-actions{flex-wrap:wrap}.report-top-actions>:first-child{flex:1 1 100%;min-width:0}}
+
+/* Ledger Outstanding uses the same report surface and table treatment as Loan Dues. */
+.collection-report-page .ledger-outstanding-table .num { text-align:right; }
+.collection-report-page .ledger-outstanding-pagination { display:flex; align-items:center; justify-content:center; gap:16px; flex:0 0 auto; padding:10px; font-size:12px; }
+.collection-report-page .ledger-outstanding-pagination button { border:1px solid #c9d9e8; border-radius:6px; background:#fff; color:#174d7c; padding:6px 12px; }
+
+#root .collection-report-page .ledger-outstanding-table :is(th,td):first-child { width:110px; min-width:110px; white-space:nowrap; overflow:visible; text-overflow:clip; }
+
+#root .collection-report-page .total-outstanding-table .num { text-align:right; }
+
+.installment-breakdown { min-width:620px; }
+.installment-reference { display:block; margin-top:6px; font-size:12px; color:#526174; white-space:normal; }
+
+.ledger-scope-note { margin:0; padding:8px 16px; color:#526174; font-size:12px; }
+
+/* Pending & Outstanding filters: one row in the order Customer | Due Scope | Status | From Date |
+   To Date | Loan Number | Refresh. Each view renders only the filters that apply to it. */
+#root .report-redesign .compact-report-filters.report-filter-row{display:flex;flex-wrap:nowrap;align-items:flex-end;gap:10px;width:100%;margin:0 0 10px;padding:0}
+#root .report-redesign .report-filter-row>label{flex:1 1 0;min-width:0;white-space:nowrap;color:#294967}
+#root .report-redesign .report-filter-row>label.f-wide{flex-grow:1.4}
+#root .report-redesign .report-filter-row>label.f-scope{flex-grow:1.3}
+#root .report-redesign .report-filter-row>label.f-date{flex-grow:.95;min-width:118px}
+#root .report-redesign .report-filter-row :is(input,select){height:36px;min-width:0;text-overflow:ellipsis}
+#root .report-redesign .report-filter-row>.report-reset{flex:0 0 36px;align-self:flex-end}
+#root .report-redesign .report-filter-row>.report-reset:hover::after{content:"Refresh"}
+/* Narrower screens: filters wrap into a grid; Refresh keeps its own column at the right. */
+@media(max-width:1180px){#root .report-redesign .compact-report-filters.report-filter-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 36px;align-items:end}#root .report-redesign .report-filter-row>label,#root .report-redesign .report-filter-row>label.f-date{min-width:0}#root .report-redesign .report-filter-row>.report-reset{grid-column:4;grid-row:1/span 2}}
+@media(max-width:700px){#root .report-redesign .compact-report-filters.report-filter-row{grid-template-columns:repeat(2,minmax(0,1fr)) 36px}#root .report-redesign .report-filter-row>.report-reset{grid-column:3;grid-row:1/span 3}}
+
+/* Total Outstanding: whole parent row toggles its installments; chevron before the Loan Number. */
+#root .collection-report-page .total-outstanding-table :is(th,td):nth-child(1){width:22%}
+#root .collection-report-page .total-outstanding-table :is(th,td):nth-child(2){width:16%}
+#root .collection-report-page .total-outstanding-table :is(th,td):nth-child(n+3){width:15.5%;text-align:right}
+#root .collection-report-page .total-outstanding-table>tbody>.total-parent-row>td{color:#123b63}
+#root .collection-report-page .total-outstanding-table>tbody>.total-parent-row:hover>td,
+#root .collection-report-page .total-outstanding-table>tbody>.total-parent-row:focus-visible>td{background:#eaf4fd!important;color:#123b63!important}
+#root .collection-report-page .total-outstanding-table>tbody>.total-parent-row.is-expanded>td{background:#eef5fc;font-weight:600;border-bottom-color:transparent}
+#root .collection-report-page .total-outstanding-table>tbody>.total-parent-row:focus-visible{outline:2px solid #268bda;outline-offset:-2px}
+.total-loan-cell{display:inline-flex;align-items:center;gap:8px;max-width:100%}
+.total-loan-cell>span{overflow:hidden;text-overflow:ellipsis}
+.row-chevron{flex:0 0 18px;width:18px;height:18px;padding:2px;border:1px solid #c9d9e8;border-radius:5px;background:#fff;fill:none;stroke:#176db3;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;box-sizing:border-box}
+.total-parent-row:hover .row-chevron,.total-parent-row.is-expanded .row-chevron{border-color:#176db3;background:#176db3;stroke:#fff}
+
+/* Expanded installment detail: stays inside the main table, its own navy header, no inherited
+   column widths or ellipsis from the parent table, and no global row-hover repaint. */
+#root .collection-report-page .total-outstanding-table>tbody>.installment-detail-row>td,
+#root .collection-report-page .total-outstanding-table>tbody>.installment-detail-row:hover>td{width:auto;padding:0 12px 12px;background:#eef5fc!important;box-shadow:none!important;white-space:normal;overflow:visible;text-align:left}
+.installment-detail-panel{overflow-x:auto;border:1px solid #d3e2f0;border-radius:8px;background:#fff;animation:installment-open .18s ease-out}
+@keyframes installment-open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+#root .collection-report-page .installment-breakdown{width:100%;min-width:620px;table-layout:fixed;border-collapse:collapse;background:#fff}
+#root .collection-report-page .installment-breakdown col.col-sno{width:64px}
+#root .collection-report-page .installment-breakdown col.col-date{width:120px}
+#root .collection-report-page .installment-breakdown col.col-receipt{width:32%}
+#root .collection-report-page .installment-breakdown :is(th,td){width:auto;height:auto;padding:9px 12px;white-space:normal;overflow:visible;text-overflow:clip;text-align:left;vertical-align:top;font-size:12.5px}
+#root .collection-report-page .installment-breakdown thead tr,
+#root .collection-report-page .installment-breakdown thead tr:hover,
+#root .collection-report-page .installment-breakdown thead th{background:#123b63!important;color:#fff!important;box-shadow:none!important}
+#root .collection-report-page .installment-breakdown thead th{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+#root .collection-report-page .installment-breakdown tbody tr>td{color:#123b63;background:#fff;border-bottom:1px solid #e6eef6}
+#root .collection-report-page .installment-breakdown tbody tr:nth-child(even)>td{background:#f8fbfe}
+#root .collection-report-page .installment-breakdown tbody tr:hover>td{background:#eaf4fd!important;color:#123b63!important;box-shadow:none!important}
+#root .collection-report-page .installment-breakdown tbody tr:last-child>td{border-bottom:0}
+#root .collection-report-page .installment-breakdown .num{text-align:right;font-variant-numeric:tabular-nums}
+.installment-collected{display:block;font-weight:600}
+.installment-receipt{display:block;margin-top:4px;color:#526174;font-size:11.5px;line-height:1.35}
+.installment-receipt b{color:#176db3;font-weight:700}
+#root .collection-report-page .installment-breakdown td.installment-empty{text-align:center;color:#71879a}
+.ledger-empty{text-align:center;color:#71879a}
+#root .collection-report-page .ledger-outstanding-table td.ledger-empty{width:auto;min-width:0;padding:28px 12px;white-space:normal;overflow:visible}
+#root .collection-report-page .ledger-outstanding-table td:nth-child(3){display:table-cell;white-space:normal;overflow:visible;text-overflow:clip}

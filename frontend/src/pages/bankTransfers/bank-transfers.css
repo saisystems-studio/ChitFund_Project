@@ -1,0 +1,69 @@
+/* Bank transfers: styles are scoped to this module. */
+.bt-page{width:100%;min-width:0;max-width:100%;box-sizing:border-box;color:#203d59}
+.bt-page-heading,.bt-history-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.bt-button{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 14px;border:1px solid #cfdae7;border-radius:7px;background:#fff;color:#274e74;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.bt-button:hover:not(:disabled){background:#edf5fc;border-color:#a9bfd6}.bt-button:disabled{opacity:.5;cursor:default}
+.bt-primary{background:#143c65;color:#fff;border-color:#143c65}.bt-primary:hover:not(:disabled){background:#205281;color:#fff}
+.bt-form{width:100%;max-width:none;margin:0;border:1px solid #dde6ef;border-radius:12px;padding:18px;background:#fff;box-shadow:0 3px 15px #173b5d08;box-sizing:border-box}
+.bt-form fieldset{min-width:0;border:0;padding:0;margin:0}
+.bt-segments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:4px;margin-bottom:16px;background:#f3f6fa;border:1px solid #e2e9f0;border-radius:9px}
+.bt-segments button{padding:10px 7px;border:1px solid transparent;border-radius:6px;background:transparent;color:#637c94;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:normal}
+.bt-segments button.selected{background:#e6f1ff;border-color:#bed5ed;color:#154b7a}
+.bt-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.bt-form-grid label{min-width:0;color:#48627b;font-size:12px;font-weight:600}
+.bt-required{color:#176db3}
+.bt-form input,.bt-form select,.bt-form textarea{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;margin-top:5px;border:1px solid #cedbe8;border-radius:7px;background:#fff;padding:9px 10px;color:#243e59;font:inherit;font-size:13px;font-weight:400;min-height:40px}
+.bt-form input[readonly]{background:#f5f8fb;color:#71869a}
+.bt-form textarea{resize:vertical;min-height:66px}
+.bt-form input:focus,.bt-form textarea:focus{outline:2px solid #cee2f6;outline-offset:0;border-color:#7ca7ce}
+.bt-amount{display:flex;align-items:center;margin-top:5px;border:1px solid #cedbe8;border-radius:7px;overflow:hidden;background:#fff}
+.bt-amount>span{padding:0 12px;color:#5b7590;font-size:15px}.bt-form .bt-amount input{border:0;border-radius:0;margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.bt-direction{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;color:#5f7c96;font-size:11px;margin:-4px 0}
+.bt-direction svg{width:20px;height:20px;fill:none;stroke:#6897c1;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bt-notes{grid-column:1/-1}
+.bt-form-actions{display:flex;justify-content:center;gap:9px;margin-top:18px;padding-top:13px;border-top:1px solid #e8eef5}
+.bt-message{margin:0;padding:14px;color:#6b8197;font-size:12px}
+.bt-error,.bt-success{padding:9px 12px;border-radius:7px;font-size:12px;margin:10px 0 0;overflow-wrap:anywhere}.bt-error{color:#943e48;background:#fff1f2}.bt-success{color:#286544;background:#edf8f0}
+.bt-edit-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px}.bt-edit-heading h2{margin:0;font-size:15px}
+/* The footer stays below the scroll area, rather than following the last row. */
+.main-content:has(> .bt-history-page){display:flex!important;flex-direction:column!important;overflow:hidden!important}
+.bt-history-page{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;height:100%}
+.bt-history-toolbar{flex:0 0 auto}.bt-history-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
+.bt-history-controls>input,.bt-history-controls select,.bt-date-filter input{height:38px;min-width:0;border:1px solid #cfdae7;border-radius:7px;padding:7px 10px;background:#fff;color:#375773;font:inherit;font-size:12px;box-sizing:border-box}
+.bt-history-controls>input{width:180px;max-width:100%}.bt-date-filter{display:flex;align-items:center;gap:5px;font-size:11px;color:#668098}
+.bt-history-container{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;min-width:0;overflow:hidden;border:1px solid #dce6ef;border-radius:10px;background:#fff}
+.bt-table-scroll{flex:1 1 auto;min-height:0;max-width:100%;overflow:auto;overscroll-behavior:contain}
+.bt-history-table{width:100%;min-width:860px;border-collapse:collapse;table-layout:auto;font-size:12px;margin:0}
+.bt-history-table th,.bt-history-table td{display:table-cell!important;padding:11px 12px;border-bottom:1px solid #e8eef4;vertical-align:middle;text-align:left;white-space:nowrap}
+.bt-history-table th{position:sticky;top:0;background:#f2f7fc;color:#486783;font-size:11px;font-weight:700;z-index:1}
+.bt-history-table tbody tr:hover{background:#f8fbfe}.bt-history-table .bt-number,.bt-history-table th:nth-child(6){text-align:right;font-variant-numeric:tabular-nums}
+.bt-history-footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;flex:0 0 auto;padding:10px 12px;border-top:1px solid #e4edf5;background:#fff;color:#668098;font-size:11px}
+.bt-history-footer>div{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.bt-modal-backdrop{position:fixed;inset:0;z-index:100;display:flex;justify-content:center;align-items:center;padding:16px;background:#102f5055}
+.bt-edit-modal{width:min(790px,95vw);max-height:95vh;overflow:auto;border-radius:12px;background:#fff}.bt-edit-modal .bt-form{border:0}
+@media(max-width:800px){.bt-history-controls{width:100%}.bt-form{padding:15px}.bt-history-footer{padding:9px}}
+@media(max-width:600px){.bt-form-grid{grid-template-columns:minmax(0,1fr);gap:12px}.bt-segments{grid-template-columns:minmax(0,1fr)}.bt-form-actions{display:grid;grid-template-columns:minmax(0,1fr)}.bt-form-actions .bt-button{width:100%;min-height:44px}.bt-form input,.bt-form select{min-height:44px}.bt-history-controls>input{flex:1 1 100%;width:100%}.bt-history-controls>*{max-width:100%}.bt-date-filter{flex:1 1 140px}.bt-date-filter input{flex:1;min-width:0}.bt-modal-backdrop{padding:8px}.bt-form{padding:12px}.bt-page-heading>.bt-button{min-height:42px}}
+/* Date in the heading (same pattern as Collection / Payment Entry) */
+.bt-heading-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;min-width:0}
+.bt-heading-date{display:flex;align-items:center;gap:6px;color:#48627b;font-size:12px;font-weight:600}
+.bt-heading-date input{height:38px;border:1px solid #cedbe8;border-radius:7px;padding:0 10px;font:inherit;font-size:13px;color:#243e59;background:#fff;box-sizing:border-box;min-width:0}
+.bt-edit-date{display:block;max-width:260px;margin-bottom:12px;color:#48627b;font-size:12px;font-weight:600}
+.bt-form select{appearance:auto}
+/* Transaction preview: FROM is credited (−), TO is debited (+) */
+.bt-preview{display:grid;gap:6px;margin-top:14px;padding:10px 12px;border:1px dashed #cfdbe8;border-radius:9px;background:#f8fbfe}
+.bt-preview-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:10px;font-size:13px}
+.bt-preview-row span{color:#6b8197;font-size:11px;font-weight:700;letter-spacing:.04em}
+.bt-preview-row strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#203d59}
+.bt-preview-row b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.bt-credit b{color:#b3404d}.bt-debit b{color:#23784c}
+/* History: notes stay one line; view dialog */
+.bt-history-table .bt-notes-cell{max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.bt-view-modal{padding:18px;box-sizing:border-box;width:min(560px,95vw)}
+.bt-view-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin:0}
+.bt-view-grid dt{color:#6b8197;font-size:11px;font-weight:700}.bt-view-grid dd{margin:2px 0 0;color:#203d59;font-size:13px;overflow-wrap:anywhere}
+@media(max-width:600px){.bt-heading-actions,.bt-heading-date{width:100%}.bt-heading-date input{flex:1}.bt-view-grid{grid-template-columns:minmax(0,1fr)}.bt-preview-row{grid-template-columns:44px minmax(0,1fr) auto;font-size:12px}}
+/* Enable Denomination (Cash mode): keep the shared checkbox compact inside .bt-form */
+.bt-denomination{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin-top:2px}
+.bt-form .bt-denomination input[type="checkbox"]{display:inline-block;flex:0 0 auto;width:14px;height:14px;min-height:0;margin:0;padding:0;border:0;box-shadow:none;accent-color:#176db3;cursor:pointer}
+.bt-denomination .cash-denom-chip{margin-top:6px}
+.bt-form input.bt-voucher[readonly]{color:#143c65;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}

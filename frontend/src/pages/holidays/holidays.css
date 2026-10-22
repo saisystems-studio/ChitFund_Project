@@ -1,0 +1,163 @@
+/* Holiday Calendar (Add Holiday) and Holiday List (horizontal month cards). */
+.hol-page{width:100%;max-width:1400px;margin:0 auto;color:#17324d;--hol-border:#dde7f1;--hol-navy:#123a63;--hol-blue:#176db3;--hol-muted:#607b93}
+.hol-head,.hol-list-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.hol-breadcrumb{margin:0}
+.hol-card{padding:14px;border:1px solid var(--hol-border);border-radius:8px;background:#fff;box-shadow:0 4px 16px rgba(18,59,99,.06)}
+
+/* Buttons and controls */
+.hol-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;border:1px solid #c3d6e6;border-radius:7px;background:#fff;color:#174d7c;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.hol-btn:hover:not(:disabled){background:#eef6fc}
+.hol-btn:disabled{opacity:.55;cursor:not-allowed}
+.hol-btn-primary{border-color:var(--hol-navy);background:var(--hol-navy);color:#fff}
+.hol-btn-primary:hover:not(:disabled){background:#174d7c}
+.hol-icon-btn{width:34px;height:34px;border:1px solid #c3d6e6;border-radius:7px;background:#fff;color:#174d7c;font-size:18px;line-height:1;cursor:pointer}
+.hol-icon-btn:hover{background:#eef6fc}
+.hol-link-btn{border:0;background:none;color:var(--hol-blue);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.hol-control{display:flex;flex-direction:column;gap:4px;color:#17324d;font-size:11.5px;font-weight:700}
+.hol-control select,.hol-control input,.hol-month-nav select{height:36px;min-width:150px;box-sizing:border-box;padding:0 10px;border:1px solid #cfdcea;border-radius:7px;background:#fff;color:#17324d;font:inherit;font-size:12.5px;font-weight:500}
+.hol-control select:focus,.hol-control input:focus,.hol-month-nav select:focus{outline:0;border-color:var(--hol-blue);box-shadow:0 0 0 3px rgba(23,109,179,.12)}
+.hol-month-nav select{min-width:0}
+
+/* Type colours (chips, cells, rows) */
+.hol-chip{display:inline-flex;align-items:center;max-width:100%;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hol-type-government{--hol-tone:#1d5fa8;--hol-tint:#e8f1fc}
+.hol-type-local{--hol-tone:#0f7a6b;--hol-tint:#e3f6f2}
+.hol-type-weekly-off{--hol-tone:#5b6b7c;--hol-tint:#eef1f4}
+.hol-type-special-leave{--hol-tone:#7a3fb0;--hol-tint:#f3ecfb}
+.hol-type-sunday-working{--hol-tone:#1a8a5f;--hol-tint:#e6f8f0}
+.hol-type-sunday-off{--hol-tone:#c23b3b;--hol-tint:#fdeceb}
+.hol-chip{background:var(--hol-tint,#eef1f4);color:var(--hol-tone,#5b6b7c)}
+
+/* Add Holiday toolbar + legend */
+.hol-toolbar{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.hol-month-nav{display:flex;align-items:center;gap:6px;margin-right:auto}
+.hol-apply{display:flex;gap:8px}
+.hol-legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.hol-hint{margin-left:auto;color:var(--hol-muted);font-size:11.5px}
+
+/* Calendar grid: one box per date */
+.hol-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.hol-grid.is-loading{opacity:.6}
+.hol-weekday{padding:6px 0;border-radius:6px;background:var(--hol-navy);color:#fff;font-size:11.5px;font-weight:800;text-align:center;letter-spacing:.3px}
+.hol-weekday.is-sunday{background:#8c2f39}
+.hol-day{position:relative;display:flex;flex-direction:column;gap:4px;min-height:92px;min-width:0;padding:6px 7px;border:1px solid var(--hol-border);border-radius:7px;background:#fff;cursor:default;user-select:none;transition:border-color .15s,box-shadow .15s}
+.hol-day:hover{border-color:#9fc0dc}
+.hol-day.is-blank{border:1px dashed #edf2f7;background:#fafcfe}
+.hol-day.is-sunday{background:#fffafa}
+.hol-day.is-sunday-off{border-color:#f3d3d0}
+.hol-day.is-working{border-color:#bfe8d4;background:#f6fdf9}
+.hol-day.has-holiday{border-color:var(--hol-tone);background:var(--hol-tint);box-shadow:inset 3px 0 0 var(--hol-tone)}
+.hol-day.is-inactive{opacity:.6}
+.hol-day.is-today .hol-day-number{background:var(--hol-blue);color:#fff}
+.hol-day.is-editing{border-color:var(--hol-blue);box-shadow:0 0 0 3px rgba(23,109,179,.15);background:#fff}
+.hol-day-top{display:flex;align-items:flex-start;justify-content:space-between;gap:4px}
+.hol-day-number{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 4px;border-radius:12px;color:#17324d;font-size:12.5px;font-weight:800}
+.hol-circle{display:grid;place-items:center;width:18px;height:18px;flex:0 0 auto;padding:0;border:1.5px solid #9fb6c9;border-radius:50%;background:#fff;cursor:pointer}
+.hol-circle svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.hol-circle.is-on{border-color:var(--hol-tone,#1a8a5f);background:var(--hol-tone,#1a8a5f)}
+.hol-day.is-working .hol-circle.is-on{--hol-tone:#1a8a5f}
+.hol-day.is-sunday-off .hol-circle{border-color:#e3a6a0}
+.hol-circle:disabled{cursor:wait}
+.hol-day-body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hol-day-reason{color:#17324d;font-size:11.5px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hol-day-actions{position:absolute;right:5px;bottom:5px;display:flex;gap:3px;opacity:0;transition:opacity .15s}
+.hol-day:hover .hol-day-actions,.hol-day:focus-within .hol-day-actions{opacity:1}
+.hol-day-actions button{width:22px;height:22px;padding:0;border:1px solid #c3d6e6;border-radius:5px;background:#fff;color:#174d7c;font-size:11px;cursor:pointer}
+.hol-editor{display:flex;flex-direction:column;gap:4px;min-width:0}
+.hol-editor input,.hol-editor select{width:100%;height:26px;box-sizing:border-box;padding:0 6px;border:1px solid #cfdcea;border-radius:5px;background:#fff;color:#17324d;font:inherit;font-size:11.5px}
+.hol-editor input:focus,.hol-editor select:focus{outline:0;border-color:var(--hol-blue)}
+.hol-editor-actions{display:flex;justify-content:flex-end;gap:4px}
+.hol-editor-actions button{width:26px;height:24px;padding:0;border:0;border-radius:5px;font-size:14px;font-weight:800;cursor:pointer}
+.hol-save{background:#1a8a5f;color:#fff}.hol-save:disabled{opacity:.5;cursor:not-allowed}
+.hol-cancel{background:#fdeceb;color:#c23b3b}
+
+/* Monthly summary (calendar footer and card footer) */
+.hol-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;padding:10px 12px;border-top:1px solid var(--hol-border);background:#f8fbfe}
+.hol-summary>div{display:flex;align-items:baseline;justify-content:space-between;gap:6px;min-width:0;font-size:11.5px}
+.hol-summary span{color:var(--hol-muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hol-summary strong{color:var(--hol-navy);font-size:12.5px;font-variant-numeric:tabular-nums}
+.hol-summary-inline{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:12px;border:1px solid var(--hol-border);border-radius:7px}
+
+/* Holiday List: fixed controls with continuously open month sections below. */
+/* The page fills the shell's fixed-height content area (no page growth): filters and
+   exports stay on top, and only the month list below scrolls (scrollbar hidden). */
+#root .app-shell .main-content:has(> .hol-list-page),.main-content:has(> .hol-list-page){display:flex!important;flex-direction:column!important;overflow:hidden!important}
+.hol-list-page{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;height:100%;max-height:100%}
+.hol-list-header{position:relative;z-index:5;flex:0 0 auto;padding:4px 0 10px}
+.hol-list-controls{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px}
+.hol-list-controls .hol-control select{min-width:130px}
+/* Edit modal */
+.hol-modal-backdrop{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(15,39,66,.28)}
+.hol-modal{display:flex;flex-direction:column;gap:12px;width:min(420px,100%);padding:16px;border-radius:9px;background:#fff;box-shadow:0 22px 65px rgba(15,39,66,.25)}
+.hol-modal h2{margin:0;color:var(--hol-navy);font-size:15px}
+.hol-modal .hol-control select,.hol-modal .hol-control input{width:100%}
+.hol-modal-actions{display:flex;justify-content:flex-end;gap:8px}
+
+@media(max-width:900px){
+  .hol-hint{margin-left:0;width:100%}
+  .hol-day{min-height:76px;padding:5px}
+  .hol-day-reason{-webkit-line-clamp:1}
+}
+@media(max-width:600px){
+  .hol-grid{gap:3px}
+  .hol-weekday{font-size:10px}
+  .hol-day{min-height:60px;padding:3px}
+  .hol-day-number{min-width:20px;height:20px;font-size:11px}
+  .hol-day-body .hol-chip{font-size:8.5px;padding:1px 4px}
+  .hol-day-reason{display:none}
+  .hol-day-actions{opacity:1;position:static;justify-content:flex-end}
+  .hol-day.is-editing{grid-column:span 7;min-height:auto}
+  .hol-list-controls>*{flex:1 1 140px}
+  .hol-list-controls .hol-control select{width:100%;min-width:0}
+}
+/* Holiday List toolbar: compact one-row filters like the other Master Lists; the field
+   labels stay for screen readers (the dropdown values already read Year / All Months / All Types). */
+.hol-list-header{padding:0 0 10px}.hol-list-controls{align-items:center}
+.hol-list-controls .hol-control-label{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.hol-list-controls>div>button[aria-haspopup="menu"]{height:36px;padding:0 12px}
+@media (max-width:767px){.hol-list-controls{row-gap:8px;column-gap:8px}.hol-list-controls .hol-control{gap:0}.hol-list-controls>div:has(>button[aria-haspopup=menu]){display:flex}.hol-list-controls>div>button[aria-haspopup=menu]{width:100%;justify-content:center}}
+
+/* Open two-column month cards, with scrolling contained inside each table. */
+.hol-list-page{min-width:0;max-width:100%;box-sizing:border-box;container-type:inline-size}
+.hol-list-page .hol-list-header{gap:10px;margin-bottom:4px;flex-wrap:nowrap}
+.hol-list-page .hol-list-controls{gap:8px;align-items:center;flex-wrap:nowrap}
+.hol-list-page .hol-list-controls .hol-control{min-width:0}
+.hol-list-page .hol-list-controls .hol-control select{min-width:110px}
+.hol-overall-total{flex:0 0 auto;display:flex;align-self:flex-end;gap:6px;margin:0 0 12px;padding:7px 11px;border:1px solid #dbe7f1;border-radius:8px;background:#f3f8fc;color:#385976;font-size:12px}
+.hol-overall-total strong{color:#123a63}
+.hol-month-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;align-items:stretch;grid-auto-rows:1fr;flex:1 1 auto;min-height:0;gap:14px;min-width:0;max-width:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:2px 3px 12px}
+.hol-month-section{display:flex;flex-direction:column;min-height:148px;min-width:0;max-width:100%;border:1px solid #e2eaf2;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 3px 12px rgba(30,60,90,.06);--month-tint:#edf5fd;--month-ink:#346b9d;border-top:3px solid var(--month-ink)}
+.hol-palette-0{--month-tint:#edf5fd;--month-ink:#346b9d}
+.hol-palette-1{--month-tint:#eaf7f4;--month-ink:#32796e}
+.hol-palette-2{--month-tint:#f2eefb;--month-ink:#70559a}
+.hol-palette-3{--month-tint:#fff5e5;--month-ink:#977133}
+.hol-section-heading{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 10px;padding:11px 13px;border-bottom:1px solid #e9eef4;color:#203d59}
+.hol-section-heading h2{margin:0;font-size:14px;font-weight:800}
+.hol-section-heading>span{margin-left:auto;padding:4px 7px;border-radius:6px;background:var(--month-tint);color:var(--month-ink);font-size:11px;white-space:nowrap}
+.hol-horizontal-scroll{flex:1 0 auto;min-width:0;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#c8d7e5 transparent;padding:8px 0}
+.hol-horizontal-scroll:focus-visible{outline:2px solid var(--hol-blue);outline-offset:-2px}
+.hol-horizontal-table{width:max-content;min-width:0;table-layout:fixed;border-collapse:collapse;font-size:12px;margin:0}
+.hol-horizontal-table th,.hol-horizontal-table td{box-sizing:border-box;padding:6px 9px;border-right:1px solid #e8edf3;text-align:center;vertical-align:top}
+.hol-horizontal-table th{width:65px;min-width:65px;text-align:left;color:#708399;font-size:11px;font-weight:600}
+.hol-horizontal-table td{width:122px;min-width:122px;max-width:122px}
+.hol-horizontal-table .hol-date-cell{background:var(--month-tint)}
+.hol-horizontal-table .hol-cell-name{display:block;white-space:normal;overflow:visible;overflow-wrap:anywhere;text-overflow:clip;color:#3a536c;font-weight:600;line-height:1.4}
+.hol-horizontal-table .hol-cell-date{border:0;border-radius:5px;background:transparent;color:var(--month-ink);padding:2px 9px;font:inherit;font-weight:800;cursor:pointer}
+.hol-horizontal-table .hol-cell-date:disabled{cursor:default}
+.hol-horizontal-table .hol-cell-actions{display:flex;justify-content:center;gap:4px;margin-top:5px;opacity:0;transition:opacity .15s}
+.hol-horizontal-table td:hover .hol-cell-actions,.hol-horizontal-table td:focus-within .hol-cell-actions{opacity:1}
+.hol-horizontal-table .hol-cell-actions button{width:24px;height:24px;padding:0;border:1px solid #e0e8f0;border-radius:5px;background:#fff;color:#607b93;font-size:11px;cursor:pointer}
+.hol-horizontal-table .hol-cell-actions button:hover{background:var(--month-tint);color:var(--month-ink);border-color:#c6d5e2}
+.hol-horizontal-table .is-allocated{background:#e7f6eb}
+.hol-horizontal-table .is-allocated .hol-cell-date{background:#23833b;color:#fff}
+.hol-horizontal-table .is-inactive{opacity:.6}
+.hol-allocation-details{display:block;color:#216535;overflow-wrap:anywhere;font-size:10px;margin-top:4px}
+.hol-allocation-details button{margin-left:3px;border:1px solid #79bd8b;background:white;border-radius:3px;color:#216535;font-size:10px;cursor:pointer}
+.hol-list-empty{grid-column:1/-1;margin:0;padding:18px;color:#607b93;background:#fff;border:1px solid #e2eaf2;border-radius:10px;font-size:12px}
+.hol-month-section .hol-month-empty{display:flex;align-items:center;justify-content:center;min-height:82px;margin:0;padding:10px;color:#7b8da0;font-size:12px;text-align:center}
+@container(max-width:800px){.hol-list-page .hol-list-header,.hol-list-page .hol-list-controls{flex-wrap:wrap}}
+@container(max-width:560px){.hol-month-sections{grid-template-columns:minmax(0,1fr);gap:12px}}
+@media(max-width:600px){.hol-month-sections{grid-template-columns:minmax(0,1fr);gap:12px}.hol-list-page .hol-list-header,.hol-list-page .hol-list-controls{flex-wrap:wrap}}
+@media(max-width:600px){.hol-list-page .hol-list-controls{width:100%}.hol-list-page .hol-list-controls>*{flex:1 1 110px;min-width:0}.hol-overall-total{font-size:11px;margin-bottom:10px}.hol-section-heading{padding:9px 10px}.hol-list-page .hol-modal{max-width:calc(100vw - 24px)}}
+@media(hover:none){.hol-horizontal-table .hol-cell-actions{opacity:1}}
+@media(prefers-reduced-motion:reduce){.hol-horizontal-table .hol-cell-actions{transition:none}}

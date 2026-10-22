@@ -64,3 +64,27 @@ test("a fallback preview completes when its tab is closed", async () => {
     assert.equal(redirected, true);
   } finally { globalThis.document = previousDocument; globalThis.window = previousWindow; }
 });
+
+test("print completes when the page is used again even if afterprint never fires", async () => {
+  const previousDocument = globalThis.document, previousWindow = globalThis.window;
+  const printWindow = new EventTarget();
+  printWindow.focus = () => {};
+  printWindow.print = () => {};
+  const frame = { contentWindow: printWindow };
+  const host = new EventTarget();
+  globalThis.document = { querySelector: () => frame };
+  globalThis.window = host;
+  try {
+    let redirected = false;
+    const complete = completeEntryOutput(async () => {}, "print", "receipt-print-frame", () => { redirected = true; });
+    await Promise.resolve();
+    frame.onload();
+    host.dispatchEvent(new Event("focus"));
+    await new Promise(resolve => setTimeout(resolve, 400));
+    assert.equal(redirected, false, "focus while the dialog is opening is ignored");
+    await new Promise(resolve => setTimeout(resolve, 800));
+    host.dispatchEvent(new Event("pointerdown"));
+    await complete;
+    assert.equal(redirected, true);
+  } finally { globalThis.document = previousDocument; globalThis.window = previousWindow; }
+});

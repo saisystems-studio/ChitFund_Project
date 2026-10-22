@@ -11,3 +11,13 @@
 .customer-list-surface .table-wrap td.customer-address-cell{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3;overflow-wrap:anywhere}
 .customer-list-surface .table-wrap td:last-child .row-actions{display:inline-flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 .breadcrumb{color:#287bc4;font-size:12px;margin-bottom:18px}.profile-card{margin-top:24px}.profile-card h2{margin:10px 0}.profile-card p{margin-top:8px;color:#5e7892}.edit-form{margin-top:24px}.edit-actions{display:flex;justify-content:center;gap:12px;margin-top:22px}
+/* Customer List mobile cards: explicit View More button + SVG icon buttons. Overrides the
+   older first-child "View More" pseudo-label rules, which assumed a different button order. */
+.customer-mobile-actions .customer-mobile-view{display:inline-flex!important;align-items:center;gap:5px;margin-right:auto;padding:0 10px!important;font-size:11px!important}
+.customer-mobile-actions .customer-mobile-view::before,.customer-mobile-actions .customer-mobile-view::after{content:none!important;display:none!important}
+.customer-mobile-actions .customer-mobile-view span{font-size:11px;font-weight:700}
+.customer-mobile-actions .customer-mobile-view svg{width:14px;height:14px}
+.customer-mobile-actions .customer-mobile-icon{display:inline-flex!important;align-items:center;justify-content:center;width:32px!important;height:32px!important;min-width:32px;padding:0!important;margin:0!important}
+.customer-mobile-actions .customer-mobile-icon.edit{color:#f59e0b}.customer-mobile-actions .customer-mobile-icon.kyc{color:#176db3}.customer-mobile-actions .customer-mobile-icon.delete{color:#ef4444}
+/* Tablet / small laptop: give the Action column room for all three buttons. */
+@media (max-width:1199px){.customer-list-surface .table-wrap th:last-child,.customer-list-surface .table-wrap td:last-child{width:112px!important;min-width:112px!important;padding-left:4px!important;padding-right:6px!important}.customer-list-surface .table-wrap th:nth-child(4),.customer-list-surface .table-wrap td:nth-child(4){width:auto!important}}

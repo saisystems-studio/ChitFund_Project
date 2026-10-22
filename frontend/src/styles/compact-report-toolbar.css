@@ -1,0 +1,27 @@
+/* Scoped to the nine requested pages; dropdown popups and table actions retain their styles. */
+#root .main-content .compact-report-page{min-width:0;width:100%;max-width:100%;margin:0!important;padding-top:0!important;gap:0!important}
+#root .main-content:has(.compact-report-page){padding-top:8px!important}
+#root .main-content .compact-report-page>:is(.rl-header,.cg-header){display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-height:28px;padding:0!important;margin:0 0 6px!important}
+#root .main-content .compact-report-page>:is(.rl-filters,.cg-filters){display:flex!important;flex-wrap:nowrap;align-items:flex-end;gap:6px!important;width:100%;min-width:0;padding:0!important;margin:0 0 8px!important;overflow:visible}
+#root .main-content .compact-report-page :is(.rl-filters,.cg-filters)>:is(.rl-field,.cg-field){display:flex;flex-direction:column;flex:1 1 0!important;width:auto!important;min-width:0!important;max-width:none!important;margin:0!important;gap:4px;grid-column:auto!important}
+#root .main-content .compact-report-page :is(.rl-field,.cg-field)>:is(.rl-label,span){font-size:12px;line-height:16px;font-weight:600;color:#4f6a84}
+#root .main-content .compact-report-page :is(.rl-filters,.cg-filters) :is(input,select,button[aria-haspopup="listbox"]){box-sizing:border-box;width:100%!important;min-width:0!important;height:40px!important;min-height:40px!important;max-height:40px;border:1px solid #d7dce2;border-radius:8px!important;font-size:13px!important;font-weight:500;margin:0}
+#root .main-content .compact-report-page :is(.rl-filters,.cg-filters) :is(input[type="search"],input[type="date"],select){padding:0 8px}
+#root .main-content .compact-report-page :is(.rl-filters,.cg-filters) select{padding-right:24px}
+#root .main-content .compact-report-page :is(.rl-filters,.cg-filters)>:is(.rl-actions,.cg-actions){display:flex;flex:0 0 auto!important;align-items:center;gap:6px;margin:0!important;padding:0;order:initial}
+#root .main-content .compact-report-page :is(.rl-actions,.cg-actions)>*{min-width:0;flex:0 0 auto}
+#root .main-content .compact-report-page :is(.rl-actions,.cg-actions)>button,
+#root .main-content .compact-report-page :is(.rl-actions,.cg-actions) button[aria-haspopup="menu"]{box-sizing:border-box;height:40px!important;min-height:40px!important;border-radius:8px!important;font-size:13px!important;padding:0 10px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+#root .main-content .compact-report-page>.data-container{margin-top:0!important;min-width:0}
+@media(min-width:1200px){#root .main-content .compact-report-page :is(.rl-filters,.cg-filters) input[type="date"]{padding-inline:3px;font-size:12px!important}}
+@media(min-width:601px) and (max-width:1199px){
+ #root .main-content .compact-report-page>:is(.rl-filters,.cg-filters){flex-wrap:wrap}
+ #root .main-content .compact-report-page :is(.rl-filters,.cg-filters)>:is(.rl-field,.cg-field){flex:1 1 160px!important}
+ #root .main-content .compact-report-page :is(.rl-filters,.cg-filters)>:is(.rl-actions,.cg-actions){flex-wrap:wrap}
+}
+@media(max-width:600px){
+ #root .main-content .compact-report-page>:is(.rl-filters,.cg-filters){flex-direction:column;align-items:stretch}
+ #root .main-content .compact-report-page :is(.rl-filters,.cg-filters)>:is(.rl-field,.cg-field){flex:0 0 auto!important;width:100%!important}
+ #root .main-content .compact-report-page :is(.rl-filters,.cg-filters)>:is(.rl-actions,.cg-actions){display:grid;grid-template-columns:minmax(0,1fr);width:100%}
+ #root .main-content .compact-report-page :is(.rl-actions,.cg-actions)>*,#root .main-content .compact-report-page :is(.rl-actions,.cg-actions)>*>button[aria-haspopup="menu"]{width:100%}
+}

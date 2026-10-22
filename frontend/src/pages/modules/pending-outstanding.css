@@ -1,0 +1,58 @@
+/* Pending & Outstanding report: party picker, grid, totals footer. Layout of the toolbar and the
+   full-height white container comes from report-layout.css (.rl-page) and data-page.css. */
+.po-page .po-wide{grid-column:span 1}
+#root .rl-page .rl-filters .po-actions{grid-column:span 2;align-self:end;margin-left:0;justify-content:flex-start;flex-wrap:nowrap;gap:6px}
+
+.po-party{position:relative;width:100%}
+.po-party-button{display:flex;align-items:center;justify-content:space-between;gap:8px;box-sizing:border-box;width:100%;height:var(--rl-h,40px);padding:0 10px;border:1px solid var(--rl-border,#d7dce2);border-radius:8px;background:#fff;color:#102a43;font:inherit;font-size:13px;font-weight:500;cursor:pointer;text-align:left}
+.po-party-button span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.po-party-button i{font-style:normal;color:#4f6a84}
+.po-party-panel{position:absolute;z-index:30;top:calc(100% + 4px);left:0;width:max(100%,300px);max-height:340px;display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #c9d9e8;border-radius:10px;background:#fff;box-shadow:0 12px 28px rgba(16,42,67,.16)}
+#root .rl-page .rl-filters .po-party-panel input[type="search"]{height:36px!important;min-height:36px}
+.po-party-tools{display:flex;gap:8px}
+.po-party-tools button{flex:1;height:30px;border:1px solid #d7dce2;border-radius:6px;background:#f5f8fb;color:#174d7c;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.po-party-tools button:disabled{opacity:.5;cursor:not-allowed}
+.po-party-panel ul{margin:0;padding:0;list-style:none;overflow:auto;min-height:0}
+.po-party-panel li label{display:flex;align-items:center;gap:10px;margin:0;padding:7px 6px;border-radius:6px;cursor:pointer;font-size:13px;color:#102a43}
+.po-party-panel li label:hover{background:#f1f7fd}
+.po-party-panel li input{width:auto;height:auto;margin:0}
+.po-party-panel li span{display:flex;flex-direction:column;min-width:0}
+.po-party-panel li small{color:#60758b;font-size:11px}
+.po-party-empty{padding:12px 6px;color:#60758b;font-size:13px}
+
+.po-container{display:flex;flex-direction:column;min-height:0}
+.po-grid{flex:1 1 auto;min-height:0;overflow:auto;position:relative}
+.po-table{width:100%;border-collapse:collapse;font-size:13px}
+.po-table th{position:sticky;top:0;z-index:2;height:40px;padding:0 12px;background:#eaf2fb;color:#102a43;font-size:11px;letter-spacing:.5px;text-transform:uppercase;text-align:left;white-space:nowrap}
+.po-table td{padding:10px 12px;border-bottom:1px solid #e8f1f8;white-space:nowrap}
+.po-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.po-row{cursor:pointer;user-select:none}
+.po-row:hover td{background:#f1f7fd}
+.po-band td{background:#f6f9fc;font-weight:600;color:#17324d}
+.po-subtotal td{background:#eef4fa;font-weight:700;border-bottom:2px solid #d7e3ef}
+.po-empty{padding:48px 16px;text-align:center;color:#60758b}
+
+.po-footer{flex:0 0 auto;margin-top:auto;border-top:1px solid #dbe6f1;background:#fff}
+.po-totals{display:flex;flex-wrap:wrap;gap:6px 28px;padding:12px 16px;font-size:13px;color:#4f6a84}
+.po-totals b{margin-left:6px;color:#102a43;font-variant-numeric:tabular-nums}
+.po-note{font-size:12px;font-style:italic}
+.po-count{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 16px 12px;font-size:13px;color:#4f6a84}
+.po-count div{display:flex;align-items:center;gap:10px}
+.po-count button{height:32px;padding:0 12px;border:1px solid #d7dce2;border-radius:6px;background:#fff;color:#174d7c;font:inherit;cursor:pointer}
+.po-count button:disabled{opacity:.5;cursor:not-allowed}
+
+@media (max-width:1023px){.po-table{min-width:900px}}
+@media (max-width:767px){.po-party-panel{width:100%}}
+
+/* Toolbar: Party | Report View | Date Basis | From | To (or Select Date) | Sort By | Apply | Reset | Export in ONE row
+   whenever the report area is wide enough (container query, so a collapsed sidebar or a laptop screen both qualify).
+   Narrower areas fall back to the shared wrapping grid. All controls are 42px and share one baseline. */
+#root .po-page{container-type:inline-size;--rl-h:42px}
+@container (min-width:900px){
+  #root .rl-page.po-page>.rl-filters{grid-template-columns:minmax(0,1.15fr) minmax(0,1.45fr) minmax(0,1.3fr) minmax(0,1.15fr) minmax(0,1.15fr) minmax(0,1.4fr) auto auto auto;gap:8px;align-items:end;flex-wrap:nowrap}
+  #root .rl-page.po-page>.rl-filters.po-single{grid-template-columns:minmax(0,1.15fr) minmax(0,1.45fr) minmax(0,1.3fr) minmax(0,1.15fr) minmax(0,1.4fr) auto auto auto}
+  #root .rl-page.po-page .rl-filters .rl-field :is(select,input[type="date"]),#root .rl-page.po-page .po-party-button{padding-left:8px!important;padding-right:18px!important;font-size:12.5px!important}
+  #root .rl-page.po-page .rl-filters .po-actions{display:contents}
+  #root .rl-page.po-page .rl-filters .po-actions>*{align-self:end;min-width:0}
+  #root .rl-page.po-page .rl-filters .po-actions button{height:42px;padding:0 12px;margin:0;white-space:nowrap}
+}

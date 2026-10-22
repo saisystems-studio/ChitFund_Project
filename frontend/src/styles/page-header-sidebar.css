@@ -1,0 +1,34 @@
+/* Global page header + sidebar toggle (loaded last in App).
+   - Pages: compact top spacing so the "← Page Name" header sits higher.
+   - Sidebar: the collapse/expand control lives inside the sidebar header (top-right),
+     a panel icon distinct from the page Back arrow; the old floating circular toggle
+     is gone. */
+
+/* Compact top padding for every page (sides/bottom unchanged). */
+.app-shell .main-content { padding-top: 14px !important; }
+
+/* Sidebar header: brand (→ Dashboard) + separate collapse toggle (never navigates). */
+.app-shell > aside .sidebar-header { display: flex; align-items: center; gap: 6px; margin: 0 0 22px; min-width: 0; }
+.app-shell > aside .sidebar-header > [class*="brand"] { flex: 1 1 auto; min-width: 0; margin: 0 !important; }
+.sidebar-panel-toggle {
+  display: inline-flex; flex: 0 0 28px; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0;
+  border: 1px solid rgba(255, 255, 255, .22); border-radius: 7px;
+  background: rgba(255, 255, 255, .06); color: #d7ebff; cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.sidebar-panel-toggle:hover { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .4); color: #fff; }
+.sidebar-panel-toggle:focus-visible { outline: 2px solid #8ec5f5; outline-offset: 2px; }
+.sidebar-panel-toggle svg { display: block; width: 17px; height: 17px; }
+
+/* Collapsed sidebar (78px): logo with the expand toggle right under it, always visible. */
+.app-shell > aside .sidebar-header.is-collapsed { flex-direction: column; align-items: center; gap: 10px; }
+.app-shell > aside .sidebar-header.is-collapsed > [class*="brand"] { flex: 0 0 auto; justify-content: center; }
+
+/* The old floating circular arrow is no longer rendered; make sure nothing styles a stray one. */
+.app-shell > .sidebar-toggle { display: none !important; }
+
+/* Mobile: the closed sidebar is an icon rail whose header toggle opens the full menu. */
+
+/* Dashboard: page title sits at the top-left like every other page header. */
+.app-shell .dashboard-header { align-items: flex-start !important; }

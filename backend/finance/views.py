@@ -4,25 +4,30 @@ from decimal import Decimal
 import logging
 import re
 from django.db import transaction
-from django.db.models import Q, Sum, F, Exists, OuterRef
+from django.db.models import Q, Sum, F, Exists, OuterRef, Count, Prefetch
 from django.db.models import ProtectedError
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from accounts.permissions import CanWriteFinanceData
+from customers.kyc_security import CanAccessKycDocuments, secure_kyc_response
+from accounts.permissions import CanWriteFinanceData, IsAdminRole
+from .cash_bank import BANK_GROUP, CASH_GROUP, LedgerMappingError, customer_ledger, is_account_ledger, is_cash_mode, resolve_account
 from .models import (LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
-    Mortgage, MortgageUnit, MortgageProductGroup, MortgageRate, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
+    Mortgage, MortgageUnit, MortgageProductGroup, MortgageUqc, MortgageRate, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings, CollectionTransaction, AdjustmentTypeMaster,
-    Ledger, PaymentEntry, MortgageLoanHistory, CollectionAllocation, Group)
+    Ledger, PaymentEntry, MortgageLoanHistory, CollectionAllocation, Group, LoanKycDocument, TransactionDocument)
 from .delete_utils import delete_response
+from .receipts import voucher_no as receipt_voucher_no
 from .serializers import (LoanTypeSerializer, LoanInstallmentSerializer, ChitGroupSerializer,
     ChitGroupInstallmentDetailSerializer, MortgageSerializer, CustomerLoanDetailsSerializer, InterestDetailsSerializer,
     CustomerChitDetailsSerializer, CustomerLoanInstallmentDetailsSerializer,
     HolidayMasterSerializer, LoanHolidaySettingsSerializer, AdjustmentTypeMasterSerializer, LedgerSerializer, PaymentEntrySerializer,
-    GroupSerializer)
-from .services import generate_chit_schedule, generate_customer_chit_installments, generate_customer_interest_installments, generate_customer_mortgage_installment, record_mortgage_history
+    GroupSerializer, LoanKycDocumentSerializer, TransactionDocumentSerializer)
+from .services import calendar_blocked_dates, generate_chit_schedule, generate_customer_chit_installments, generate_customer_interest_installments, generate_customer_mortgage_installment, record_mortgage_history
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +65,18 @@ class FinanceViewSet(viewsets.ModelViewSet):
 
 
 class LedgerViewSet(FinanceViewSet):
-    queryset = Ledger.objects.select_related("group_detail", "done_by_staff").all()
+    queryset = Ledger.objects.select_related("group_detail", "done_by_staff", "customer").all()
     serializer_class = LedgerSerializer
     delete_label = "ledger"
     pagination_class = None
     search_fields = ('name', 'group')
+
+    def destroy(self, request, *args, **kwargs):
+        item = self.get_object()
+        # A linked Party Ledger lives and dies with its customer (one ledger per customer).
+        if item.customer_id:
+            return Response({"detail": "This ledger is linked to a customer. Delete or edit the customer in Customer Master instead."}, status=409)
+        return super().destroy(request, *args, **kwargs)
 
 
 class GroupViewSet(FinanceViewSet):
@@ -80,6 +92,12 @@ class GroupViewSet(FinanceViewSet):
         item = self.get_object()
         if item.is_system:
             return Response({"detail": "This root group is a system default and cannot be deleted."}, status=400)
+        # Ledger.group_detail is SET_NULL, so deleting a group that ledgers use would silently
+        # unlink them from their accounting group; block it like any other protected record.
+        ledger_count = item.ledgers_detail.count()
+        if ledger_count:
+            noun = "ledger" if ledger_count == 1 else "ledgers"
+            return Response({"detail": f"This group cannot be deleted because it is used in {ledger_count} {noun}."}, status=409)
         return delete_response(item, self.delete_label)
 
 
@@ -91,6 +109,7 @@ class PaymentEntryViewSet(FinanceViewSet):
 
 
 @api_view(["GET", "POST"])
+@permission_classes([CanWriteFinanceData])
 def adjustment_types(request):
     if request.method == "GET":
         return Response(AdjustmentTypeMasterSerializer(AdjustmentTypeMaster.objects.filter(is_active=True), many=True).data)
@@ -147,6 +166,23 @@ class MortgageViewSet(FinanceViewSet):
     queryset = Mortgage.objects.select_related("done_by_staff").all()
     serializer_class = MortgageSerializer
 
+    @action(detail=False, methods=["get", "post"], url_path="uqcs")
+    def uqcs(self, request):
+        defaults = {"KGS", "LTR", "NOS", "PCS", "MTR", "BOX", "GMS", "BAG", "BTL", "CAN", "CMS", "DOZ", "DZN", "FTS", "KLR", "MLT", "MTR", "OTH", "PAC", "PRS", "QTL", "SET", "SQF", "SQM", "TBS", "TGM", "THD", "TON", "UNT", "YDS"}
+        if request.method == "GET":
+            names = defaults | set(MortgageUqc.objects.values_list("name", flat=True))
+            names.update(Mortgage.objects.exclude(uqc="").values_list("uqc", flat=True))
+            return Response(sorted({name.strip().upper() for name in names if name and name.strip()}, key=str.casefold))
+        name = str(request.data.get("name", "") or "").strip().upper()
+        if not name or len(name) > 20 or name in {"OTHER", "__OTHER__"}:
+            return Response({"detail": "Enter a UQC of 1-20 characters other than Other."}, status=400)
+        existing = MortgageUqc.objects.filter(name__iexact=name).first()
+        if existing:
+            item, created = existing, False
+        else:
+            item, created = MortgageUqc.objects.get_or_create(name=name)
+        return Response({"name": item.name.strip().upper()}, status=201 if created else 200)
+
     @action(detail=False, methods=["get", "post"])
     def units(self, request):
         if request.method == "GET":
@@ -156,7 +192,7 @@ class MortgageViewSet(FinanceViewSet):
             return Response(sorted(names, key=str.casefold))
         name = str(request.data.get("name", "")).strip()
         if not name or len(name) > 50 or name.casefold() == "other":
-            return Response({"detail": "Enter a unit name of 1–50 characters other than Other."}, status=400)
+            return Response({"detail": "Enter a unit name of 1â€“50 characters other than Other."}, status=400)
         existing = MortgageUnit.objects.filter(name__iexact=name).first()
         item = existing or MortgageUnit.objects.get_or_create(name=name)[0]
         return Response({"name": item.name}, status=200 if existing else 201)
@@ -169,7 +205,7 @@ class MortgageViewSet(FinanceViewSet):
             return Response(sorted(names, key=str.casefold))
         name = str(request.data.get("name", "")).strip()
         if not name or len(name) > 50 or name.casefold() == "other":
-            return Response({"detail": "Enter a product group name of 1–50 characters other than Other."}, status=400)
+            return Response({"detail": "Enter a product group name of 1â€“50 characters other than Other."}, status=400)
         existing = MortgageProductGroup.objects.filter(name__iexact=name).first()
         item = existing or MortgageProductGroup.objects.get_or_create(name=name)[0]
         return Response({"name": item.name}, status=200 if existing else 201)
@@ -250,6 +286,14 @@ class ChitGroupInstallmentDetailViewSet(FinanceViewSet):
 class CustomerLoanDetailsViewSet(FinanceViewSet):
     queryset = CustomerLoanDetails.objects.select_related("customer", "loan_type", "chit_details__chit_group", "interest_details", "mortgage_details__product").prefetch_related("installment_details"); serializer_class = CustomerLoanDetailsSerializer
     delete_label = "loan"
+
+    def get_permissions(self):
+        # Regenerating an existing loan's schedule overwrites already-persisted
+        # installment rows â€” that is an edit, not an Entry, so it is admin-only
+        # regardless of the normal POST-is-Entry rule below.
+        if self.action == "generate_customer_schedule":
+            return [IsAdminRole()]
+        return super().get_permissions()
 
     @action(detail=False, methods=['get'], url_path='application-date')
     def application_date(self, request):
@@ -348,7 +392,7 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             loan.customer_id = payload.get("customer_id", loan.customer_id)
             loan.loan_amount = amount; loan.loan_start_date = start_date; loan.total_amount = total_payable; loan.outstanding_amount = max(Decimal("0.00"), total_payable - loan.paid_amount); loan.save(update_fields=("customer", "loan_amount", "loan_start_date", "total_amount", "outstanding_amount", "modified_date"))
             yearly = periodicity in ("Annual", "Other", "Others"); interest.principal_amount = amount; interest.interest_percentage = percentage; interest.interest_amount = interest_amount; interest.total_payable_amount = total_payable; interest.loan_installment = master; interest.duration_value = duration; interest.duration_type = payload.get("interest_duration_type", interest.duration_type); interest.start_date = start_date; interest.installment_count = duration; interest.installment_amount = per_installment; interest.collection_day = payload.get("interest_collection_day", interest.collection_day); interest.collection_month = payload.get("interest_collection_month") or (interest.collection_month if yearly else None); collection_day = int(payload.get("interest_collection_day", interest.collection_date.day if interest.collection_date else 1) or 1); interest.collection_date = date(start_date.year, int(interest.collection_month or start_date.month), min(collection_day, monthrange(start_date.year, int(interest.collection_month or start_date.month))[1])) if periodicity in ("Monthly", "Annual", "Other", "Others") else None; interest.save()
-            generate_customer_interest_installments(loan, interest, bool(payload.get("include_sunday", False)))
+            generate_customer_interest_installments(loan, interest, bool(payload.get("include_sunday", False)), holiday_dates_for(payload.get("selected_holidays") or []))
             return Response(self.get_serializer(loan).data)
         group_id = payload.get("chit_group_id", payload.get("group", loan.chit_details.chit_group_id))
         if str(group_id) != str(loan.chit_details.chit_group_id) and not ChitGroup.objects.filter(pk=group_id, is_active=True).exists():
@@ -425,7 +469,7 @@ class CustomerLoanDetailsViewSet(FinanceViewSet):
             collection_month_value = int(collection_month or start_date.month); collection_day = int(payload.get("interest_collection_day") or 1)
             collection_date = date(start_date.year, collection_month_value, min(collection_day, monthrange(start_date.year, collection_month_value)[1])) if periodicity in ("Monthly", "Annual", "Other", "Others") else None
             interest = InterestDetails.objects.create(loan=loan, principal_amount=amount, interest_percentage=percentage, interest_amount=interest_amount, total_payable_amount=total_payable, loan_installment=installment_master, duration_value=duration, duration_type=payload.get("interest_duration_type", ""), start_date=start_date, collection_day=payload.get("interest_collection_day"), collection_date=collection_date, collection_month=collection_month, installment_count=duration, installment_amount=per_installment, paid_amount=0, outstanding_amount=total_payable)
-            generate_customer_interest_installments(loan, interest, bool(include_sunday))
+            generate_customer_interest_installments(loan, interest, bool(include_sunday), holiday_dates_for(selected_ids))
             return Response(self.get_serializer(loan).data, status=201)
         if loan_type and loan_type.name.strip().lower() == "mortgage":
             from customers.models import Customer
@@ -519,19 +563,43 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
     @transaction.atomic
     def collect(self, request, pk=None):
         installment = self.get_object()
+        # Serialize collections for a loan before reading balances or accepting a retry.
+        loan = CustomerLoanDetails.objects.select_for_update().get(pk=installment.loan_id)
+        request_key = str(request.data.get("request_key") or "").strip()
+        if len(request_key) > 64:
+            return Response({"detail": "Invalid collection request key."}, status=400)
+        existing = CollectionTransaction.objects.filter(loan=loan, request_key=request_key).first() if request_key else None
+        if existing:
+            from decimal import Decimal, InvalidOperation
+            try:
+                matching = (existing.collection_amount == Decimal(str(request.data.get("customer_paid_amount", "0")))
+                            and existing.advance_amount == Decimal(str(request.data.get("advance_amount") or "0")))
+                requested_split = sorted((int(item["installment_id"]), Decimal(str(item["amount"]))) for item in request.data.get("allocations", []) if Decimal(str(item["amount"])) > 0)
+                saved_split = sorted(existing.allocations.values_list("installment_id", "amount"))
+                matching = matching and requested_split == saved_split
+            except (InvalidOperation, TypeError, ValueError, KeyError):
+                matching = False
+            if not matching:
+                return Response({"detail": "This collection request was already saved with different amounts."}, status=409)
+            return Response({"detail": "Collection already saved.", "loan_id": loan.pk, "collection_id": existing.pk})
         from decimal import Decimal, InvalidOperation
         try:
             received = Decimal(str(request.data.get("customer_paid_amount", request.data.get("received_amount", "0"))))
+            advance = Decimal(str(request.data.get("advance_amount") or "0"))
             penalty = Decimal(str(request.data.get("penalty", "0")))
             discount = Decimal(str(request.data.get("discount", "0")))
             payment_date = date.fromisoformat(str(request.data.get("payment_date")))
         except (InvalidOperation, TypeError, ValueError):
             return Response({"detail": "Enter a valid payment date and amount."}, status=400)
-        account = None
-        if request.data.get("account_id"):
-            account = Ledger.objects.filter(pk=request.data.get("account_id"), group__in=("Cash-in-Hand", "Bank Accounts")).first() if str(request.data.get("account_id")).isdigit() else None
-            if account is None:
-                return Response({"detail": "Select a valid Cash or Bank account."}, status=400)
+        if any(not value.is_finite() for value in (received, advance, penalty, discount)) or advance < 0 or advance > received:
+            return Response({"detail": "Enter valid collection and advance amounts."}, status=400)
+        applied_received = received - advance
+        # Cash/Bank side is resolved from the Payment Mode (existing API default: Cash):
+        # Cash -> default Cash-in-Hand ledger, other modes -> the selected Bank Accounts ledger.
+        try:
+            account = resolve_account(request.data.get("payment_mode", "Cash"), request.data.get("account_id") or None)
+        except LedgerMappingError as error:
+            return Response({"detail": error.message, error.field: error.message}, status=400)
         # The Ledger entry is recorded alongside the collection; it never changes installment dues or loan outstanding.
         ledger_group = str(request.data.get("ledger_group") or "").strip()
         ledger = None
@@ -539,29 +607,80 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
             ledger = Ledger.objects.filter(pk=request.data.get("ledger_id")).first() if str(request.data.get("ledger_id")).isdigit() else None
             if ledger is None:
                 return Response({"detail": "Select a valid Ledger."}, status=400)
-            if not ledger_group:
-                ledger_group = ledger.group
+            ledger_group = ledger.group
         try:
             ledger_amount = Decimal(str(request.data.get("ledger_amount") or "0"))
         except (InvalidOperation, TypeError, ValueError):
             return Response({"detail": "Enter a valid Ledger Amount."}, status=400)
         if ledger_amount < 0:
             return Response({"detail": "Ledger Amount cannot be negative."}, status=400)
-        if ledger_group and ledger_group not in dict(CollectionTransaction.LEDGER_GROUPS):
+        if ledger is None and ledger_group and ledger_group not in dict(CollectionTransaction.LEDGER_GROUPS):
             return Response({"detail": "Select a valid Ledger."}, status=400)
         if ledger_amount > 0 and not ledger_group:
             return Response({"detail": "Select a Ledger for the Ledger Amount."}, status=400)
-        loan = installment.loan
-        all_rows = list(loan.installment_details.all().order_by("due_date", "installment_number"))
+        party_ledger = None
+        if request.data.get("party_ledger_id"):
+            party_id = request.data["party_ledger_id"]
+            party_ledger = Ledger.objects.filter(pk=party_id).first() if str(party_id).isdigit() else None
+            if party_ledger is None:
+                return Response({"detail": "Select a valid party Ledger."}, status=400)
+            if party_ledger.customer_id and party_ledger.customer_id != installment.loan.customer_id:
+                return Response({"detail": "The selected Ledger does not belong to this loan's customer."}, status=400)
+            if is_account_ledger(party_ledger):
+                return Response({"detail": "Cash in Hand and Bank Accounts belong in Accounts, not Ledger."}, status=400)
+        else:
+            # Collections always credit a Ledger: default to the customer's own ledger.
+            party_ledger = customer_ledger(installment.loan.customer)
+        all_rows = list(loan.installment_details.select_for_update().order_by("due_date", "pk"))
         remaining_total = sum((max(Decimal("0.00"), row.installment_amount - row.paid_amount) for row in all_rows), Decimal("0.00"))
         if received <= 0:
             return Response({"detail": "Customer Paid Amount must be greater than zero."}, status=400)
-        if received > remaining_total + penalty - discount:
+        if advance > max(Decimal("0.00"), received - remaining_total):
+            return Response({"detail": "Others may contain only the excess above pending dues."}, status=400)
+        if applied_received > remaining_total + penalty - discount:
             return Response({"detail": f"Customer Paid Amount exceeds the remaining loan outstanding by {received - remaining_total:.2f}."}, status=400)
         allocations = []
         allocated_rows = []
-        remaining = received
-        for row in all_rows:
+        remaining = applied_received
+        requested = request.data.get("allocations")
+        if requested:
+            # View Statement: the user chose the dues and the amount for each. Every due must
+            # belong to this loan, appear once and never take more than its pending balance;
+            # together they must account for the whole Collection Amount.
+            if not isinstance(requested, list):
+                return Response({"detail": "Send the installment allocations as a list."}, status=400)
+            by_id = {row.pk: row for row in all_rows}
+            seen = set()
+            for item in requested:
+                item = item if isinstance(item, dict) else {}
+                key = str(item.get("installment_id", "")).strip()
+                row = by_id.get(int(key)) if key.isdigit() else None
+                if row is None:
+                    return Response({"detail": "Select installments of this loan only."}, status=400)
+                if row.pk in seen:
+                    return Response({"detail": f"Installment #{row.installment_number} is listed more than once."}, status=400)
+                seen.add(row.pk)
+                try:
+                    applied = Decimal(str(item.get("amount", ""))).quantize(Decimal("0.01"))
+                except (InvalidOperation, TypeError, ValueError):
+                    return Response({"detail": f"Installment #{row.installment_number}: enter a valid amount."}, status=400)
+                if not applied.is_finite() or applied < 0:
+                    return Response({"detail": f"Installment #{row.installment_number}: enter a valid amount."}, status=400)
+                if not applied:
+                    continue
+                balance = max(Decimal("0.00"), row.installment_amount - row.paid_amount)
+                if applied > balance:
+                    return Response({"detail": f"Installment #{row.installment_number}: allocation {applied:.2f} exceeds its pending {balance:.2f}."}, status=400)
+                allocated_rows.append((row, applied))
+            if sum((applied for _, applied in allocated_rows), Decimal("0.00")) != applied_received:
+                return Response({"detail": "Allocated installments plus Others must add up to the Collection Amount."}, status=400)
+            allocated_rows.sort(key=lambda pair: (pair[0].due_date, pair[0].pk))
+            for row, applied in allocated_rows:
+                row.paid_amount += applied
+                row.paid_date = payment_date
+                allocations.append({"installment_number": row.installment_number, "amount": applied})
+            remaining = Decimal("0.00")
+        for row in all_rows if not requested else ():
             balance = max(Decimal("0.00"), row.installment_amount - row.paid_amount)
             if balance <= 0 or remaining <= 0:
                 continue
@@ -575,20 +694,20 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
             first = next(row for row in all_rows if row.installment_number == allocations[0]["installment_number"])
             first.penalty_amount += penalty
         collection = None
-        if allocations:
-            first = next(row for row in all_rows if row.installment_number == allocations[0]["installment_number"])
+        if allocations or advance:
+            first = allocated_rows[0][0] if allocated_rows else installment
             details = request.data
             cheque_date = details.get("cheque_date") or None
             collection = CollectionTransaction.objects.create(
                 installment=first, loan=loan, customer=loan.customer,
-                collection_amount=received, collection_date=payment_date,
+                collection_amount=received, advance_amount=advance, request_key=request_key, collection_date=payment_date,
                 payment_mode=details.get("payment_mode", "Cash"),
                 reference_no=details.get("transaction_utr") or details.get("utr_number") or details.get("reference_number") or details.get("neft_reference") or "",
                 remarks=details.get("notes", ""), upi_id=details.get("upi_id", ""),
                 bank_name=details.get("bank_name", ""), cheque_number=details.get("cheque_number", ""),
                 cheque_date=cheque_date, adjustment_type=details.get("adjustment_type", ""),
                 adjustment_amount=penalty, discount_amount=discount, account=account,
-                ledger_group=ledger_group, ledger_amount=ledger_amount, ledger=ledger,
+                ledger_group=ledger_group, ledger_amount=ledger_amount, ledger=ledger, party_ledger=party_ledger,
                 done_by_staff_id=details.get("done_by_staff") or None,
             )
             CollectionAllocation.objects.bulk_create([CollectionAllocation(transaction=collection, installment=row, amount=applied) for row, applied in allocated_rows])
@@ -606,11 +725,39 @@ class CustomerLoanInstallmentDetailsViewSet(FinanceViewSet):
         return Response({"detail": "Collection saved successfully.", "allocations": allocations, "remaining_unallocated": remaining, "loan_id": loan.id, "collection_id": collection.id if collection else None})
 
 
+def holiday_dates_for(ids):
+    """Dates of the active holidays a loan form explicitly includes (ids; "sunday-…" keys ignored)."""
+    numeric = [int(value) for value in ids if str(value).isdigit()]
+    return set(HolidayMaster.objects.filter(pk__in=numeric, is_active=True).values_list("holiday_date", flat=True)) if numeric else set()
+
+
 class HolidayMasterViewSet(FinanceViewSet):
     pagination_class = None
     queryset = HolidayMaster.objects.select_related("done_by_staff").all(); serializer_class = HolidayMasterSerializer
 
     delete_label = "holiday"
+
+    @action(detail=True, methods=["get"])
+    def allocations(self, request, pk=None):
+        holiday = self.get_object()
+        candidates = CustomerLoanDetails.objects.filter(installment_details__due_date=holiday.holiday_date).distinct()
+        saved = dict(LoanHolidaySettings.objects.filter(holiday=holiday, include_in_schedule=True).values_list("loan_id", "id"))
+        return Response([{"loan_id": loan.pk, "loan_no": loan.loan_no, "allocation_id": saved.get(loan.pk)} for loan in candidates])
+
+    @action(detail=True, methods=["post"])
+    def allocate(self, request, pk=None):
+        holiday = self.get_object()
+        loan_id = request.data.get("loan_id")
+        if not str(loan_id).isdigit() or not holiday.is_active:
+            return Response({"detail": "Select a valid collection loan and active holiday."}, status=400)
+        loan = CustomerLoanDetails.objects.filter(pk=loan_id, installment_details__due_date=holiday.holiday_date).first()
+        if loan is None:
+            return Response({"detail": "This loan has no collection scheduled on this date."}, status=400)
+        setting, created = LoanHolidaySettings.objects.get_or_create(loan=loan, holiday=holiday, defaults={"include_in_schedule": True})
+        if not created and not setting.include_in_schedule:
+            return Response({"detail": "Use Edit to change the existing allocation."}, status=409)
+        return Response({"id": setting.pk, "loan_id": loan.pk, "loan_no": loan.loan_no}, status=201 if created else 200)
+
 
 
 class LoanHolidaySettingsViewSet(FinanceViewSet):
@@ -638,13 +785,22 @@ def preview_chit_schedule(request):
 
     try:
         start_date = parse_api_date(start_value)
-        blocked = [parse_api_date(value) for value in (payload.get("blocked_holidays") or [])]
+        duration = group.duration if group else int(payload["duration"])
+        duration_type = group.duration_type if group else payload["duration_type"]
+        include_sunday = bool(payload.get("include_sunday", False))
+        # Same rule as the saved schedule: the Holiday Calendar (holidays Off, Sundays Off
+        # unless ticked Working) minus the holidays this loan explicitly includes, plus any
+        # extra dates the client blocks.
+        included = holiday_dates_for(payload.get("selected_holidays") or [])
+        horizon = start_date + timedelta(days=(int(duration) * 3 if str(duration_type).upper() == "DAY" else int(duration) * 366))
+        blocked = calendar_blocked_dates(start_date, horizon, include_sunday, included)
+        blocked.update(parse_api_date(value) for value in (payload.get("blocked_holidays") or []))
+        blocked.difference_update(included)
         rows = generate_chit_schedule(
-            start_date, group.duration if group else int(payload["duration"]),
-            group.duration_type if group else payload["duration_type"],
+            start_date, duration, duration_type,
             collection_day=group.collection_day if group else payload.get("collection_day"),
             collection_month=group.collection_month if group else payload.get("collection_month"),
-            include_sunday=bool(payload.get("include_sunday", False)), holidays=blocked,
+            include_sunday=True, holidays=blocked,
         )
     except (KeyError, TypeError, ValueError, OverflowError) as exc:
         return Response({"detail": f"Invalid Loan Start Date or schedule details: {exc}"}, status=400)
@@ -663,13 +819,13 @@ def _status(row, today=None):
     return "UPCOMING"
 
 
-def _filtered_installments(request):
+def _filtered_installments(request, apply_status=True, include_future=False):
     rows = CustomerLoanInstallmentDetails.objects.select_related(
         "loan", "loan__customer", "loan__loan_type", "loan__chit_details__chit_group",
     )
     from_value, to_value = request.query_params.get("from"), request.query_params.get("to")
     if from_value: rows = rows.filter(due_date__gte=from_value)
-    if to_value: rows = rows.filter(due_date__lte=to_value)
+    if to_value and not include_future: rows = rows.filter(due_date__lte=to_value)
     search = request.query_params.get("search", "").strip()
     if search:
         rows = rows.filter(
@@ -701,7 +857,7 @@ def _filtered_installments(request):
     if customer_type:
         rows = rows.filter(loan__customer__role=customer_type)
     status_filter = request.query_params.get("status", "").upper()
-    if status_filter:
+    if status_filter and apply_status:
         aliases = {"PENDING": {"UPCOMING", "PENDING"}, "OUTSTANDING": {"PARTIAL", "OVERDUE", "UPCOMING"}, "PAID": {"PAID", "PAID LATE"}, "OVERDUE": {"OVERDUE"}}
         rows = [row for row in rows if _status(row) in aliases.get(status_filter, {status_filter})]
     return rows
@@ -803,6 +959,7 @@ def _collection_row(row, today):
         "total_paid": paid, "paid": paid, "balance": balance,
         "payment_status": status, "status": status, "is_overdue": overdue,
         "days_overdue": max(0, (today - row.due_date).days) if overdue else 0,
+        "due_days": max(0, (today - row.due_date).days) if overdue else 0,
         "payment_mode": transactions[-1].payment_mode if transactions else "",
         "collection_date": transactions[-1].collection_date if transactions else None,
         "done_by_staff": transactions[-1].done_by_staff_id if transactions else None,
@@ -821,7 +978,7 @@ def collections_list(request):
         selected = request.query_params.get("date") or today.isoformat()
         try: selected_date = date.fromisoformat(selected)
         except (TypeError, ValueError): return Response({"detail": "Invalid collection date."}, status=400)
-        rows = [_collection_row(row, today) for row in _collection_queryset() if row.due_date == selected_date]
+        rows = [_collection_row(row, selected_date) for row in _collection_queryset() if row.due_date == selected_date]
         rows = [row for row in rows if row["balance"] > 0]
         search = request.query_params.get("search", "").strip().lower()
         status = request.query_params.get("status", "").strip().upper()
@@ -832,7 +989,7 @@ def collections_list(request):
             elif previous == "last_7_days": start = today - timedelta(days=7)
             elif previous == "this_month": start = today.replace(day=1)
             elif previous == "all_previous": start = date.min
-            rows = [_collection_row(row, today) for row in _collection_queryset() if row.due_date and start <= row.due_date < today]
+            rows = [_collection_row(row, selected_date) for row in _collection_queryset() if row.due_date and start <= row.due_date < today]
             rows = [row for row in rows if row["balance"] > 0]
             rows.sort(key=lambda row: (row["due_date"], row["id"]))
         if search:
@@ -879,7 +1036,9 @@ def collections_create(request):
     payment_date = request.data.get("collection_date") or timezone.localdate()
     try: payment_date = date.fromisoformat(str(payment_date))
     except ValueError: return Response({"detail": "Collection date is invalid."}, status=400)
-    collection = CollectionTransaction.objects.create(installment=installment, loan=installment.loan, customer=installment.loan.customer, collection_amount=amount, collection_date=payment_date, payment_mode=request.data.get("payment_mode", "Cash"), reference_no=request.data.get("reference_no", ""), remarks=request.data.get("remarks", ""), done_by_staff_id=request.data.get("done_by_staff") or None)
+    try: account = resolve_account(request.data.get("payment_mode", "Cash"), request.data.get("account_id") or None)
+    except LedgerMappingError as error: return Response({"detail": error.message, error.field: error.message}, status=400)
+    collection = CollectionTransaction.objects.create(installment=installment, loan=installment.loan, customer=installment.loan.customer, collection_amount=amount, collection_date=payment_date, payment_mode=request.data.get("payment_mode", "Cash"), reference_no=request.data.get("reference_no", ""), remarks=request.data.get("remarks", ""), account=account, party_ledger=customer_ledger(installment.loan.customer), done_by_staff_id=request.data.get("done_by_staff") or None)
     CollectionAllocation.objects.create(transaction=collection, installment=installment, amount=amount)
     new_paid = paid + amount; new_balance = max(Decimal("0.00"), installment.installment_amount + installment.penalty_amount - new_paid)
     installment.paid_amount = new_paid; installment.outstanding_amount = new_balance; installment.paid_date = payment_date if new_balance <= 0 else installment.paid_date; installment.payment_status = "PAID" if new_balance <= 0 else "PARTIAL"; installment.save(update_fields=("paid_amount", "outstanding_amount", "paid_date", "payment_status", "modified_date"))
@@ -912,22 +1071,57 @@ def collection_history(request):
 
 
 @api_view(["GET", "POST"])
+@permission_classes([CanWriteFinanceData])
 def collections_endpoint(request):
     return collections_list(request) if request.method == "GET" else collections_create(request)
 
 
 @api_view(["POST"])
+@permission_classes([CanWriteFinanceData])
 def collections_create_endpoint(request):
     return collections_create(request)
 
 
+def _pending_report_rows(request, include_future=False, include_settled=False):
+    """Dues eligible at the report cutoff, paid only by posted allocation history."""
+    from rest_framework.exceptions import ValidationError
+    raw = request.query_params.get("to")
+    try:
+        cutoff = date.fromisoformat(raw) if raw else timezone.localdate()
+    except ValueError:
+        raise ValidationError({"to": "Enter a valid To Date."})
+    candidates = _filtered_installments(request, apply_status=False, include_future=include_future)
+    if not include_future:
+        candidates = candidates.filter(due_date__lte=cutoff)
+    candidates = candidates.order_by("due_date", "pk").prefetch_related(
+        Prefetch("collection_allocations", queryset=CollectionAllocation.objects.select_related("transaction")),
+        Prefetch("collection_transactions", queryset=CollectionTransaction.objects.annotate(has_allocations=Exists(CollectionAllocation.objects.filter(transaction_id=OuterRef("pk")))))
+    )
+    status_filter = "" if include_settled else request.query_params.get("status", "").upper()
+    for row in candidates:
+        zero = Decimal("0.00")
+        paid = sum((a.amount for a in row.collection_allocations.all() if a.transaction.collection_date <= cutoff), zero)
+        paid += sum((t.collection_amount - t.advance_amount for t in row.collection_transactions.all() if not t.has_allocations and t.collection_date <= cutoff), zero)
+        balance = max(zero, row.installment_amount - paid)
+        if balance <= 0 and not include_settled:
+            continue
+        status = "PAID" if balance <= 0 else "OVERDUE" if row.due_date < cutoff else "PARTIAL" if paid > 0 else "UPCOMING"
+        if status_filter == "PARTIAL" and paid <= 0:
+            continue
+        if status_filter in ("PAID", "PAID LATE"):
+            continue
+        if status_filter == "OVERDUE" and row.due_date >= cutoff:
+            continue
+        if status_filter == "PENDING" and status not in ("PENDING", "UPCOMING"):
+            continue
+        yield row, paid, balance, status, cutoff
+
+
 @api_view(["GET"])
 def day_wise_report(request):
-    rows = _filtered_installments(request)
+    rows = _pending_report_rows(request, include_future=request.query_params.get("scope") == "all_pending")
     results = []
-    for index, row in enumerate(rows, 1):
-        status_value = _status(row)
-        balance = max(Decimal("0"), row.installment_amount - row.paid_amount)
+    for index, (row, paid, balance, status_value, cutoff) in enumerate(rows, 1):
         results.append({
             "s_no": index, "due_date": row.due_date, "customer": row.loan.customer.full_name,
             "customer_code": row.loan.customer.customer_code, "loan_id": row.loan_id,
@@ -937,8 +1131,8 @@ def day_wise_report(request):
             "chit_group": getattr(getattr(getattr(row.loan, "chit_details", None), "chit_group", None), "name", None),
             "installment_no": row.installment_number, "installment_number": row.installment_number,
             "scheduled": row.installment_amount, "scheduled_amount": row.installment_amount,
-            "paid": row.paid_amount, "paid_amount": row.paid_amount, "balance": balance,
-            "payment_date": row.paid_date, "penalty": row.penalty_amount, "status": status_value,
+            "paid": paid, "paid_amount": paid, "balance": balance,
+            "days_overdue": max(0, (cutoff - row.due_date).days), "payment_date": row.paid_date if row.paid_date and row.paid_date <= cutoff else None, "penalty": row.penalty_amount, "status": status_value,
         })
     return Response({"summary": {
         "scheduled": sum((item["scheduled"] for item in results), Decimal("0")),
@@ -951,19 +1145,21 @@ def day_wise_report(request):
 
 @api_view(["GET"])
 def loan_wise_report(request):
+    if request.query_params.get("scope") == "total":
+        return total_outstanding_report(request)
     grouped = {}
-    for row in _filtered_installments(request):
+    for row, paid, balance, status_value, cutoff in _pending_report_rows(request):
         item = grouped.setdefault(row.loan_id, {
             "loan_id": row.loan_id, "loan_no": row.loan.loan_no or f"LN_{row.loan_id:06d}",
             "customer": row.loan.customer.full_name, "customer_code": row.loan.customer.customer_code,
             "start_date": row.loan.loan_start_date, "principal": row.loan.loan_amount,
-            "total_payable": row.loan.total_amount, "paid": Decimal("0"), "outstanding": Decimal("0"),
+            "total_payable": Decimal("0"), "due_date": row.due_date, "paid": Decimal("0"), "outstanding": Decimal("0"),
             "paid_installments": 0, "pending_installments": 0, "overdue": 0,
             "status": row.loan.loan_status, "installments": 0,
         })
-        status_value = _status(row)
-        item["paid"] += row.paid_amount
-        item["outstanding"] += max(Decimal("0"), row.installment_amount - row.paid_amount)
+        item["total_payable"] += row.installment_amount
+        item["paid"] += paid
+        item["outstanding"] += balance
         item["installments"] += 1
         item["paid_installments"] += status_value in ("PAID", "PAID LATE")
         item["pending_installments"] += status_value in ("PARTIAL", "UPCOMING")
@@ -973,6 +1169,39 @@ def loan_wise_report(request):
     return Response({"summary": {"principal": sum((x["principal"] for x in grouped.values()), Decimal("0")), "payable": sum((x["total_payable"] for x in grouped.values()), Decimal("0")), "collected": sum((x["paid"] for x in grouped.values()), Decimal("0")), "outstanding": sum((x["outstanding"] for x in grouped.values()), Decimal("0"))}, "results": list(grouped.values())})
 
 
+def total_outstanding_report(request):
+    """All saved receivables, including future dues, with receipt balances at cutoff."""
+    grouped = {}
+    cutoff = timezone.localdate()
+    for row, paid, balance, status, cutoff in _pending_report_rows(request, include_future=True, include_settled=True):
+        item = grouped.setdefault(row.loan_id, {"loan_id":row.loan_id,"loan_no":row.loan.loan_no,"customer":row.loan.customer.full_name,
+            "customer_code":row.loan.customer.customer_code,"principal":row.loan.loan_amount,"total_payable":Decimal("0"),
+            "paid":Decimal("0"),"outstanding":Decimal("0"),"unallocated_others":Decimal("0"),"overdue_amount":Decimal("0"),"overdue":0,"days_overdue":0,"installments":[]})
+        item["total_payable"] += row.installment_amount
+        collections = [{"id": a.transaction_id, "date": a.transaction.collection_date, "voucher": f"RV-{a.transaction_id:06d}", "amount": a.amount, "particulars": "Collection"} for a in row.collection_allocations.all() if a.transaction.collection_date <= cutoff]
+        collections += [{"id": t.pk, "date": t.collection_date, "voucher": f"RV-{t.pk:06d}", "amount": t.collection_amount-t.advance_amount, "particulars": "Collection"} for t in row.collection_transactions.all() if not t.has_allocations and t.collection_date <= cutoff]
+        item["installments"].append({"id":row.pk,"installment_number":row.installment_number,"due_date":row.due_date,"create_date":row.create_date,"scheduled":row.installment_amount,"paid":paid,"balance":balance,"collections":collections})
+        item["paid"] += min(row.installment_amount, paid)
+        item["outstanding"] += balance
+        if balance > 0 and row.due_date < cutoff:
+            item["overdue"] += 1
+            item["overdue_amount"] += balance
+            item["days_overdue"] = max(item["days_overdue"],(cutoff-row.due_date).days)
+    for receipt in CollectionTransaction.objects.filter(loan_id__in=grouped,collection_date__lte=cutoff).prefetch_related("allocations"):
+        splits = list(receipt.allocations.all())
+        allocated = sum((split.amount for split in splits),Decimal("0")) if splits else receipt.collection_amount-receipt.advance_amount
+        grouped[receipt.loan_id]["unallocated_others"] += max(Decimal("0"),receipt.collection_amount-allocated)
+    status = request.query_params.get("status", "").upper()
+    rows = [row for row in grouped.values() if row["outstanding"]>0 or row["unallocated_others"]>0]
+    if status == "OUTSTANDING": rows = [row for row in rows if row["outstanding"]>0]
+    elif status == "OVERDUE": rows = [row for row in rows if row["overdue"]>0]
+    elif status == "PARTIAL": rows = [row for row in rows if row["paid"]>0 and row["outstanding"]>0]
+    elif status == "PENDING": rows = [row for row in rows if row["paid"]==0 and row["outstanding"]>0]
+    elif status in ("PAID","PAID LATE"): rows = []
+    return Response({"results":rows,"summary":{key:sum((row.get(field,Decimal("0")) for row in rows),Decimal("0")) for key,field in
+        [("payable","total_payable"),("collected","paid"),("outstanding","outstanding"),("unallocated_others","unallocated_others"),("overdue","overdue_amount")]}})
+
+
 @api_view(["GET"])
 def customer_wise_report(request):
     """Customer ledger: Opening Balance first, every scheduled Chit/Interest/Mortgage
@@ -980,11 +1209,7 @@ def customer_wise_report(request):
     as a separate Credit, running as a day-book per customer."""
     from customers.models import Customer
     params = request.query_params
-    try:
-        from_date = date.fromisoformat(params["from"]) if params.get("from") else None
-        to_date = date.fromisoformat(params["to"]) if params.get("to") else None
-    except ValueError:
-        return Response({"detail": "Enter valid report dates."}, status=400)
+    from_date, to_date = _report_date_range(params)
 
     loans = CustomerLoanDetails.objects.select_related(
         "customer", "loan_type", "chit_details__chit_group",
@@ -1016,7 +1241,7 @@ def customer_wise_report(request):
     today = timezone.localdate()
     # Chit/Interest/Mortgage schedules are generated and persisted for the loan's whole
     # future tenure the moment it's created, but a ledger only posts a due once it has
-    # actually accrued — so cap at today unless the caller explicitly asks past it with `to`.
+    # actually accrued â€” so cap at today unless the caller explicitly asks past it with `to`.
     due_cutoff = to_date if to_date else today
     for loan in loans:
         entry = bucket_for(loan.customer)
@@ -1024,9 +1249,11 @@ def customer_wise_report(request):
         group = chit.chit_group if chit else None
         kind_name = loan.loan_type.name
         if group:
-            particulars = f"Chit Installment - {group.name}"
+            voucher_type = "Chit Installment"
+            particulars = group.name
         else:
-            particulars = f"{kind_name} Loan Installment"
+            voucher_type = kind_name
+            particulars = f"{kind_name} Loan"
         for row in loan.installment_details.all():
             if row.due_date > due_cutoff:
                 continue
@@ -1035,6 +1262,7 @@ def customer_wise_report(request):
             entry["entries"].append({
                 "date": row.due_date, "sort": (row.due_date, 0, loan.id, row.installment_number),
                 "particulars": f"{particulars} (Inst #{row.installment_number})",
+                "voucher_type": voucher_type, "loan_type": kind_name,
                 "voucher_no": loan.doc_no or loan.loan_no or "",
                 "debit": row.installment_amount or zero, "credit": zero,
             })
@@ -1045,9 +1273,37 @@ def customer_wise_report(request):
                 continue
             entry["entries"].append({
                 "date": item.collection_date, "sort": (item.collection_date, 1, loan.id, item.id),
-                "particulars": "Receipt", "voucher_no": f"RV-{item.id:06d}",
+                "particulars": "Receipt", "voucher_type": "Receipt", "loan_type": kind_name,
+                "voucher_no": f"RV-{item.id:06d}",
                 "debit": zero, "credit": item.collection_amount or zero,
             })
+
+    # Customer = linked Party Ledger: the merged statement (no loan / loan-type filter) also
+    # carries every other posting to that ledger -- Party Dues (Dr), Party / general
+    # Collections (Cr), Journal lines and Payment Entries -- so it matches the ledger.
+    if not loan_id and not (kind and kind.upper() != "ALL"):
+        from .models import JournalLine, PartyCollection, PartyDue
+        scope = {"customer_id": customer_param} if customer_param and customer_param.upper() != "ALL" else {"customer__isnull": False}
+        party_ledgers = Ledger.objects.filter(**scope)
+        customer_of = {ledger.id: ledger.customer for ledger in party_ledgers.select_related("customer")}
+
+        def post(ledger_id, on, order, row_id, particulars, voucher_type, voucher_no, debit=zero, credit=zero):
+            if on > due_cutoff or (from_date and on < from_date):
+                return
+            bucket_for(customer_of[ledger_id])["entries"].append({
+                "date": on, "sort": (on, order, 0, row_id), "particulars": particulars, "voucher_type": voucher_type,
+                "loan_type": "", "voucher_no": voucher_no, "debit": debit, "credit": credit})
+
+        for due in PartyDue.objects.filter(party__in=party_ledgers).select_related("counter_ledger"):
+            post(due.party_id, due.due_date, 2, due.id, f"{due.due_number} ({due.counter_ledger.name})", "Party Due", due.voucher_no, debit=due.amount)
+        for receipt in PartyCollection.objects.filter(party__in=party_ledgers).select_related("account"):
+            post(receipt.party_id, receipt.date, 3, receipt.id, f"Collection ({receipt.account.name})", "Receipt", receipt.voucher_no, credit=receipt.amount)
+        for line in JournalLine.objects.filter(ledger__in=party_ledgers).select_related("voucher"):
+            debit = line.side == JournalLine.DEBIT
+            post(line.ledger_id, line.voucher.date, 4, line.id, line.voucher.narration or "Journal", "Journal", line.voucher.voucher_no,
+                 debit=line.amount if debit else zero, credit=zero if debit else line.amount)
+        for payment in PaymentEntry.objects.filter(ledger__in=party_ledgers).select_related("account"):
+            post(payment.ledger_id, payment.date, 5, payment.id, f"Payment ({payment.account.name if payment.account else payment.payment_mode})", "Payment", f"PV-{payment.id:06d}", debit=payment.amount)
 
     ledger_balance = {}
     if buckets:
@@ -1059,13 +1315,14 @@ def customer_wise_report(request):
         rows = []
         debit_total = credit_total = zero
         if not loan_id:
-            # Opening Balance is a customer-level ledger fact, not tied to any one loan —
+            # Opening Balance is a customer-level ledger fact, not tied to any one loan â€”
             # only included in the merged (no loan_id) view, never repeated per loan.
             opening = ledger_balance.get(customer_id, zero)
             opening_debit = opening if opening >= 0 else zero
             opening_credit = -opening if opening < 0 else zero
             rows.append({
-                "date": None, "particulars": "Opening Balance", "voucher_no": "",
+                "date": None, "particulars": "Opening Balance", "voucher_type": "Opening Balance", "loan_type": "",
+                "voucher_no": "",
                 "debit": opening_debit, "credit": opening_credit, "total": opening_debit + opening_credit,
                 "is_opening": True,
             })
@@ -1074,7 +1331,8 @@ def customer_wise_report(request):
             debit_total += item["debit"]
             credit_total += item["credit"]
             rows.append({
-                "date": item["date"], "particulars": item["particulars"], "voucher_no": item["voucher_no"],
+                "date": item["date"], "particulars": item["particulars"], "voucher_type": item["voucher_type"],
+                "loan_type": item["loan_type"], "voucher_no": item["voucher_no"],
                 "debit": item["debit"], "credit": item["credit"], "total": item["debit"] + item["credit"],
                 "is_opening": False,
             })
@@ -1089,6 +1347,261 @@ def customer_wise_report(request):
     return Response({"customers": customers, "results": results})
 
 
+TODAY_REPORT_TYPES = ("Loan", "Receipt", "Collection Entry", "Payment", "Bank Transaction")
+
+
+@api_view(["GET"])
+def today_report(request):
+    """Read-only transaction register: every saved loan application (on its Loan Start Date),
+    every saved collection receipt (on its collection date) and every Payment Entry (on its
+    payment date). Built only from those source rows — never from installment schedules, so
+    a due date alone never produces a receipt. Each source row appears exactly once, keyed by
+    its type and primary key. `from`/`to` are inclusive business-local dates (default today)."""
+    params = request.query_params
+    today = timezone.localdate()
+    try:
+        from_date = date.fromisoformat(params["from"]) if params.get("from") else today
+        to_date = date.fromisoformat(params["to"]) if params.get("to") else from_date
+    except ValueError:
+        return Response({"detail": "Enter valid report dates."}, status=400)
+    if from_date > to_date:
+        return Response({"detail": "From Date cannot be after To Date."}, status=400)
+    kind = params.get("loan_type", "").strip()
+    if kind.upper() == "ALL":
+        kind = ""
+    loan_id = params.get("loan_id", "").strip()
+    if loan_id and not loan_id.isdigit():
+        return Response({"detail": "Select a valid loan number."}, status=400)
+
+    loans = CustomerLoanDetails.objects.select_related("customer", "loan_type").filter(loan_start_date__range=(from_date, to_date))
+    receipts = CollectionTransaction.objects.select_related("customer", "loan__loan_type", "account").filter(collection_date__range=(from_date, to_date))
+    if kind:
+        loans = loans.filter(loan_type__name__iexact=kind)
+        receipts = receipts.filter(loan__loan_type__name__iexact=kind)
+    if loan_id:
+        loans = loans.filter(pk=loan_id)
+        receipts = receipts.filter(loan_id=loan_id)
+
+    def loan_number(loan):
+        return loan.doc_no or loan.loan_no or ""
+
+    def account_type(item):
+        # Cash / Bank comes from the linked Accounts ledger's category, never the
+        # payment method name; only records without an account fall back to the mode.
+        if item.account is not None and item.account.group in (CASH_GROUP, BANK_GROUP):
+            return "Cash" if item.account.group == CASH_GROUP else "Bank"
+        return "Cash" if is_cash_mode(item.payment_mode) else "Bank" if item.payment_mode else ""
+
+    rows = []
+    for loan in loans:
+        rows.append({
+            "key": f"LOAN-{loan.id}", "sort": (loan.loan_start_date, 0, loan.id),
+            "date": loan.loan_start_date, "transaction_type": "Loan", "loan_type": loan.loan_type.name,
+            "transaction_id": loan.id, "loan_id": loan.id, "loan_no": loan_number(loan), "customer": loan.customer.full_name,
+            "particulars": f"{loan.customer.full_name} — {loan.loan_type.name} Loan Application",
+            "voucher_no": loan_number(loan), "amount": loan.loan_amount,
+            "party": loan.customer.full_name, "payment_mode": "", "account_type": "",
+        })
+    for item in receipts:
+        rows.append({
+            "key": f"RECEIPT-{item.id}", "sort": (item.collection_date, 1, item.id),
+            "date": item.collection_date, "transaction_type": "Receipt", "loan_type": item.loan.loan_type.name,
+            "transaction_id": item.id, "loan_id": item.loan_id, "loan_no": loan_number(item.loan), "customer": item.customer.full_name,
+            "particulars": f"{item.customer.full_name} — Receipt ({item.payment_mode})",
+            "voucher_no": f"RV-{item.id:06d}", "amount": item.collection_amount,
+            "party": item.customer.full_name, "payment_mode": item.payment_mode or "", "account_type": account_type(item),
+        })
+    # Payment Entries carry no loan, so they only belong to the unscoped register: a Loan Type
+    # or Loan Number filter selects loan-linked rows, which no payment can match.
+    payments = PaymentEntry.objects.select_related("ledger__customer", "account").filter(date__range=(from_date, to_date))
+    if kind or loan_id:
+        payments = payments.none()
+    for item in payments:
+        customer = item.ledger.customer.full_name if item.ledger and item.ledger.customer else ""
+        ledger_label = item.ledger.name if item.ledger else (item.ledger_group or "Payment")
+        rows.append({
+            "key": f"PAYMENT-{item.id}", "sort": (item.date, 2, item.id),
+            "date": item.date, "transaction_type": "Payment", "loan_type": "",
+            "transaction_id": item.id, "loan_id": None, "loan_no": "", "customer": customer,
+            "particulars": f"{ledger_label} — Payment ({item.payment_mode})",
+            "voucher_no": f"PV-{item.id:06d}", "amount": item.amount,
+            "party": customer or ledger_label, "payment_mode": item.payment_mode or "", "account_type": account_type(item),
+        })
+    # Bank Transactions: one row per saved transfer (its Cr FROM / Dr TO postings are never
+    # listed separately, so the amount counts once). Like payments they carry no loan.
+    from .accounting_reports import bank_transfer_queryset
+    transfers = bank_transfer_queryset().select_related("from_account", "to_account").filter(date__range=(from_date, to_date))
+    if kind or loan_id:
+        transfers = transfers.none()
+    for item in transfers:
+        route = f"{item.from_account.name} → {item.to_account.name}"
+        # Cash when either side is the Cash in Hand account (deposit / withdrawal), Bank for bank-to-bank.
+        involves_cash = CASH_GROUP in (item.from_account.group, item.to_account.group)
+        rows.append({
+            "key": f"TRANSFER-{item.id}", "sort": (item.date, 3, item.id),
+            "date": item.date, "transaction_type": "Bank Transaction", "loan_type": "",
+            "transaction_id": item.id, "loan_id": None, "loan_no": "", "customer": "",
+            "particulars": route, "voucher_no": item.voucher_no, "amount": item.amount,
+            "party": route, "payment_mode": item.payment_mode or "", "account_type": "Cash" if involves_cash else "Bank",
+        })
+    # Party Collection receipts: one row per voucher (its due allocations are never listed),
+    # shown as Collection Entry. Like payments they carry no loan.
+    from .models import PartyCollection
+    party_receipts = PartyCollection.objects.select_related("party", "account").filter(date__range=(from_date, to_date))
+    if kind or loan_id:
+        party_receipts = party_receipts.none()
+    for item in party_receipts:
+        rows.append({
+            "key": f"PARTYCOLLECTION-{item.id}", "sort": (item.date, 1, item.id),
+            "date": item.date, "transaction_type": "Collection Entry", "loan_type": "",
+            "transaction_id": item.id, "loan_id": None, "loan_no": "", "customer": "",
+            "particulars": f"{item.party.name} — {'Party Collection' if item.party.collection_type else 'Collection'}", "voucher_no": item.voucher_no, "amount": item.amount,
+            "party": item.party.name, "payment_mode": item.payment_mode or "", "account_type": account_type(item),
+        })
+    rows.sort(key=lambda row: row["sort"])
+    # Attachment counts only for users allowed to open documents (admin or Entry access) —
+    # view-only users get the register without any document metadata. Counted through
+    # subqueries on the same filtered sets (no id lists: SQL Server caps parameters at 2100).
+    documents_allowed = CanAccessKycDocuments().has_permission(request, None)
+    counts = {}
+    if documents_allowed:
+        for prefix, queryset, field in (
+                ("LOAN", LoanKycDocument.objects.filter(loan__in=loans.values("pk")), "loan_id"),
+                ("RECEIPT", TransactionDocument.objects.filter(collection__in=receipts.values("pk")), "collection_id"),
+                ("PAYMENT", TransactionDocument.objects.filter(payment__in=payments.values("pk")), "payment_id")):
+            for owner_id, number in queryset.order_by().values_list(field).annotate(number=Count("id")):
+                counts[f"{prefix}-{owner_id}"] = number
+    for row in rows:
+        del row["sort"]
+        # Bank Transactions take no attachments, so they carry no document metadata.
+        row["document_count"] = counts.get(row["key"], 0) if documents_allowed and row["transaction_type"] not in ("Bank Transaction", "Collection Entry") else None
+    totals = {name: {"count": 0, "amount": Decimal("0.00")} for name in TODAY_REPORT_TYPES}
+    for row in rows:
+        totals[row["transaction_type"]]["count"] += 1
+        totals[row["transaction_type"]]["amount"] += row["amount"] or Decimal("0.00")
+    return Response({"from": from_date, "to": to_date, "count": len(rows), "rows": rows, "totals": totals,
+                     "documents_allowed": documents_allowed})
+
+
+def _pending_as_of(row, as_of):
+    """Pending balance of one schedule installment as of `as_of`, from saved collections only.
+    Same attribution as the collection editor: a receipt's CollectionAllocation rows are
+    authoritative; an older receipt without allocations counts against its own installment.
+    Collections dated after `as_of` are not yet paid then, and the adjustment (penalty) a
+    later receipt added to this installment is not yet owed. Any stored paid amount that no
+    saved receipt explains is treated as paid, so a settled installment never reappears."""
+    zero = Decimal("0.00")
+    allocations = list(row.collection_allocations.all())
+    legacy = [item for item in row.collection_transactions.all() if not item.has_allocations]
+    traced = sum((a.amount for a in allocations), zero) + sum((t.collection_amount - t.advance_amount for t in legacy), zero)
+    paid = (sum((a.amount for a in allocations if a.transaction.collection_date <= as_of), zero)
+            + sum((t.collection_amount - t.advance_amount for t in legacy if t.collection_date <= as_of), zero)
+            + max(zero, (row.paid_amount or zero) - traced))
+    later_adjustments = sum((t.adjustment_amount or zero for t in row.collection_transactions.all() if t.collection_date > as_of), zero)
+    penalty = max(zero, (row.penalty_amount or zero) - later_adjustments)
+    due = (row.installment_amount or zero) + penalty
+    return due, min(paid, due), max(zero, due - paid)
+
+
+def _installment_receipts(row, as_of):
+    """Saved receipts that paid this installment on or before `as_of`, oldest first, each with
+    the amount allocated to THIS installment (allocation rows are authoritative; an older
+    receipt without allocations counts against its own installment). Deleted receipts no
+    longer exist, so they are never counted."""
+    entries = [(a.transaction, a.amount) for a in row.collection_allocations.all() if a.transaction.collection_date <= as_of]
+    entries += [(t, t.collection_amount - t.advance_amount) for t in row.collection_transactions.all() if not t.has_allocations and t.collection_date <= as_of and t.collection_amount > t.advance_amount]
+    entries.sort(key=lambda item: (item[0].collection_date, item[0].pk))
+    return [{
+        "collection_id": receipt.pk, "voucher_no": receipt_voucher_no(receipt), "date": receipt.collection_date,
+        "amount": amount, "receipt_amount": receipt.collection_amount, "payment_mode": receipt.payment_mode,
+        "account": receipt.account.name if receipt.account_id else "", "ledger": receipt.ledger.name if receipt.ledger_id else (receipt.ledger_group or ""),
+        "notes": receipt.remarks or "", "reference_no": receipt.reference_no or "",
+    } for receipt, amount in entries]
+
+
+@api_view(["GET"])
+def today_collection_report(request):
+    """Collection dues as of a report date, one row per schedule installment (so nothing is
+    counted twice): every installment due on or before it with a balance still above zero,
+    plus every installment that received a saved collection within the period (so a due
+    settled in the period shows as Completed). RECEIVED = saved collections allocated to the
+    installment up to the as-of date, BALANCE = MAX(0, DUE − RECEIVED), STATUS = Completed /
+    Partial / Pending. Payment Entries never appear, and a due date alone is never a receipt.
+    The as-of date is the period end, capped at today."""
+    params = request.query_params
+    today = timezone.localdate()
+    try:
+        all_time = params.get("all_time") == "true"
+        from_date = date.min if all_time else date.fromisoformat(params["from"]) if params.get("from") else today
+        to_date = date.fromisoformat(params["to"]) if params.get("to") else today if all_time else from_date
+    except ValueError:
+        return Response({"detail": "Enter valid report dates."}, status=400)
+    if from_date > to_date:
+        return Response({"detail": "From Date cannot be after To Date."}, status=400)
+    as_of = min(to_date, today)
+    kind = params.get("loan_type", "").strip()
+    loan_id = params.get("loan_id", "").strip()
+    if loan_id and not loan_id.isdigit():
+        return Response({"detail": "Select a valid loan number."}, status=400)
+
+    receipts = (CollectionTransaction.objects.select_related("account", "ledger")
+                .annotate(has_allocations=Exists(CollectionAllocation.objects.filter(transaction=OuterRef("pk")))))
+    # Settled on or before the as-of date can be skipped in SQL unless collected in the period.
+    unsettled = Q(due_date__lte=as_of) & (Q(paid_amount__lt=F("installment_amount") + F("penalty_amount")) | Q(paid_date__isnull=True) | Q(paid_date__gt=as_of))
+    collected_in_period = (Q(collection_allocations__transaction__collection_date__gte=from_date, collection_allocations__transaction__collection_date__lte=as_of)
+                           | Q(collection_transactions__collection_date__gte=from_date, collection_transactions__collection_date__lte=as_of))
+    ids = CustomerLoanInstallmentDetails.objects.filter(unsettled | collected_in_period)
+    if kind and kind.upper() != "ALL":
+        ids = ids.filter(loan__loan_type__name__iexact=kind)
+    if loan_id:
+        ids = ids.filter(loan_id=loan_id)
+    installments = (CustomerLoanInstallmentDetails.objects.filter(pk__in=ids.values("pk"))
+        .select_related("loan", "loan__customer", "loan__loan_type", "loan__chit_details__chit_group")
+        .prefetch_related(Prefetch("collection_allocations", queryset=CollectionAllocation.objects.select_related("transaction__account", "transaction__ledger")),
+                          Prefetch("collection_transactions", queryset=receipts))
+        .order_by("due_date", "loan_id", "installment_number"))
+
+    documents_allowed = CanAccessKycDocuments().has_permission(request, None)
+    rows = []
+    for row in installments:
+        due, paid, pending = _pending_as_of(row, as_of)
+        history = _installment_receipts(row, as_of)
+        in_period = any(from_date <= item["date"] <= as_of for item in history)
+        if pending <= 0 and not in_period:
+            continue
+        status = "Completed" if pending <= 0 else "Partial" if paid > 0 else "Pending"
+        loan = row.loan
+        customer = loan.customer
+        chit = getattr(loan, "chit_details", None)
+        plan = chit.chit_group.name if chit else f"{loan.loan_type.name} Loan"
+        due_days = (as_of - row.due_date).days
+        loan_no = loan.doc_no or loan.loan_no or ""
+        latest = history[-1] if history else None
+        address = ", ".join(part for part in (customer.address, customer.district, getattr(customer, "state", "") or "") if part)
+        if customer.pincode:
+            address = f"{address} - {customer.pincode}" if address else customer.pincode
+        rows.append({
+            "key": f"INSTALLMENT-{row.id}", "transaction_id": loan.id, "document_kind": "loan",
+            "installment_id": row.id, "installment_number": row.installment_number,
+            "date": row.due_date, "transaction_type": "Overdue" if due_days > 0 else "Due Today" if due_days == 0 else "Advance",
+            "loan_type": loan.loan_type.name, "loan_id": loan.id, "loan_no": loan_no,
+            "customer": customer.full_name,
+            "particulars": f"{customer.full_name} — {plan} (Inst #{row.installment_number})",
+            "voucher_no": f"{loan_no} · Inst #{row.installment_number}",
+            "due_amount": due, "paid_amount": paid, "received_amount": paid, "balance_amount": pending, "amount": pending,
+            "status": status, "due_days": max(0, due_days) if pending > 0 else 0,
+            "customer_id": customer.id, "customer_code": customer.customer_code, "customer_phone": customer.primary_mobile or "",
+            "customer_address": address, "plan_name": plan, "loan_start_date": loan.loan_start_date,
+            "collection": latest, "collections": history,
+        })
+    # Documents are the loan's own KYC documents (the existing model has no installment link).
+    counts = dict(LoanKycDocument.objects.order_by().values_list("loan_id").annotate(number=Count("id"))) if documents_allowed else {}
+    for row in rows:
+        row["document_count"] = counts.get(row["loan_id"], 0) if documents_allowed else None
+    return Response({"from": from_date, "to": to_date, "as_of": as_of, "count": len(rows), "rows": rows,
+                     "documents_allowed": documents_allowed})
+
+
 @api_view(["GET"])
 def group_wise_report(request):
     """Read-only customer-wise loan report across all loan types, grouped by customer with
@@ -1096,11 +1609,7 @@ def group_wise_report(request):
     rich payload down to one Chit Group's member customers/loans on the client."""
     from customers.models import Customer
     params = request.query_params
-    try:
-        from_date = date.fromisoformat(params["from"]) if params.get("from") else None
-        to_date = date.fromisoformat(params["to"]) if params.get("to") else None
-    except ValueError:
-        return Response({"detail": "Enter valid report dates."}, status=400)
+    from_date, to_date = _report_date_range(params)
     loans = CustomerLoanDetails.objects.select_related(
         "customer", "loan_type", "chit_details__chit_group", "interest_details__loan_installment", "mortgage_details",
     ).prefetch_related("installment_details", "collection_transactions__installment").order_by("customer__full_name", "id")
@@ -1187,40 +1696,96 @@ def _signed(value):
 
 @api_view(["GET"])
 def ledger_statement(request):
-    """Cash/Bank ledger statement: Collection Entries post as Debit, Payment Entries post as Credit,
-    running from the ledger's Opening Balance (positive = Dr, negative = Cr)."""
+    """Ledger statement, running from the Opening Balance (positive = Dr, negative = Cr).
+    type=cash / type=bank: every Cash-in-Hand / Bank Accounts ledger together.
+    type=ledger&ledger=<id>: one ledger (e.g. a party), with every posting that touches it.
+    Rows mirror accounting_reports.ledger_balances, so closing balances match Trial Balance."""
     params = request.query_params
     kind = params.get("type", "").strip().lower()
-    group_name = LEDGER_REPORT_GROUPS.get(kind)
-    if not group_name:
-        return Response({"detail": "type must be 'cash' or 'bank'."}, status=400)
-    try:
-        from_date = date.fromisoformat(params["from"]) if params.get("from") else None
-        to_date = date.fromisoformat(params["to"]) if params.get("to") else None
-    except ValueError:
-        return Response({"detail": "Enter valid report dates."}, status=400)
+    from_date, to_date = _report_date_range(params)
 
-    ledgers = list(Ledger.objects.filter(group=group_name))
+    from .accounting_reports import _group_lookup, _root_of, bank_transfer_queryset, report_warnings
+    if kind == "ledger":
+        ledger_param = str(params.get("ledger", "")).strip()
+        single = Ledger.objects.filter(pk=ledger_param).first() if ledger_param.isdigit() else None
+        if single is None:
+            return Response({"detail": "Select a valid ledger."}, status=400)
+        ledgers, group_name = [single], single.group
+    else:
+        group_name = LEDGER_REPORT_GROUPS.get(kind)
+        if not group_name:
+            return Response({"detail": "type must be 'cash', 'bank' or 'ledger'."}, status=400)
+        groups = _group_lookup()
+        ledgers = [item for item in Ledger.objects.all() if item.group == group_name or
+                   (item.group_detail_id in groups and
+                    getattr(_root_of(groups[item.group_detail_id], groups), "name", None) == group_name)]
     ledger_ids = [item.id for item in ledgers]
-    opening_balance = sum((item.opening_balance for item in ledgers), Decimal("0.00"))
+    opening_balance = sum((item.opening_balance or Decimal("0.00") for item in ledgers), Decimal("0.00"))
 
     zero = Decimal("0.00")
     entries = []
-    collections = CollectionTransaction.objects.filter(account_id__in=ledger_ids).select_related("customer", "loan")
+    collections = CollectionTransaction.objects.filter(Q(account_id__in=ledger_ids) | Q(party_ledger_id__in=ledger_ids) | Q(ledger_id__in=ledger_ids)).select_related("customer", "loan")
     for item in collections:
+        amount, ledger_amount = item.collection_amount or zero, item.ledger_amount or zero
+        # Dr Cash/Bank; Cr the party ledger (and any legacy "Other Charges" ledger share).
+        credit = (amount - ledger_amount if item.party_ledger_id in ledger_ids else zero) + (ledger_amount if item.ledger_id in ledger_ids else zero)
         entries.append({
             "date": item.collection_date, "sort": (item.collection_date, item.id, 0),
             "particulars": f"{item.customer.full_name} · Collection ({item.loan.loan_no})",
             "reference": f"RV-{item.id:06d}", "type": "Collection Entry",
-            "debit": item.collection_amount or zero, "credit": zero,
+            "debit": amount if item.account_id in ledger_ids else zero, "credit": credit,
         })
-    payments = PaymentEntry.objects.filter(account_id__in=ledger_ids).select_related("ledger", "account")
+    payments = PaymentEntry.objects.filter(Q(account_id__in=ledger_ids) | Q(ledger_id__in=ledger_ids)).select_related("ledger", "account")
     for item in payments:
         entries.append({
             "date": item.date, "sort": (item.date, item.id, 1),
-            "particulars": (item.ledger.name if item.ledger else item.ledger_group) or "Payment Entry",
+            # Seen from Cash/Bank: the ledger paid; seen from the ledger paid: the account paid from.
+            "particulars": (f"Paid from {item.account.name}" if item.ledger_id in ledger_ids and item.account else
+                            item.ledger.name if item.ledger else item.ledger_group) or "Payment Entry",
             "reference": f"PV-{item.id:06d}", "type": "Payment Entry",
-            "debit": zero, "credit": item.amount or zero,
+            "debit": item.amount if item.ledger_id in ledger_ids else zero, "credit": item.amount if item.account_id in ledger_ids else zero,
+        })
+    from .models import JournalLine, PartyCollection, PartyDue
+    for item in PartyCollection.objects.filter(Q(account_id__in=ledger_ids) | Q(party_id__in=ledger_ids)).select_related("party", "account").annotate(allocated_total=Sum("allocations__amount")):
+        label = "Collection" if item.allocated_total else "Others Collection"
+        entries.append({
+            "date": item.date, "sort": (item.date, item.id, 3),
+            "particulars": f"{item.party.name} - {label}" if item.account_id in ledger_ids else f"{label} - {item.account.name}",
+            "reference": item.voucher_no, "type": "Collection Entry",
+            "debit": item.amount if item.account_id in ledger_ids else zero, "credit": item.amount if item.party_id in ledger_ids else zero,
+        })
+    for item in PartyDue.objects.filter(Q(party_id__in=ledger_ids) | Q(counter_ledger_id__in=ledger_ids)).select_related("party", "counter_ledger"):
+        entries.append({
+            "date": item.due_date, "sort": (item.due_date, item.id, 4),
+            "particulars": item.due_number if item.party_id in ledger_ids else f"{item.party.name} · {item.due_number}",
+            "reference": item.voucher_no, "type": "Due",
+            "debit": item.amount if item.party_id in ledger_ids else zero, "credit": item.amount if item.counter_ledger_id in ledger_ids else zero,
+        })
+    # Journal Entry: one row per posting line, named after the ledgers on the other side.
+    journal_lines = JournalLine.objects.filter(voucher__in=JournalLine.objects.filter(ledger_id__in=ledger_ids).values("voucher_id")).select_related("voucher", "ledger")
+    by_voucher = {}
+    for line in journal_lines:
+        by_voucher.setdefault(line.voucher_id, []).append(line)
+    for lines in by_voucher.values():
+        for line in lines:
+            if line.ledger_id not in ledger_ids:
+                continue
+            others = sorted({other.ledger.name for other in lines if other.side != line.side})
+            entries.append({
+                "date": line.voucher.date, "sort": (line.voucher.date, line.voucher_id, 5, line.row),
+                "particulars": f"Journal · {', '.join(others)}" + (f" ({line.voucher.narration})" if line.voucher.narration else ""),
+                "reference": line.voucher.voucher_no, "type": "Journal",
+                "debit": line.amount if line.side == JournalLine.DEBIT else zero, "credit": line.amount if line.side == JournalLine.CREDIT else zero,
+            })
+    from .models import BankTransfer
+    transfers = bank_transfer_queryset().filter(Q(from_account_id__in=ledger_ids) | Q(to_account_id__in=ledger_ids)).select_related('from_account', 'to_account')
+    for item in transfers:
+        entries.append({
+            "date": item.date, "sort": (item.date, item.id, 2),
+            "particulars": f"{item.from_account.name} -> {item.to_account.name}",
+            "reference": item.voucher_no, "type": item.get_transaction_type_display(),
+            "debit": item.amount if item.to_account_id in ledger_ids else zero,
+            "credit": item.amount if item.from_account_id in ledger_ids else zero,
         })
     entries.sort(key=lambda row: row["sort"])
 
@@ -1247,7 +1812,7 @@ def ledger_statement(request):
     opening_amount, opening_type = _signed(opening_for_range)
     closing_amount, closing_type = _signed(running)
     return Response({
-        "ledger_type": kind, "group": group_name,
+        "ledger_type": kind, "group": group_name, "ledger_name": ledgers[0].name if kind == "ledger" else "", "warnings": report_warnings(),
         "opening_balance": opening_amount, "opening_balance_type": opening_type,
         "rows": rows, "total_debit": total_debit, "total_credit": total_credit,
         "closing_balance": closing_amount, "closing_balance_type": closing_type,
@@ -1255,27 +1820,109 @@ def ledger_statement(request):
 
 
 def _report_date_range(params):
-    from_date = params.get("from") or None
-    to_date = params.get("to") or None
-    return from_date, to_date
+    from rest_framework.exceptions import ValidationError
+    try:
+        start = date.fromisoformat(params["from"]) if params.get("from") else None
+        end = date.fromisoformat(params["to"]) if params.get("to") else None
+    except (ValueError, TypeError):
+        raise ValidationError({"detail": "Enter valid report dates."})
+    if start and end and start > end:
+        raise ValidationError({"detail": "From Date cannot be after To Date."})
+    return start, end
 
 
 @api_view(["GET"])
 def trial_balance_report(request):
     from .accounting_reports import trial_balance
     from_date, to_date = _report_date_range(request.query_params)
-    return Response(trial_balance(from_date, to_date))
+    from .accounting_reports import report_warnings
+    return Response({**trial_balance(from_date, to_date), "warnings": report_warnings()})
 
 
 @api_view(["GET"])
 def profit_and_loss_report(request):
     from .accounting_reports import profit_and_loss
     from_date, to_date = _report_date_range(request.query_params)
-    return Response(profit_and_loss(from_date, to_date))
+    from .accounting_reports import report_warnings
+    return Response({**profit_and_loss(from_date, to_date), "warnings": report_warnings()})
 
 
 @api_view(["GET"])
 def balance_sheet_report(request):
     from .accounting_reports import balance_sheet
     from_date, to_date = _report_date_range(request.query_params)
-    return Response(balance_sheet(from_date, to_date))
+    from .accounting_reports import report_warnings
+    return Response({**balance_sheet(from_date, to_date), "warnings": report_warnings()})
+
+
+@api_view(["GET", "POST"])
+@permission_classes([CanAccessKycDocuments])
+def loan_kyc_documents(request, loan_id):
+    loan = get_object_or_404(CustomerLoanDetails, pk=loan_id)
+    if request.method == "POST":
+        serializer = LoanKycDocumentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(loan=loan)
+        return Response(serializer.data, status=201)
+    documents = loan.kyc_documents.all()
+    return Response(LoanKycDocumentSerializer(documents, many=True).data)
+
+
+@api_view(["GET"])
+@permission_classes([CanAccessKycDocuments])
+def loan_kyc_document_file(request, loan_id, document_id):
+    # Scoped to the loan id in the path, not just the document id, so one loan's
+    # document link can never be swapped onto another loan â€” same guarantee as the
+    # customer-level KYC file endpoint.
+    document = get_object_or_404(LoanKycDocument, pk=document_id, loan_id=loan_id)
+    try:
+        handle = document.file.open("rb")
+    except FileNotFoundError:
+        raise Http404("Document file is missing.")
+    response = FileResponse(handle, as_attachment=bool(request.query_params.get("download")),
+                            filename=document.original_file_name,
+                            content_type=document.file_type or "application/octet-stream")
+    return secure_kyc_response(response)
+
+
+# Today Report attachments for a saved Receipt or Payment Entry (Loan rows use the loan KYC
+# endpoints above). Same access rule as loan KYC: administrators or users with Entry access.
+TRANSACTION_DOCUMENT_OWNERS = {"receipt": ("collection", CollectionTransaction), "payment": ("payment", PaymentEntry)}
+
+
+def _transaction_document_owner(kind, transaction_id):
+    if kind not in TRANSACTION_DOCUMENT_OWNERS:
+        raise Http404("Unknown transaction type.")
+    field, model = TRANSACTION_DOCUMENT_OWNERS[kind]
+    return field, get_object_or_404(model, pk=transaction_id)
+
+
+@api_view(["GET", "POST"])
+@permission_classes([CanAccessKycDocuments])
+def transaction_documents(request, kind, transaction_id):
+    field, owner = _transaction_document_owner(kind, transaction_id)
+    if request.method == "POST":
+        serializer = TransactionDocumentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # Only the document row is written; the receipt/payment itself is never saved here.
+        serializer.save(**{field: owner})
+        return Response(serializer.data, status=201)
+    documents = TransactionDocument.objects.filter(**{field: owner})
+    return Response(TransactionDocumentSerializer(documents, many=True).data)
+
+
+@api_view(["GET"])
+@permission_classes([CanAccessKycDocuments])
+def transaction_document_file(request, kind, transaction_id, document_id):
+    # Scoped to the owning transaction in the path, so one receipt's document id can never be
+    # read through another receipt or payment of the same customer or loan.
+    field, owner = _transaction_document_owner(kind, transaction_id)
+    document = get_object_or_404(TransactionDocument, pk=document_id, **{field: owner})
+    try:
+        handle = document.file.open("rb")
+    except FileNotFoundError:
+        raise Http404("Document file is missing.")
+    response = FileResponse(handle, as_attachment=bool(request.query_params.get("download")),
+                            filename=document.original_file_name,
+                            content_type=document.file_type or "application/octet-stream")
+    return secure_kyc_response(response)

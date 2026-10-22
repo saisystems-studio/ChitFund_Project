@@ -28,13 +28,25 @@
 }
 @media (min-width:768px){.customer-mobile-cards{display:none}}
 
-@media (max-width:767px){
-  .app-shell:has([class*="mobileSidebar"]){width:100%;min-width:0}
-  .app-shell:has([class*="mobileSidebar"]) .main-content{width:calc(100% - 60px);max-width:calc(100% - 60px);min-width:0;margin-left:60px!important;padding:10px 12px!important}
-  .app-shell:has([class*="mobileSidebar"]) .sidebar-toggle{position:fixed;left:47px!important;right:auto!important;top:18px!important;z-index:1010;width:26px;height:26px;font-size:18px}
-  .app-shell.mobile-sidebar-open:has([class*="mobileSidebar"]) .sidebar-toggle{left:calc(min(280px, 82vw) - 13px)!important}
-  .mobile-sidebar-backdrop{position:fixed;inset:0;z-index:999;border:0;background:rgba(7,27,49,.35);cursor:pointer}
-}
+/* ---------------------------------------------------------------------------
+   App shell (see Shell in App.jsx): .layout-desktop | .layout-tablet | .layout-mobile
+   Tablet: fixed 78px icon rail; the full menu opens as an overlay drawer, so the
+   content offset never changes. Mobile: sticky top bar + off-canvas drawer.
+   --------------------------------------------------------------------------- */
+.mobile-sidebar-backdrop{position:fixed;inset:0;z-index:999;border:0;padding:0;background:rgba(7,27,49,.42);cursor:pointer;touch-action:none}
+#root .app-shell.mobile-sidebar-open .main-content{overflow:hidden!important}
+.app-shell.layout-tablet,.app-shell.layout-mobile{width:100%;min-width:0}
+.app-shell.layout-tablet .main-content{margin-left:88px!important;width:calc(100% - 88px)!important;max-width:calc(100% - 88px)!important;min-width:0;padding:14px 16px!important}
+.app-shell.layout-mobile .main-content{margin-left:0!important;width:100%!important;max-width:100%!important;min-width:0;padding:0 12px 12px!important}
+/* At exactly 1024px the expanded sidebar is the narrow 200px variant (Sidebar.module.css). */
+@media (min-width:1024px) and (max-width:1024px){.app-shell.layout-desktop:not(.sidebar-collapsed) .main-content{margin-left:200px}}
+.mobile-topbar{position:sticky;top:0;z-index:25;display:flex;flex:0 0 auto;align-items:center;gap:8px;width:auto!important;max-width:none!important;height:50px;margin:0 -12px 10px!important;padding:0 10px;background:linear-gradient(165deg,#123b68,#0b2341);color:#fff;box-shadow:0 2px 10px #0b234133}
+.mobile-topbar button{display:inline-flex;align-items:center;min-width:0;min-height:40px!important;height:40px;border:0!important;background:transparent!important;color:#fff!important;cursor:pointer}
+.mobile-topbar-menu{justify-content:center;flex:0 0 40px;width:40px;padding:0!important;border-radius:8px}
+.mobile-topbar-menu:focus-visible,.mobile-topbar-brand:focus-visible{outline:2px solid #8ec5f5;outline-offset:1px}
+.mobile-topbar-brand{flex:1 1 auto;gap:9px;padding:0 4px!important;text-align:left}
+.mobile-topbar-logo{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;overflow:hidden;border-radius:8px;background:linear-gradient(135deg,#37a5ff,#1863c1);font-size:12px;font-weight:900}
+.mobile-topbar-brand strong{min-width:0;overflow:hidden;color:#fff!important;font-size:14px!important;font-weight:800;white-space:nowrap;text-overflow:ellipsis}
 .exact-header p:before {
   content: "← LOANS / LOAN APPLICATION" !important;
   font-size: 11px;
@@ -68,18 +80,6 @@
     gap: 14px;
   }
 
-  .list-toolbar-row { flex-wrap: wrap; }
-  .list-toolbar-title { flex: 1 1 220px; min-width: 0; }
-  .list-toolbar-controls {
-    flex: 1 1 100%;
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    min-width: 0;
-  }
-  .list-toolbar-controls input { flex: 1 1 250px; min-width: 0; width: auto; }
-  .list-toolbar-controls select,
-  .list-toolbar-controls button { flex: 0 1 auto; min-width: 0; }
 
   .dashboard-kpis,
   .reportCards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -191,6 +191,7 @@
   .list-container > .panel-head input,
   .list-container > .toolbar input { width: 100%; max-width: none; }
 
+  /* Forms are single-column on mobile; summary tiles stay two-up. */
   .form-grid,
   .innerGrid,
   .exact-two,
@@ -198,8 +199,8 @@
   .loan-details-grid,
   .collection-select-card,
   .payment-fields,
-  .collection-summary-items,
-  .collection-bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .collection-bottom { grid-template-columns: minmax(0, 1fr); }
+  .collection-summary-items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .form-grid > *, .innerGrid > *, .boxGrid > *,
   .exact-field, .loan-details-grid > *, .collection-select-card > *,
   .payment-fields > *, .collection-summary-items > * { min-width: 0; }
@@ -466,7 +467,7 @@
   .main-content .form-grid,
   .main-content .formGrid,
   .main-content .payment-fields,
-  .main-content .collection-select-card{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;min-width:0;padding:12px}
+  .main-content .collection-select-card{grid-template-columns:minmax(0,1fr);gap:8px 10px;min-width:0;padding:12px}
   .main-content .form-grid>* ,
   .main-content .formGrid>* ,
   .main-content .payment-fields>* ,
@@ -517,8 +518,7 @@
   .main-content .report-summary-card span{font-size:10px}
   .main-content .report-summary-card strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .main-content .report-table-wrap{width:100%;max-width:100%;overflow:auto}
-  .main-content .report-table{width:100%;min-width:0;table-layout:fixed;font-size:10px}
-  .main-content .report-table th,.main-content .report-table td{padding:6px 4px;font-size:10px;white-space:normal;overflow-wrap:anywhere}
+  .main-content .report-table th,.main-content .report-table td{padding:6px 6px;font-size:11px}
 
   .main-content .active-loans-page{width:100%;min-width:0;display:flex;flex-direction:column;gap:10px;padding:0}
   .main-content .active-loans-page .active-loans-header{display:block;margin:0}
@@ -532,6 +532,7 @@
   .main-content .active-loans-page .active-summary-card{min-width:0;min-height:78px;padding:10px}
   .main-content .active-loans-page .active-summary-card strong{font-size:15px;white-space:normal;overflow-wrap:anywhere}
   .main-content .active-loans-page .active-table-wrap{overflow:visible}
+  #root .main-content .active-loans-page .active-table-wrap>table{min-width:0}
   .main-content .active-loans-page .active-table-wrap table,
   .main-content .active-loans-page .active-table-wrap thead,
   .main-content .active-loans-page .active-table-wrap tbody,
@@ -541,14 +542,14 @@
   .main-content .active-loans-page .active-table-wrap tr{padding:10px;border-bottom:1px solid #e7f0f7}
   .main-content .active-loans-page .active-table-wrap td{display:flex;justify-content:space-between;align-items:center;width:100%;height:auto;padding:5px 0;white-space:normal}
   .main-content .active-loans-page .active-table-wrap td:before{color:#7891aa;font-size:10px;font-weight:700}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(1):before{content:"Loan"}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(2):before{content:"Customer"}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(3):before{content:"Plan"}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(4):before{content:"Period"}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(5):before{content:"Total Amount"}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(6):before{content:"Collected"}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(7):before{content:"Outstanding"}
-  .main-content .active-loans-page .active-table-wrap td:nth-child(8):before{content:"Next Due"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(1):before{content:"S.No"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(2):before{content:"Start Date"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(3):before{content:"Loan Number"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(4):before{content:"Customer"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(5):before{content:"Plan Type"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(6):before{content:"Collection Date"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(7):before{content:"Total Amount"}
+  .main-content .active-loans-page .active-table-wrap td:nth-child(8):before{content:"Outstanding"}
   .main-content .active-loans-page .active-table-wrap td:nth-child(9):before{content:"Status"}
   .main-content .active-loans-page .active-footer{display:block;padding:10px 0}
   .main-content .active-loans-page .active-footer>div{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
@@ -644,20 +645,54 @@
   }
 }
 
-/* Mobile data tables use contained row cards; never create page-level scrolling. */
+/* ---------------------------------------------------------------------------
+   Data tables below 1280px: keep real table layouts and scroll horizontally
+   inside their own container (.scrollable-grid, tagged by utils/tableScrolling).
+   Each table gets roughly 110px per column (--table-cols is set by the same
+   util), so columns stay readable instead of being crushed to fit the screen.
+   --------------------------------------------------------------------------- */
+@media (max-width:1279px){
+  #root .main-content .scrollable-grid{max-width:100%;min-width:0;overflow-x:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+  #root .main-content .scrollable-grid>table{min-width:max(100%,calc(var(--table-cols,4) * 110px))}
+  #root .main-content .scrollable-grid>table th{white-space:nowrap}
+  #root .main-content .scrollable-grid>table td{overflow-wrap:normal;word-break:normal}
+  /* Ledger reports render rows and the Opening/Current/Closing footer as two tables:
+     the card scrolls them together so DR/CR columns stay aligned. */
+  #root .main-content .rpt-ledger-card{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  #root .main-content .rpt-ledger-card .scrollable-grid{overflow-x:visible!important;max-width:none}
+  #root .main-content .rpt-ledger-card .rpt-ledger-table{min-width:880px}
+  #root .main-content .scrollable-grid>table.acct-table{min-width:max(100%,calc(var(--table-cols,3) * 140px))}
+  /* Scrollbars stay invisible (see responsive-final.css); scrolling still works. */
+}
 @media (max-width:767px){
-  .main-content [class*="tableWrap"],.main-content [class*="table-wrap"],.main-content .report-table-wrap{width:100%;max-width:100%;min-width:0;overflow:hidden}
-  .main-content [class*="tableWrap"] table,.main-content [class*="table-wrap"] table,.main-content .report-table{width:100%;max-width:100%;min-width:0;table-layout:fixed}
-  .main-content [class*="tableWrap"] th,.main-content [class*="table-wrap"] th{font-size:9px;padding:6px 4px;white-space:normal}
-  .main-content [class*="tableWrap"] td,.main-content [class*="table-wrap"] td{font-size:10px;padding:7px 4px;white-space:normal;overflow-wrap:anywhere}
-  .main-content .report-table-wrap .report-table{display:block}
-  .main-content .report-table-wrap .report-table thead{display:none}
-  .main-content .report-table-wrap .report-table tbody,.main-content .report-table-wrap .report-table tr,.main-content .report-table-wrap .report-table td{display:block;width:100%}
-  .main-content .report-table-wrap .report-table tr{margin-bottom:8px;padding:9px 10px;border:1px solid #dce8f5;border-radius:9px;background:#fff}
-  .main-content .report-table-wrap .report-table td{display:flex;justify-content:space-between;gap:10px;height:auto;padding:4px 0;border:0;text-align:right}
-  .main-content .report-table-wrap .report-table td:before{color:#71879a;font-size:10px;font-weight:700;text-align:left}
-  .main-content .report-table-wrap .report-table td:nth-child(1):before{content:"S.No"}.main-content .report-table-wrap .report-table td:nth-child(2):before{content:"Date"}.main-content .report-table-wrap .report-table td:nth-child(3):before{content:"Customer"}.main-content .report-table-wrap .report-table td:nth-child(4):before{content:"Loan No"}.main-content .report-table-wrap .report-table td:nth-child(5):before{content:"Installment"}.main-content .report-table-wrap .report-table td:nth-child(6):before{content:"Scheduled"}.main-content .report-table-wrap .report-table td:nth-child(7):before{content:"Paid"}.main-content .report-table-wrap .report-table td:nth-child(8):before{content:"Balance"}.main-content .report-table-wrap .report-table td:nth-child(9):before{content:"Payment Date"}.main-content .report-table-wrap .report-table td:nth-child(10):before{content:"Status"}
   .mobile-data-card{width:100%;max-width:100%;min-width:0;padding:10px 12px;margin-bottom:8px;border:1px solid #dce8f5;border-radius:9px;background:#fff;box-sizing:border-box}
   .mobile-data-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;min-width:0}
   .mobile-data-card-label{display:block;color:#71879a;font-size:10px;font-weight:700}.mobile-data-card-value{display:block;margin-top:2px;color:#173f65;font-size:12px;overflow-wrap:anywhere}.mobile-data-card-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+}
+
+/* ---------------------------------------------------------------------------
+   Modals, popups and drawers (all breakpoints)
+   - the page behind an open modal does not scroll;
+   - every dialog fits the viewport and scrolls internally when its content is
+     taller than the screen, so its action buttons stay reachable.
+   --------------------------------------------------------------------------- */
+body:has(.cash-denom-backdrop,.save-confirm-backdrop,.hol-modal-backdrop,.report-detail-backdrop,.installment-dialog-backdrop,.loan-type-backdrop,.loan-type-edit-backdrop,.mortgage-modal-backdrop,.staff-modal-backdrop,.ledger-modal-backdrop,.group-modal-backdrop,.tcr-detail-backdrop,.transaction-edit-backdrop,.loan-modal-backdrop,.loan-add-customer-backdrop,.exact-overlay,.customer-drawer-layer,[class*="_modalBackdrop_"],[class*="_confirmBackdrop_"],[class*="_backdrop_"]) #root .app-shell .main-content{overflow:hidden!important;overscroll-behavior:none}
+.hol-modal{max-height:calc(100dvh - 24px);overflow-y:auto}
+.mortgage-modal{max-height:calc(100dvh - 24px)}
+@media (max-width:767px){
+  :is(.cash-denom-backdrop,.save-confirm-backdrop,.hol-modal-backdrop,.report-detail-backdrop,.installment-dialog-backdrop,.loan-type-backdrop,.loan-type-edit-backdrop,.mortgage-modal-backdrop,.staff-modal-backdrop,.ledger-modal-backdrop,.group-modal-backdrop,.tcr-detail-backdrop,.transaction-edit-backdrop,.loan-modal-backdrop,.exact-overlay,[class*="_modalBackdrop_"],[class*="_confirmBackdrop_"]){padding:8px!important;box-sizing:border-box}
+  :is(.cash-denom-modal,.hol-modal,.report-detail-dialog,.installment-dialog,.loan-type-modal,.mortgage-edit-modal,.mortgage-modal,.staff-modal,.ledger-modal,.group-modal,.transaction-edit-modal,.loan-details-modal,.exact-holiday-modal,.tcr-detail,[class*="_detailModal_"],[class*="_confirmModal_"],[class*="_listModal_"],[class*="_cameraModal_"],[class*="_previewModal_"],[class*="_confirmDialog_"],[class*="_holidayModal_"]){box-sizing:border-box;max-width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important}
+  :is(.report-detail-dialog,.installment-dialog,.loan-type-modal,.exact-holiday-modal,.hol-modal,.staff-modal,.ledger-modal,.group-modal){overflow-y:auto}
+  .loan-type-modal{padding:16px;border-radius:14px}
+}
+
+/* List toolbars on tablet (768-1023): title on its own line, then one wrapping
+   row of controls — search grows, filters keep a compact width, buttons natural. */
+@media (min-width:768px) and (max-width:1023px){
+  #root .main-content .list-toolbar-row{display:flex!important;flex-wrap:wrap;align-items:center;gap:10px 12px;height:auto;min-height:0}
+  #root .main-content .list-toolbar-row>.list-toolbar-title{flex:1 1 100%;min-width:0}
+  #root .main-content .list-toolbar-controls{display:flex!important;flex:1 1 100%;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;width:100%;min-width:0;margin:0}
+  #root .main-content .list-toolbar-controls>input,#root .main-content .list-toolbar-controls>:is(div,label):has(input){flex:1 1 220px;width:auto!important;min-width:0;max-width:none}
+  #root .main-content .list-toolbar-controls select{flex:0 1 170px;width:170px!important;min-width:0}
+  #root .main-content .list-toolbar-controls>button,#root .main-content .list-toolbar-controls>*>button{flex:0 0 auto;width:auto!important;white-space:nowrap}
 }

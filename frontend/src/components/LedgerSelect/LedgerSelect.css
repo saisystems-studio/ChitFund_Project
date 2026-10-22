@@ -1,0 +1,6 @@
+.ledger-select-add{display:flex;align-items:center;gap:6px;min-width:0}
+.ledger-select-add select{flex:1 1 auto;min-width:0}
+.ledger-add-button{display:inline-flex;flex:0 0 26px;align-items:center;justify-content:center;width:26px;height:26px;padding:0;border:1px solid #c9d9e8;border-radius:6px;background:#f1f7fc;color:#176db3;cursor:pointer}
+.ledger-add-button:hover{background:#e3f1ff;border-color:#176db3}
+.ledger-add-button:focus-visible{outline:2px solid #3188d4;outline-offset:1px}
+.ledger-add-button svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}

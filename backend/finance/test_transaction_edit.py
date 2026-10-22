@@ -1,3 +1,5 @@
+from .test_support import ensure_cash_ledger
+from .models import Ledger
 from datetime import date
 from decimal import Decimal
 
@@ -12,6 +14,7 @@ from .models import (CollectionTransaction, CustomerLoanDetails, CustomerLoanIns
 
 class TransactionEditTests(TestCase):
     def setUp(self):
+        ensure_cash_ledger()
         self.client = APIClient()
         self.client.force_authenticate(User.objects.create_user('editor', is_staff=True))
         self.customer = Customer.objects.create(customer_code='EDIT', full_name='Edit Customer', primary_mobile='9876543210')
@@ -33,7 +36,8 @@ class TransactionEditTests(TestCase):
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.data['customer_name'], 'Edit Customer')
         self.assertEqual(len(result.data['allocations']), 2)
-        result = self.client.patch(self.url(pk), {'collection_amount': '80', 'collection_date': '2026-01-12', 'remarks': 'Corrected', 'payment_mode': 'UPI', 'upi_id': 'payer@bank', 'reference_no': 'UTR123'}, format='json')
+        bank = Ledger.objects.create(name='Bank', group='Bank Accounts')
+        result = self.client.patch(self.url(pk), {'collection_amount': '80', 'collection_date': '2026-01-12', 'remarks': 'Corrected', 'payment_mode': 'UPI', 'upi_id': 'payer@bank', 'reference_no': 'UTR123', 'account': bank.id}, format='json')
         self.assertEqual(result.status_code, 200, result.data)
         self.assertEqual(result.data['id'], pk)
         self.assertEqual(result.data['remarks'], 'Corrected')

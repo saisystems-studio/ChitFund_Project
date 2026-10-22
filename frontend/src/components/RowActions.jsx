@@ -10,12 +10,14 @@ function ActionIcon({ name }) {
 }
 
 export default function RowActions({ onView, onPdf, onPrint, onEdit, onDelete, disabled = false, className = "" }) {
+  const { isAdmin } = useSession();
   return <div className={`action-group ${className}`.trim()}>
     {onPdf && <Tooltip label="Download PDF"><button type="button" className="action-pdf" aria-label="Download PDF" disabled={disabled} onClick={event => { event.stopPropagation(); onPdf(event); }}><ActionIcon name="pdf" /></button></Tooltip>}
     {onPrint && <Tooltip label="Print"><button type="button" className="action-print" aria-label="Print" disabled={disabled} onClick={event => { event.stopPropagation(); onPrint(event); }}><ActionIcon name="print" /></button></Tooltip>}
     {onView && <Tooltip label="View"><button type="button" className="action-view" aria-label="View" onClick={event => { event.stopPropagation(); onView(event); }}><ActionIcon name="view" /></button></Tooltip>}
-    {onEdit && <Tooltip label="Edit"><button type="button" className="action-edit" aria-label="Edit" onClick={event => { event.stopPropagation(); onEdit(event); }}><ActionIcon name="edit" /></button></Tooltip>}
-    {onDelete && <Tooltip label="Delete"><button type="button" className="action-delete" aria-label="Delete" onClick={event => { event.stopPropagation(); onDelete(event); }}><ActionIcon name="delete" /></button></Tooltip>}
+    {onEdit && isAdmin && <Tooltip label="Edit"><button type="button" className="action-edit" aria-label="Edit" onClick={event => { event.stopPropagation(); onEdit(event); }}><ActionIcon name="edit" /></button></Tooltip>}
+    {onDelete && isAdmin && <Tooltip label="Delete"><button type="button" className="action-delete" aria-label="Delete" onClick={event => { event.stopPropagation(); onDelete(event); }}><ActionIcon name="delete" /></button></Tooltip>}
   </div>;
 }
 import Tooltip from "./Tooltip";
+import { useSession } from "./SessionContext";

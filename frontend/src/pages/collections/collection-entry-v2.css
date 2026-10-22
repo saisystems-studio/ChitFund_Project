@@ -1,0 +1,212 @@
+/* Collection Entry: stable 60/40 form and preview columns with an independent action footer. */
+#root .app-shell .main-content:has(> .ce-fill){display:flex!important;flex-direction:column!important;padding-bottom:12px!important;scrollbar-gutter:stable}
+#root .app-shell .main-content > .ce-fill:not([hidden]){display:flex;flex-direction:column;flex:1 1 0;min-height:0}
+#root .app-shell .main-content:has(> .ce-fill) > :not(.ce-fill){flex-shrink:0}
+#root .app-shell .main-content > .ce-fill > .collection-entry-page{flex:1 1 0;min-height:0;display:flex;flex-direction:column;min-height:0}
+#root .app-shell .main-content > .ce-fill > .collection-entry-page > .collection-entry-card{flex:1 1 0;min-height:0}
+#root .ce-v2.collection-entry-page{width:100%;max-width:none;margin:0;overflow:visible}
+#root .ce-v2 .collection-entry-heading{flex:0 0 auto}
+#root .ce-v2 .collection-entry-card{flex:1 1 0;display:flex;flex-direction:column;min-height:0;padding:16px 20px 14px;box-sizing:border-box}
+#root .ce-v2 .collection-entry-card>form{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+#root .ce-v2 .ce-v2-body{flex:1 1 0;display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:20px;min-height:0}
+#root .ce-v2 .collection-entry-actions{margin-top:auto;padding-top:14px}
+
+/* Two-column field grid within the left pane; payment details use the same grid. */
+#root .ce-v2 .ce-v2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 16px;align-items:start;align-content:start}
+#root .ce-v2 .ce-v2-grid>*{min-width:0;margin:0}
+#root .ce-v2 .ce-v2-grid>.dynamic-fields{display:contents}
+#root .ce-v2 .ce-v2-grid>.dynamic-fields>*{min-width:0;margin:0}
+#root .ce-v2 .entry-field input,#root .ce-v2 .entry-field select,#root .ce-v2 .entry-picker-button,#root .ce-v2 .currency-input{min-height:38px;box-sizing:border-box}
+/* Scenario B: Loan Plan stays in place, greyed out. */
+#root .ce-v2 .ce-v2-disabled select,#root .ce-v2 .ce-v2-disabled button,#root .ce-v2 .ce-v2-disabled input{background:#eef1f5;color:#8a97a6;cursor:not-allowed}
+#root .ce-v2 .ce-v2-disabled .entry-label{color:#8a97a6}
+
+/* Collection Preview summary within the right column. */
+.ce-v2-statement{border:1px solid #dbe6f1;border-radius:8px;background:#f7fafd;padding:8px 12px;min-height:72px;box-sizing:border-box}
+.ce-v2-statement-title{display:block;margin-bottom:6px;color:#5b6f84;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.ce-v2-statement-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 22px;min-height:36px}
+.ce-v2-stat{display:grid;gap:1px;min-width:0}
+.ce-v2-stat small{color:#6b7f93;font-size:11px}
+.ce-v2-stat b{color:#17324d;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.ce-v2-stat.ok b{color:#1f7a4a}.ce-v2-stat.warn b{color:#c2410c}
+.ce-v2-hint{margin:0;color:#4a6178;font-size:13px}
+.ce-v2-statement-button{margin-left:auto;padding:7px 14px;border:1px solid #1d5d99;border-radius:6px;background:#1d5d99;color:#fff;font-weight:700;cursor:pointer}
+.ce-v2-statement-button:disabled{opacity:.5;cursor:not-allowed}
+
+@media(max-width:1100px){#root .ce-v2 .ce-v2-grid{grid-template-columns:repeat(2,minmax(0,1fr));min-height:0}}
+@media(max-width:767px){#root .ce-v2 .ce-v2-grid{grid-template-columns:minmax(0,1fr)}#root .ce-v2 .collection-entry-card{padding:12px}.ce-v2-statement-button{margin-left:0;width:100%}}
+
+/* Stable columns share the available height; only their contents scroll. */
+#root .ce-v2 .ce-v2-fields { min-width:0; min-height:0; overflow:auto; padding:12px 4px 8px 0; }
+#root .ce-v2 .ce-v2-preview { min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; background:#fff; border:1px solid #dbe6f1; border-radius:8px; }
+#root .ce-v2 .ce-v2-statement { border:0; border-radius:0; background:#fff; padding:14px; }
+#root .ce-v2 .ce-v2-statement-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+#root .ce-v2 .ce-v2-stat b { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+#root .ce-v2 .entry-notes { margin:26px 0 0; }
+#root .ce-v2 .collection-entry-actions { flex:0 0 auto; display:flex; justify-content:center; gap:10px; }
+@media(max-width:767px) {
+  #root .ce-v2 .ce-v2-body { grid-template-columns:minmax(0,1fr); overflow:auto; align-content:start; }
+  #root .ce-v2 .ce-v2-fields { overflow:visible; }
+  #root .ce-v2 .ce-v2-preview { min-height:260px; max-height:440px; }
+}
+
+/* Statement owns one scroll area; its header and totals occupy real flex slots. */
+#root .ce-v2 .ce-v2-statement { flex:0 0 auto; }
+#root .ce-v2 .ce-v2-statement-button { margin:12px 0 0; }
+#root .ce-v2 .ce-statement-panel { display:flex; flex-direction:column; min-width:0; min-height:0; background:#fff; color:#17324d; }
+#root .ce-v2 .ce-inline-statement { flex:1 1 auto; border-top:1px solid #dbe6f1; }
+#root .ce-v2 .ce-statement-heading { flex:0 0 auto; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px; font-size:14px; }
+#root .ce-v2 .ce-statement-summary { flex:0 0 auto; padding:0 14px 12px; font-size:12px; line-height:1.6; }
+#root .ce-v2 .ce-statement-scroll { flex:1 1 auto; min-height:100px; max-height:none; overflow-y:auto; overflow-x:hidden; }
+#root .main-content .ce-v2 .ce-statement-scroll > table.ce-statement-table { display:table; width:100%; min-width:0; table-layout:fixed; border-collapse:separate; border-spacing:0; font-size:12px; }
+#root .ce-v2 .ce-statement-table thead { position:sticky; top:0; z-index:2; }
+#root .main-content .ce-v2 .ce-statement-table :is(th,td) { position:static; height:auto; padding:10px 6px; text-align:right; white-space:normal; overflow-wrap:anywhere; vertical-align:middle; line-height:1.45; }
+#root .main-content .ce-v2 .ce-statement-table th { height:44px; padding:10px 4px; font-size:10px; letter-spacing:0; overflow-wrap:normal; }
+#root .ce-v2 .ce-statement-table td { border-bottom:1px solid #e4edf5; }
+#root .ce-v2 .ce-statement-table th:nth-child(2),
+#root .ce-v2 .ce-statement-table td:nth-child(2) { text-align:left; }
+#root .ce-v2 .ce-statement-table small { display:block; margin-top:4px; color:#60758b; font-size:10px; }
+#root .ce-v2 .ce-statement-table .ce-select-col { width:46px; }
+#root .ce-v2 .ce-statement-table .ce-allocation-col { width:28%; }
+#root .ce-v2 .ce-statement-table input[type=checkbox] { display:block; width:16px; height:16px; min-height:0; margin:auto; }
+#root .ce-v2 .ce-statement-table input[type=number] { width:100%; min-width:0; height:36px; margin:0; padding:4px; border:1px solid #c9d9e8; border-radius:6px; background:#fff; color:#17324d; font-size:12px; text-align:right; }
+#root .ce-v2 .ce-statement-table input:disabled { background:#f4f7fa; }
+#root .ce-v2 .ce-statement-table input[aria-invalid=true] { border-color:#d94a57; }
+#root .ce-v2 .ce-statement-table .ce-selectable-due { cursor:default; }
+#root .ce-v2 .ce-statement-table .selected td { background:#f0f7ff; }
+#root .ce-v2 .ce-statement-table .ce-statement-empty { padding:24px 12px; text-align:center; color:#60758b; }
+#root .ce-v2 .ce-statement-footer { flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px; border-top:1px solid #dbe6f1; background:#fff; }
+#root .ce-v2 .ce-statement-totals { display:flex; flex-wrap:wrap; gap:12px 20px; font-size:12px; }
+#root .ce-v2 .ce-statement-totals span { display:grid; gap:5px; }
+#root .ce-v2 .ce-statement-heading button { width:34px; height:34px; padding:0; border:1px solid #c9d9e8; border-radius:6px; background:#fff; color:#17324d; font-size:22px; cursor:pointer; }
+#root .ce-v2 .ce-statement-footer button { padding:9px 20px; border:0; border-radius:6px; background:#174d7c; color:#fff; cursor:pointer; }
+#root .ce-v2 .ce-statement-backdrop { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(15,39,66,.4); }
+#root .ce-v2 .ce-statement-modal { width:min(1100px,100%); height:min(760px,calc(100dvh - 40px)); max-height:calc(100dvh - 40px); border:1px solid #dbe6f1; border-radius:12px; overflow:hidden; box-shadow:0 20px 60px rgba(15,39,66,.25); }
+#root .ce-v2 .ce-statement-modal .ce-statement-table { font-size:13px; }
+#root .ce-v2 .ce-statement-modal .ce-select-col { width:60px; }
+@media(max-width:767px) {
+  #root .ce-v2 .ce-v2-preview { min-height:420px; max-height:600px; }
+  #root .ce-v2 .ce-statement-backdrop { padding:8px; }
+  #root .ce-v2 .ce-statement-modal { height:calc(100dvh - 32px); max-height:calc(100dvh - 32px); }
+  #root .ce-v2 .ce-statement-heading, #root .ce-v2 .ce-statement-footer { padding:10px; }
+  #root .ce-v2 .ce-statement-modal .ce-select-col { width:46px; }
+  #root .ce-v2 .ce-statement-footer { flex-wrap:wrap; }
+}
+
+#root .ce-v2 .ce-others-option { display:flex; align-items:center; gap:8px; margin:0 0 16px; font-size:13px; }
+#root .ce-v2 .ce-others-option input { width:16px; height:16px; margin:0; }
+
+/* Collection Preview: same layout as the Payment Preview */
+#root .collection-entry-page .pe-preview { padding:18px; gap:22px; overflow-y:auto; }
+#root .collection-entry-page .pe-preview h2 { margin:0; color:#0E2D51; font-size:15px; }
+#root .collection-entry-page .pe-preview dl { display:grid; gap:20px; margin:0; }
+#root .collection-entry-page .pe-preview dl > div { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; }
+#root .collection-entry-page .pe-preview dt { color:#60758b; font-size:12px; }
+#root .collection-entry-page .pe-preview dd { margin:0; color:#17324d; font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+#root .collection-entry-page .pe-total { display:grid; gap:6px; padding:16px 18px; border:1px solid #dbe6f1; border-radius:10px; background:#f3f8fd; flex:0 0 auto; }
+#root .collection-entry-page .pe-total span { color:#60758b; font-size:12px; font-weight:700; }
+#root .collection-entry-page .pe-total strong { color:#174d7c; font-size:28px; line-height:1.15; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+#root .collection-entry-page .pe-summary { margin-top:auto; padding-top:18px; border-top:1px solid #dbe6f1; flex:0 0 auto; }
+#root .collection-entry-page .pe-summary h3 { margin:0 0 12px; color:#0E2D51; font-size:13px; }
+#root .collection-entry-page .pe-summary p { margin:0 0 12px; font-size:12px; line-height:1.8; }
+#root .collection-entry-page .pe-summary strong { color:#174d7c; font-size:22px; }
+#root .ce-v2 .ce-others-panel { flex:0 0 auto; border-top:1px solid #e4eaf3; }
+#root .ce-v2 .ce-others-panel .ce-statement-heading { padding:12px 0 4px; color:#0E2D51; font-size:13px; }
+#root .ce-v2 .ce-others-body { padding:0 0 4px; }
+#root .ce-v2 .ce-sum-row { display:flex; justify-content:space-between; align-items:baseline; gap:16px; margin:0; padding:5px 0; font-size:13px; color:#475569; }
+#root .ce-v2 .ce-sum-row b { color:#0f172a; font-weight:600; text-align:right; }
+#root .ce-v2 .ce-others-note { margin:6px 0 0; color:#64748b; font-size:12px; }
+#root .ce-v2 .ce-v2-statement-button { align-self:flex-start; margin:0; background:#0E2D51; border-color:#0E2D51; }
+#root .ce-v2 .ce-v2-statement-button:hover { background:#16416F; }
+@media(max-width:1023px) { #root .collection-entry-page .pe-preview { min-height:430px; } }
+
+/* Pending List: the preview column scrolls as a whole; the dues grid has its own bounded scroll area. */
+#root .ce-v2 .ce-v2-preview > * { flex:0 0 auto; min-width:0; }
+#root .ce-v2 .ce-inline-statement { flex:0 0 auto; }
+#root .ce-v2 .ce-inline-statement .ce-statement-heading { padding:12px 0 8px; color:#0E2D51; font-size:13px; }
+#root .ce-v2 .ce-statement-scroll { flex:0 1 auto; min-height:0; max-height:min(48vh,420px); overflow:auto; border:1px solid #dbe6f1; border-radius:6px; }
+#root .main-content .ce-v2 .ce-statement-scroll > table.ce-statement-table { min-width:380px; }
+#root .ce-v2 .ce-statement-table thead th { position:sticky; top:0; z-index:2; background:#f1f6fb; color:#37526e; text-transform:uppercase; text-align:right; border-bottom:1px solid #dbe6f1; }
+#root .ce-v2 .ce-statement-table thead th:nth-child(1) { text-align:center; }
+#root .ce-v2 .ce-statement-table thead th:nth-child(2) { text-align:left; }
+#root .main-content .ce-v2 .ce-statement-table tbody td { height:52px; padding:8px 8px; font-size:12px; }
+#root .main-content .ce-v2 .ce-statement-table tbody td.ce-check-cell { text-align:center; }
+#root .ce-v2 .ce-statement-table td small { margin-top:2px; }
+#root .ce-v2 .ce-statement-table input[type=number] { height:34px; padding:4px 8px; }
+#root .ce-v2 .ce-statement-footer { padding:12px 0 0; border-top:0; }
+#root .ce-v2 .ce-statement-totals { flex:1 1 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0; }
+#root .ce-v2 .ce-statement-totals > div { display:grid; gap:4px; padding:8px 10px; border:1px solid #dbe6f1; border-radius:6px; background:#f8fbfe; }
+#root .ce-v2 .ce-statement-totals dt { margin:0; color:#60758b; font-size:11px; }
+#root .ce-v2 .ce-statement-totals dd { margin:0; color:#17324d; font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+@media(max-width:767px) { #root .ce-v2 .ce-v2-preview { max-height:none; } #root .ce-v2 .ce-statement-totals { grid-template-columns:1fr; } }
+#root .collection-entry-page .pe-preview dl.ce-statement-totals { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+#root .collection-entry-page .pe-preview dl.ce-statement-totals > div { grid-template-columns:minmax(0,1fr); gap:4px; }
+#root .collection-entry-page .pe-preview dl.ce-statement-totals dd { font-size:13px; }
+@media(max-width:767px) { #root .collection-entry-page .pe-preview dl.ce-statement-totals { grid-template-columns:1fr; } }
+#root .collection-entry-page .pe-preview dl.ce-statement-totals { grid-template-columns:minmax(0,1fr); }
+#root .ce-v2 .ce-advance-option { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid #dbe6f1; border-radius:6px; background:#f8fbfe; cursor:pointer; }
+#root .ce-v2 .ce-advance-option.active { border-color:#174d7c; background:#eaf3fb; }
+#root .ce-v2 .ce-advance-option input { flex:0 0 auto; width:16px; height:16px; margin:2px 0 0; }
+#root .ce-v2 .ce-advance-option span { display:grid; gap:2px; min-width:0; }
+#root .ce-v2 .ce-advance-option b { color:#17324d; font-size:13px; }
+#root .ce-v2 .ce-advance-option small { color:#60758b; font-size:11px; line-height:1.4; }
+#root .ce-v2 .ce-statement-warning { margin:0; color:#b83950; font-size:12px; font-weight:600; flex:1; }
+
+/* Collection / Payment preview: compact stack; in Collection Entry the Pending List takes the rest of the panel height
+   and only its rows scroll (sticky header), so the list is visible without scrolling the page. */
+#root .ce-v2 .ce-v2-body { grid-template-rows:minmax(0,1fr); }
+#root .ce-v2 .ce-v2-preview.pe-preview { padding:14px; gap:12px; }
+#root .ce-v2 .ce-v2-preview.pe-preview dl { gap:10px; }
+#root .ce-v2 .pe-total { padding:10px 14px; gap:2px; }
+#root .ce-v2 .pe-total strong { font-size:24px; }
+#root .ce-v2 .ce-others-panel .ce-statement-heading { padding:8px 0 2px; }
+#root .ce-v2 .ce-v2-preview > .ce-inline-statement { flex:1 1 0; min-height:0; display:flex; flex-direction:column; border-top:0; }
+#root .ce-v2 .ce-inline-statement .ce-statement-heading { padding:2px 0 8px; }
+#root .ce-v2 .ce-inline-statement .ce-statement-summary { padding:0 0 8px; }
+#root .ce-v2 .ce-inline-statement .ce-statement-scroll { flex:1 1 0; min-height:96px; max-height:none; overflow-y:auto; scrollbar-width:thin; }
+#root .ce-v2 .ce-inline-statement .ce-statement-footer { padding:8px 0 0; }
+@media (max-width:1100px) { #root .ce-v2 .ce-v2-preview.pe-preview { max-height:none; } #root .ce-v2 .ce-inline-statement .ce-statement-scroll { flex:0 1 auto; max-height:360px; } }
+#root .ce-v2 .ce-v2-preview.pe-preview { overflow-y:auto; scrollbar-width:thin; }
+@media (max-height:760px) and (min-width:1101px) {
+  #root .ce-v2 .ce-v2-preview.pe-preview { padding:10px 12px; gap:6px; }
+  #root .ce-v2 .ce-v2-preview.pe-preview h2 { font-size:14px; }
+  #root .ce-v2 .ce-v2-preview.pe-preview dl { gap:4px; }
+  #root .ce-v2 .pe-total { padding:6px 12px; }
+  #root .ce-v2 .pe-total strong { font-size:20px; }
+  #root .ce-v2 .ce-sum-row { padding:2px 0; }
+  #root .ce-v2 .ce-advance-option { padding:6px 10px; }
+  #root .ce-v2 .ce-advance-option small { display:none; }
+  #root .ce-v2 .ce-inline-statement .ce-statement-heading { padding:0 0 4px; }
+  #root .ce-v2 .ce-others-panel .ce-statement-heading { padding:2px 0; }
+}
+#root .main-content .ce-v2 .ce-inline-statement .ce-statement-scroll > table.ce-statement-table { min-width:310px; }
+#root .ce-v2 .ce-inline-statement .ce-statement-table .ce-select-col { width:44px; }
+#root .ce-v2 .ce-inline-statement .ce-statement-table .ce-allocation-col { width:27%; }
+#root .main-content .ce-v2 .ce-inline-statement .ce-statement-table tbody td { padding:8px 4px; }
+#root .main-content .ce-v2 .ce-inline-statement .ce-statement-table th { padding:10px 3px; }
+
+/* Others | Pending List: a compact segmented switch (only when the ledger has dues). The area under it is always
+   reserved with the same minimum height, so changing mode never resizes the panel or moves the buttons. */
+#root .ce-v2 .ce-mode { display:inline-grid; grid-template-columns:1fr 1fr; align-self:flex-start; width:100%; max-width:320px; padding:3px; border:1px solid #dbe6f1; border-radius:8px; background:#f1f6fb; }
+#root .ce-v2 .ce-mode button { height:32px; border:0; border-radius:6px; background:transparent; color:#4a6178; font:inherit; font-size:13px; font-weight:700; cursor:pointer; transition:background-color .15s,color .15s; }
+#root .ce-v2 .ce-mode button.active { background:#174d7c; color:#fff; box-shadow:0 1px 3px rgba(16,42,67,.2); }
+#root .ce-v2 .ce-mode-area { flex:1 1 0; min-height:150px; min-width:0; display:flex; flex-direction:column; }
+#root .ce-v2 .ce-mode-area > .ce-fade { flex:1 1 0; min-height:0; display:flex; flex-direction:column; animation:ce-fade-in .18s ease-out; }
+#root .ce-v2 .ce-mode-area .ce-inline-statement { flex:1 1 0; min-height:0; }
+@keyframes ce-fade-in { from { opacity:0; } to { opacity:1; } }
+@media (max-width:1100px) { #root .ce-v2 .ce-mode-area { flex:0 0 auto; min-height:0; } #root .ce-v2 .ce-mode-area > .ce-fade { flex:0 0 auto; } }
+
+/* Compact preview: fits the container with paginated Pending List, no nested scrollbars. */
+#root .ce-v2 .ce-v2-preview.pe-preview { padding:10px 12px; gap:8px; overflow-y:auto; }
+#root .ce-v2 .ce-v2-preview.pe-preview dl { gap:4px; }
+#root .ce-v2 .ce-v2-preview.pe-preview dl > div { gap:8px; }
+#root .ce-v2 .pe-total { padding:6px 12px; }
+#root .ce-v2 .pe-total strong { font-size:20px; }
+#root .ce-v2 .ce-mode-area { min-height:0; }
+#root .ce-v2 .ce-inline-statement .ce-statement-heading { padding:0 0 4px; }
+#root .ce-v2 .ce-inline-statement .ce-statement-scroll { flex:1 1 0; min-height:96px; max-height:none; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; -ms-overflow-style:none; overscroll-behavior:contain; }
+#root .ce-v2 .ce-inline-statement .ce-statement-scroll::-webkit-scrollbar { display:none; }
+#root .main-content .ce-v2 .ce-inline-statement .ce-statement-table thead th { height:32px; padding:6px 3px; }
+#root .main-content .ce-v2 .ce-inline-statement .ce-statement-table tbody td { height:44px; padding:4px; }
+#root .ce-v2 .ce-inline-statement .ce-statement-table input[type=number] { height:30px; }
+@media (max-width:1100px) { #root .ce-v2 .ce-v2-preview.pe-preview { min-height:0; } #root .ce-v2 .ce-inline-statement .ce-statement-scroll { flex:0 1 auto; max-height:260px; } }

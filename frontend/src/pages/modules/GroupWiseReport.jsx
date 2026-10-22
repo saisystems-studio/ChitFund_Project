@@ -1,10 +1,19 @@
+import "../../styles/compact-report-toolbar.css";
+import PageBreadcrumb from "../../components/PageBreadcrumb";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { formatINR } from "../../utils/currency";
 import "./group-wise-detail.css";
 import "./report-common.css";
+import "../../styles/report-layout.css";
 import SearchableDropdown from "../../components/SearchableDropdown/SearchableDropdown";
 import CustomerDropdown from "../../components/CustomerDropdown/CustomerDropdown";
+import ReportExportButtons from "../../components/ReportExportButtons/ReportExportButtons";
+import { useCompanyProfile } from "../../components/CompanyProfileContext";
+import { downloadReportPdf, printReportPdf } from "../../utils/reportPdf";
+import { downloadReportExcel } from "../../utils/reportExcel";
+import { reportFilename } from "../../utils/reportFilename";
 import { periodRange, PERIOD_OPTIONS } from "../../utils/periodRange";
+import { rowDetail } from "../reportDetail/reportDetailRoute";
 
 const money = formatINR;
 const num = value => Number(value || 0);
@@ -28,6 +37,8 @@ export default function GroupWiseReport({ api, auth, go }) {
   const [loading, setLoading] = useState(true), [error, setError] = useState("");
   const [openGroupId, setOpenGroupId] = useState(null);
   const [expandedLoans, setExpandedLoans] = useState(() => new Set());
+  const [exportBusy, setExportBusy] = useState(null);
+  const { profile } = useCompanyProfile() || {};
   const toggleLoan = id => setExpandedLoans(current => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
   useEffect(() => {
@@ -106,38 +117,74 @@ export default function GroupWiseReport({ api, auth, go }) {
       .sort((a, b) => a.customer.name.localeCompare(b.customer.name));
   };
 
-  return <div className="cwr-page rpt-page">
-    <div className="rpt-header-row">
-      <nav className="cwr-breadcrumb" aria-label="Breadcrumb">
-        <button type="button" className="cwr-back" aria-label="Back" onClick={() => go("/dashboard")}><Icon name="back" /></button>
-        <span>Reports</span><Icon name="chevron" /><strong>Group-wise Report</strong>
-      </nav>
-      <div className="rpt-toolbar">
-        {loading && <span className="rpt-loading">Updating…</span>}
-        {error && <span className="rpt-error" role="alert">{error}</span>}
-        <label className="rpt-field rpt-field-group">Group<SearchableDropdown options={groupOptions} searchKeys={["name", "code"]} value={filters.group} onChange={value => update("group", value)} placeholder="All Groups" /></label>
-        <label className="rpt-field rpt-field-customer">Customer<CustomerDropdown api={api} auth={auth} value={filters.customer} onChange={value => update("customer", value)} /></label>
-        <label className="rpt-field rpt-field-loan">Loan Number<SearchableDropdown options={loanOptions} searchKeys={["doc_no", "customer_name"]} value={filters.loan} onChange={value => update("loan", value)} placeholder="All Loan Numbers" /></label>
-        <label className="rpt-field rpt-field-status">Status
-          <select value={filters.status} onChange={event => update("status", event.target.value)}>
-            <option value="ALL">All</option><option>Active</option><option>Completed</option>
-          </select>
-        </label>
-        <label className="rpt-field rpt-field-period">Period
-          <select value={filters.period} onChange={event => update("period", event.target.value)}>
-            {PERIOD_OPTIONS.slice(0, -1).map(option => <option key={option}>{option}</option>)}
-            <option value="">All Time</option>
-            <option>{PERIOD_OPTIONS.at(-1)}</option>
-          </select>
-        </label>
-        {filters.period === "Custom Range" && <>
-          <label className="rpt-field rpt-field-date">From<input type="date" value={filters.from} max={filters.to || undefined} onChange={event => update("from", event.target.value)} /></label>
-          <label className="rpt-field rpt-field-date">To<input type="date" value={filters.to} min={filters.from || undefined} onChange={event => update("to", event.target.value)} /></label>
-        </>}
-        {hasActiveFilters && <button type="button" className="rpt-clear" onClick={clearFilters}>Clear Filters</button>}
+  const filtersLine = [
+    filters.group && groupOptions.find(option => String(option.value) === String(filters.group))?.label,
+    filters.status !== "ALL" && `Status: ${filters.status}`,
+    filters.period && `Period: ${filters.period}`,
+    range.from && `From ${range.from}`, range.to && `To ${range.to}`,
+  ].filter(Boolean).join("   •   ");
+  const handleExportPdf = async (mode = "pdf") => {
+    if (exportBusy) return;
+    setExportBusy(mode);
+    try {
+      await (mode === "print" ? printReportPdf : downloadReportPdf)({
+        title: "Group-wise Report", filtersLine, profile,
+        columns: [
+          { header: "Group" }, { header: "Code" }, { header: "Members", align: "right" }, { header: "Loans", align: "right" },
+          { header: "Total", align: "right" }, { header: "Collected", align: "right" }, { header: "Pending", align: "right" },
+        ],
+        rows: groupCards.map(card => [card.group.name, card.group.code || "—", String(card.members), String(card.loans), money(card.total), money(card.collected), money(card.pending)]),
+      }, reportFilename("Group_Wise_Report"));
+    } catch { setError("Unable to prepare the PDF."); }
+    finally { setExportBusy(null); }
+  };
+  const handleExportExcel = async () => {
+    if (exportBusy) return;
+    setExportBusy("excel");
+    try {
+      await downloadReportExcel({
+        filename: reportFilename("Group_Wise_Report"), title: "Group-wise Report", subtitle: filtersLine || undefined,
+        columns: [
+          { header: "Group", width: 24 }, { header: "Code", width: 12 }, { header: "Members", numeric: true, width: 10 }, { header: "Loans", numeric: true, width: 10 },
+          { header: "Total", numeric: true, width: 16 }, { header: "Collected", numeric: true, width: 16 }, { header: "Pending", numeric: true, width: 16 },
+        ],
+        rows: groupCards.map(card => [card.group.name, card.group.code || "", card.members, card.loans, Number(card.total || 0), Number(card.collected || 0), Number(card.pending || 0)]),
+      });
+    } finally { setExportBusy(null); }
+  };
+
+  return <div className="cwr-page rpt-page rl-page data-page compact-report-page">
+    <div className="rl-header">
+      <PageBreadcrumb className="cwr-breadcrumb" current="Group-wise Report" />
+      <div className="rl-status" role="status">{error ? <span className="rpt-error" role="alert">{error}</span> : loading ? "Updating…" : null}</div>
+      
+    </div>
+    <div className="rl-filters" role="search">
+      <label className="rl-field"><span className="rl-label">Group</span><SearchableDropdown options={groupOptions} searchKeys={["name", "code"]} value={filters.group} onChange={value => update("group", value)} placeholder="All Groups" /></label>
+      <label className="rl-field"><span className="rl-label">Customer</span><CustomerDropdown api={api} auth={auth} value={filters.customer} onChange={value => update("customer", value)} /></label>
+      <label className="rl-field"><span className="rl-label">Loan Number</span><SearchableDropdown options={loanOptions} searchKeys={["doc_no", "customer_name"]} value={filters.loan} onChange={value => update("loan", value)} placeholder="All Loan Numbers" /></label>
+      <label className="rl-field"><span className="rl-label">Status</span>
+        <select value={filters.status} onChange={event => update("status", event.target.value)}>
+          <option value="ALL">All</option><option>Active</option><option>Completed</option>
+        </select>
+      </label>
+      <label className="rl-field"><span className="rl-label">Period</span>
+        <select value={filters.period} onChange={event => update("period", event.target.value)}>
+          {PERIOD_OPTIONS.slice(0, -1).map(option => <option key={option}>{option}</option>)}
+          <option value="">All Time</option>
+          <option>{PERIOD_OPTIONS.at(-1)}</option>
+        </select>
+      </label>
+      {filters.period === "Custom Range" && <>
+        <label className="rl-field"><span className="rl-label">From Date</span><input type="date" value={filters.from} max={filters.to || undefined} onChange={event => update("from", event.target.value)} /></label>
+        <label className="rl-field"><span className="rl-label">To Date</span><input type="date" value={filters.to} min={filters.from || undefined} onChange={event => update("to", event.target.value)} /></label>
+      </>}
+      <div className="rl-actions">
+        <button type="button" className="rpt-clear" onClick={clearFilters} disabled={!hasActiveFilters}>Clear Filters</button>
+        <ReportExportButtons onPdf={() => handleExportPdf()} onExcel={handleExportExcel} onPrint={() => handleExportPdf("print")} busy={exportBusy} disabled={!groupCards.length} />
       </div>
     </div>
-    <div className={loading ? "cwr-body is-loading" : "cwr-body"}>
+    <div className={loading ? "cwr-body data-container is-loading" : "cwr-body data-container"}>
       {!groupCards.length && !loading ? <div className="cwr-card cwr-empty">No groups match the selected filters.</div>
         : groupCards.map(card => <GroupBlock key={card.group.id} card={card} open={openGroupId === card.group.id}
             onToggle={() => setOpenGroupId(current => current === card.group.id ? null : card.group.id)}
@@ -180,7 +227,7 @@ function GroupCustomerBlock({ row, expandedLoans, toggleLoan, go }) {
       </div>
       <dl><div><dt>Collected</dt><dd className="collected">{money(collected)}</dd></div><div><dt>Pending</dt><dd className="pending">{money(pending)}</dd></div></dl>
     </div>
-    <LoanTable loans={row.loans} expanded={expandedLoans} toggle={toggleLoan} />
+    <LoanTable loans={row.loans} expanded={expandedLoans} toggle={toggleLoan} go={go} />
   </div>;
 }
 
@@ -193,12 +240,12 @@ function chitCells(loan) {
   return [doc, loan.chit?.group_name || "—", money(loan.chit?.chit_amount ?? loan.loan_amount), dateLabel(loan.start_date), dateLabel(loan.end_date), dateLabel(loan.collection_date), loan.total_installments, loan.paid_installments, loan.pending_installments, money(loan.total_paid), money(loan.remaining), <Status value={loan.status} />];
 }
 
-function LoanTable({ loans, expanded, toggle }) {
+function LoanTable({ loans, expanded, toggle, go }) {
   return <div className="cwr-type chit">
     <div className="cwr-table-wrap"><table className="cwr-table">
       <thead><tr>{CHIT_COLUMNS.map(([label, align]) => <th key={label} className={align}>{label}</th>)}<th aria-label="Schedule details" /></tr></thead>
       <tbody>{loans.map(loan => { const open = expanded.has(loan.id); return <Fragment key={loan.id}>
-        <tr className={open ? "open" : ""}>{chitCells(loan).map((value, index) => <td key={index} className={CHIT_COLUMNS[index][1]}>{value}</td>)}
+        <tr className={open ? "open" : ""} {...rowDetail(go, "loan", loan.id)}>{chitCells(loan).map((value, index) => <td key={index} className={CHIT_COLUMNS[index][1]}>{value}</td>)}
           <td className="cwr-expand-cell"><button type="button" aria-expanded={open} onClick={() => toggle(loan.id)}>Schedule<Icon name="down" /></button></td></tr>
         {open && <tr className="cwr-detail-row"><td colSpan={CHIT_COLUMNS.length + 1}><SchedulePreview loan={loan} /></td></tr>}
       </Fragment>; })}</tbody>

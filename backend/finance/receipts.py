@@ -51,7 +51,7 @@ def _allocations(collection, cache):
     """
     stored = [(item.installment, item.amount) for item in collection.allocations.all()]
     if stored:
-        return stored
+        return stored + ([(None, collection.advance_amount)] if collection.advance_amount else [])
     loan = collection.loan
     if loan.pk not in cache:
         rows = list(loan.installment_details.all().order_by("due_date", "installment_number"))
@@ -60,7 +60,7 @@ def _allocations(collection, cache):
         for item in loan.collection_transactions.prefetch_related("allocations__installment").order_by("id"):
             split = [(a.installment, a.amount) for a in item.allocations.all()]
             if not split:
-                remaining = item.collection_amount
+                remaining = item.collection_amount - item.advance_amount
                 for row in rows:
                     balance = max(ZERO, row.installment_amount - paid[row.pk])
                     if remaining <= 0 or balance <= 0:
@@ -70,6 +70,8 @@ def _allocations(collection, cache):
                     remaining -= applied
                 if remaining > 0:
                     split.append((None, remaining))
+            if item.advance_amount:
+                split.append((None, item.advance_amount))
             for row, amount in split:
                 if row is not None:
                     paid[row.pk] = paid.get(row.pk, ZERO) + amount

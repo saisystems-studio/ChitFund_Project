@@ -41,7 +41,7 @@ function groupTable(doc, y, title, nodes) {
   return doc.lastAutoTable.finalY + 7;
 }
 
-async function reportDoc(title, from, to, profile) {
+async function reportDoc(title, from, to, profile, warnings = []) {
   const company = companyFromProfile(profile);
   const logo = await loadImage(profile?.logo);
   const doc = new jsPDF({ format: "a4", unit: "mm" });
@@ -49,11 +49,16 @@ async function reportDoc(title, from, to, profile) {
   let y = header(doc, company, logo) + 8;
   y = voucherTitle(doc, title.toUpperCase(), y);
   y = periodLine(doc, from, to, y);
+  for (const warning of warnings) {
+    const lines = doc.splitTextToSize(warning, PAGE.width - 2 * PAGE.margin);
+    doc.setFontSize(8).setTextColor(...MUTED).text(lines, PAGE.margin, y);
+    y += lines.length * 4 + 3;
+  }
   return { doc, y };
 }
 
 export async function createTrialBalancePdf(report, from, to, profile) {
-  const { doc, y } = await reportDoc("Trial Balance", from, to, profile);
+  const { doc, y } = await reportDoc("Trial Balance", from, to, profile, report.warnings || []);
   let cursor = groupTable(doc, y, "Ledger Balances", report.groups);
   autoTable(doc, {
     startY: cursor, margin: { left: PAGE.margin, right: PAGE.margin },
@@ -67,7 +72,7 @@ export async function createTrialBalancePdf(report, from, to, profile) {
 }
 
 export async function createProfitAndLossPdf(report, from, to, profile) {
-  const { doc, y } = await reportDoc("Profit & Loss Account", from, to, profile);
+  const { doc, y } = await reportDoc("Profit & Loss Account", from, to, profile, report.warnings || []);
   let cursor = groupTable(doc, y, "Expenses", [report.direct_expense, ...report.indirect_expense].filter(Boolean));
   cursor = groupTable(doc, cursor, "Income", [report.direct_income, ...report.indirect_income].filter(Boolean));
   autoTable(doc, {
@@ -82,7 +87,7 @@ export async function createProfitAndLossPdf(report, from, to, profile) {
 }
 
 export async function createBalanceSheetPdf(report, from, to, profile) {
-  const { doc, y } = await reportDoc("Balance Sheet", from, to, profile);
+  const { doc, y } = await reportDoc("Balance Sheet", from, to, profile, report.warnings || []);
   let cursor = groupTable(doc, y, "Liabilities", report.liabilities);
   cursor = groupTable(doc, cursor, "Assets", report.assets);
   const plug = [];

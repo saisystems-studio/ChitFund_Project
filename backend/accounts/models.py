@@ -3,7 +3,10 @@ from django.db import models
 
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
-    can_write = models.BooleanField(default=False)
+    # Default Entry + View for newly created profiles. This is a schema-level default
+    # for future rows only — it does not rewrite can_write on any existing UserProfile,
+    # so previously created accounts keep whatever access they already have.
+    can_write = models.BooleanField(default=True)
     display_role = models.CharField(max_length=30, default="Staff")
 
     def __str__(self):

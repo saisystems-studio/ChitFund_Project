@@ -385,3 +385,40 @@
   flex:0 0 auto!important;
   box-sizing:border-box!important;
 }
+
+/* ---------------------------------------------------------------------------
+   Chit Group List filters (ChitGroupList.jsx: .cg-header + .cg-filters)
+     >= 1280px : Search | Status | Period | From | To in one row; From/To keep
+                 their space (hidden) unless Period = Custom Range -> no shifting
+     768-1279  : Search | Status | Period in one row; From/To on a second row
+                 only for Custom Range (earlier fields never move)
+     < 768     : every filter full width, stacked
+   --------------------------------------------------------------------------- */
+#root .chit-group-list-page>.cg-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;min-height:38px;margin:0;flex:0 0 auto}
+#root .chit-group-list-page>.cg-header>.page-breadcrumb{margin:0;white-space:nowrap}
+#root .chit-group-list-page .cg-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}
+#root .chit-group-list-page .cg-actions>*{flex:0 0 auto}
+#root .chit-group-list-page .cg-actions>button{height:36px;min-height:36px;white-space:nowrap}
+#root .chit-group-list-page .cg-clear{padding:0 6px;border:0;background:none;color:#176db3;font:inherit;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer}
+#root .chit-group-list-page .cg-clear:disabled{color:#9aabbb;text-decoration:none;cursor:default}
+#root .chit-group-list-page>.cg-filters{display:grid;grid-template-columns:minmax(220px,1fr) 150px 170px 150px 150px;align-items:end;gap:6px 10px;margin:0 0 6px;flex:0 0 auto}
+#root .chit-group-list-page .cg-field{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;margin:0;color:#385975;font-size:12px;font-weight:600;line-height:16px}
+#root .chit-group-list-page .cg-field>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#root .chit-group-list-page .cg-field :is(input,select){box-sizing:border-box;width:100%;min-width:0;height:37px;margin:0;padding:0 10px;border:1px solid #d7dce2;border-radius:6px;background-color:#fff;color:#203b58;font:inherit;font-size:12.5px;font-weight:500}
+#root .chit-group-list-page .cg-field input[aria-invalid="true"]{border-color:#d64545}
+#root .chit-group-list-page .cg-range-error{position:absolute;top:100%;right:0;margin-top:2px;color:#c62828;font-size:10.5px;font-weight:600;white-space:nowrap}
+#root .chit-group-list-page .cg-filters:not(.is-custom)>.cg-date{visibility:hidden}
+#root .chit-group-list-page .cg-filters.is-custom:has(.cg-range-error){margin-bottom:18px}
+@media (max-width:1279px){
+  #root .chit-group-list-page>.cg-filters{grid-template-columns:minmax(0,1fr) 150px 170px}
+  #root .chit-group-list-page .cg-filters:not(.is-custom)>.cg-date{display:none}
+  #root .chit-group-list-page .cg-filters>.cg-date:nth-of-type(4){grid-column:2}
+}
+@media (max-width:767px){
+  #root .chit-group-list-page>.cg-filters{grid-template-columns:minmax(0,1fr);gap:8px}
+  #root .chit-group-list-page .cg-filters>.cg-date:nth-of-type(4){grid-column:auto}
+  #root .chit-group-list-page .cg-field{font-size:11px}
+  #root .chit-group-list-page .cg-field :is(input,select){height:38px;font-size:13px}
+  #root .chit-group-list-page .cg-range-error{position:static;margin-top:2px;white-space:normal}
+  #root .chit-group-list-page .cg-actions{flex:1 1 100%}
+}

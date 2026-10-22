@@ -1,0 +1,30 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { accountGroups, blankTransfer, validateTransfer, filterTransfers, modesFor } from "./bankTransfer.js";
+test("directions, modes, reset defaults and validation",()=>{
+ assert.deepEqual(accountGroups("DEPOSIT"),["Cash-in-Hand","Bank Accounts"]);
+ assert.deepEqual(accountGroups("WITHDRAWAL"),["Bank Accounts","Cash-in-Hand"]);
+ assert.deepEqual(accountGroups("TRANSFER"),["Bank Accounts","Bank Accounts"]);
+ assert.deepEqual(modesFor("DEPOSIT").map(([v])=>v),["Cash"]);
+ assert.ok(!modesFor("TRANSFER").some(([v])=>v==="Cash"));
+ const form=blankTransfer("WITHDRAWAL");assert.equal(form.transaction_type,"WITHDRAWAL");assert.equal(form.amount,"");assert.equal(form.payment_mode,"Cash");assert.equal(form.voucher_no,undefined);
+ const ledgers=[{id:1,group:"Cash-in-Hand"},{id:2,group:"Bank Accounts"},{id:3,group:"Bank Accounts"}];
+ assert.ok(validateTransfer(form,ledgers));
+ const valid={...blankTransfer(),from_account:"1",to_account:"2",amount:"100"};
+ assert.equal(validateTransfer(valid,ledgers),"");
+ assert.ok(validateTransfer({...valid,amount:"0"},ledgers));
+ assert.ok(validateTransfer({...valid,amount:"-5"},ledgers));
+ assert.ok(validateTransfer({...valid,to_account:"1"},ledgers));
+ assert.ok(validateTransfer({...valid,payment_mode:"UPI"},ledgers));
+ const transfer={...blankTransfer("TRANSFER"),from_account:"2",to_account:"3",amount:"5000"};
+ assert.equal(validateTransfer(transfer,ledgers),"");
+ assert.ok(validateTransfer({...transfer,to_account:"2"},ledgers));
+ assert.ok(validateTransfer({...transfer,from_account:"1"},ledgers));
+});
+test("history searches vouchers and filters type and dates",()=>{
+ const rows=[{date:"2026-10-12",voucher_no:"BT-000001",transaction_type:"DEPOSIT",from_account_name:"Cash",to_account_name:"Bank",payment_mode:"Cash"},{date:"2026-10-11",voucher_no:"BT-000002",transaction_type:"TRANSFER",payment_mode:"NEFT"}];
+ assert.equal(filterTransfers(rows,{search:"bt-000001"}).length,1);
+ assert.equal(filterTransfers(rows,{type:"TRANSFER"})[0].voucher_no,"BT-000002");
+ assert.equal(filterTransfers(rows,{search:"neft"}).length,1);
+ assert.equal(filterTransfers(rows,{from:"2026-10-12",to:"2026-10-12"}).length,1);
+});

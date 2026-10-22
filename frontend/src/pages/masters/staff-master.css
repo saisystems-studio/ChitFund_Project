@@ -69,5 +69,20 @@
 .staff-pager button:disabled{color:#a3b3c2;cursor:not-allowed}
 .staff-pager button.active{border-color:#123a63;background:#123a63;color:#fff;font-weight:700}
 
-@media(max-width:900px){.staff-fields{grid-template-columns:1fr;gap:14px}.staff-list-head{flex-direction:column;align-items:stretch}.staff-search{width:100%}}
+@media(max-width:1023px){.staff-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}}@media(max-width:767px){.staff-fields{grid-template-columns:1fr;gap:12px}}@media(max-width:900px){.staff-list-head{flex-direction:column;align-items:stretch}.staff-search{width:100%}}
 @media(max-width:600px){.staff-actions{flex-direction:column-reverse}.staff-actions button{width:100%}.staff-pager{flex-direction:column;align-items:flex-start}}
+
+/* Add / Edit / View Staff: KYC attachments below the fields, same section as Add Customer. */
+.staff-kyc{margin-top:14px;padding:12px 14px;border:1px solid #e6eef6;border-radius:6px;background:#fff}
+.staff-modal.staff-modal-wide{width:min(1000px,100%)}
+.staff-view-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 18px;margin-top:12px;padding:14px;border:1px solid #e6eef6;border-radius:6px}
+.staff-view-item{display:flex;flex-direction:column;gap:3px;min-width:0}
+.staff-view-item span{color:#607b93;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.staff-view-item strong{color:#17324d;font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.staff-view-wide{grid-column:1/-1}
+@media(max-width:900px){.staff-view-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.staff-view-grid{grid-template-columns:1fr}.staff-kyc{padding:10px}}
+
+/* Many pages (large datasets): page buttons wrap instead of pushing "Next" off-screen. */
+.staff-pager{flex-wrap:wrap;row-gap:8px}
+.staff-pager>div:last-child{flex:1 1 auto;flex-wrap:wrap;justify-content:flex-end;row-gap:6px;min-width:0}

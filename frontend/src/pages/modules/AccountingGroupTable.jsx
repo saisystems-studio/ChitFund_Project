@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatINR } from "../../utils/currency";
+import { rowDetail } from "../reportDetail/reportDetailRoute";
 
 // Shared Group -> Sub-group -> Ledger renderer for Trial Balance and both
 // sides of the Balance Sheet: click a group row to expand/collapse its
@@ -7,7 +8,7 @@ import { formatINR } from "../../utils/currency";
 // `amountColumns`: "split" (default) renders separate Debit/Credit columns
 // (Trial Balance, Balance Sheet); "debit" or "credit" renders a single
 // Amount column from just that field (Profit & Loss's two one-sided tables).
-export default function AccountingGroupTable({ nodes, amountColumns = "split" }) {
+export default function AccountingGroupTable({ nodes, amountColumns = "split", go, report, range = {} }) {
   const [collapsed, setCollapsed] = useState(() => new Set());
   const toggle = id => setCollapsed(current => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
   const renderRows = list => list.flatMap(node => {
@@ -17,7 +18,8 @@ export default function AccountingGroupTable({ nodes, amountColumns = "split" })
       {node.is_group && hasChildren ? <span className={`acct-chevron ${isOpen ? "open" : ""}`}>›</span> : <span className="acct-leaf-dot"/>}
       {node.is_group ? node.name.toUpperCase() : node.name}
     </span>;
-    const row = <tr key={node.id} className={node.is_group ? "acct-row-group" : "acct-row-leaf"} onClick={node.is_group && hasChildren ? () => toggle(node.id) : undefined}>
+    const row = <tr key={node.id} className={node.is_group ? "acct-row-group" : "acct-row-leaf"} onClick={node.is_group && hasChildren ? () => toggle(node.id) : undefined}
+      {...(go ? rowDetail(go, node.is_group ? "group" : "ledger", node.id, { report, from: range.from, to: range.to }) : {})}>
       <td>{label}</td>
       {amountColumns === "split"
         ? <><td className="num">{node.debit ? formatINR(node.debit) : ""}</td><td className="num">{node.credit ? formatINR(node.credit) : ""}</td></>

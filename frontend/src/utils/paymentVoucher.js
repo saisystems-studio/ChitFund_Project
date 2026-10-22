@@ -5,7 +5,7 @@ import { BAND, INK, LINE, MUTED, PAGE, amount, companyFromProfile, header, loadI
 // Same A4 layout and helpers as the Collection Receipt; PDF and Print share one document.
 export const paymentVoucherNo = entry => `PV-${String(entry.id).padStart(6, "0")}`;
 const dateLabel = value => value ? String(value).slice(0, 10).split("-").reverse().join("/") : "";
-const MODES = { Cash: "Cash", UPI: "UPI", Cheque: "Cheque", NEFT: "NEFT/IMPS/RTGS" };
+const MODES = { Cash: "Cash", UPI: "UPI", Cheque: "Cheque", NEFT: "NEFT", RTGS: "RTGS", IMPS: "IMPS" };
 
 // The PDF core fonts have no ₹ glyph, so the browser draws it once and it is placed as an image.
 let rupee;
@@ -30,7 +30,7 @@ function particulars(entry) {
   const mode = entry.payment_mode;
   const details = mode === "UPI" ? [entry.upi_id && `UPI ID ${entry.upi_id}`, entry.transaction_utr && `UTR ${entry.transaction_utr}`]
     : mode === "Cheque" ? [entry.cheque_number && `Cheque No. ${entry.cheque_number}`, entry.cheque_date && `dated ${dateLabel(entry.cheque_date)}`, entry.bank_name]
-    : mode === "NEFT" ? [entry.transaction_utr && `Ref ${entry.transaction_utr}`, entry.bank_name] : [];
+    : ["NEFT", "RTGS", "IMPS"].includes(mode) ? [entry.transaction_utr && `Ref ${entry.transaction_utr}`, entry.bank_name] : [];
   const paid = `Paid by ${MODES[mode] || mode}${entry.account_name ? ` from ${entry.account_name}` : ""}`;
   const extra = details.filter(Boolean).join(", ");
   return [{ particulars: `${ledger} — ${paid}${extra ? ` (${extra})` : ""}`, amount: Number(entry.amount || 0) }];

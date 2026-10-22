@@ -7,6 +7,9 @@
 .row-actions button[aria-label="Edit"]{color:#f59e0b}
 .row-actions button[aria-label="Edit"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 16-.7 4 4-.7L18.8 7.8a2.1 2.1 0 0 0-3-3L4 16Z'/%3E%3Cpath d='m14.5 6.5 3 3'/%3E%3C/svg%3E")!important}
 .row-actions button[aria-label="Edit"]:hover{background:#fff7ed}
+/* KYC Documents gets its own document icon; otherwise the position rules above give it
+   the 2nd button's pencil (a duplicate "Edit" on Customer List) or the 1st button's eye. */
+.row-actions button[aria-label="KYC Documents"]{color:#176db3}.row-actions button[aria-label="KYC Documents"]::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23176db3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z'/%3E%3Cpath d='M14 3v5h5M9 13h6M9 17h4'/%3E%3C/svg%3E")!important}.row-actions button[aria-label="KYC Documents"]:hover{background:#edf6ff}
 .row-actions button[aria-label="Delete"]{color:#ef4444}
 .row-actions button[aria-label="Delete"]::before{content:""!important;font-size:0!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3'/%3E%3C/svg%3E")!important}
 .row-actions button[aria-label="Delete"]:hover{background:#fef2f2}

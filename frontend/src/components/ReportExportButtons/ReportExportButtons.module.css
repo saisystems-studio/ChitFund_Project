@@ -1,0 +1,13 @@
+.root{position:relative;display:inline-flex}
+.trigger{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid #d7dce2;border-radius:6px;background:#fff;color:#45586b;font:inherit;font-size:11.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;cursor:pointer;transition:background-color .15s,border-color .15s}
+.trigger:hover{background:#f5f8fb;border-color:#c3cedb}
+.trigger:disabled{opacity:.5;cursor:not-allowed}
+.trigger svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.trigger[aria-expanded="true"]{border-color:#176db3;background:#eef6fc;color:#176db3}
+
+.menu{position:absolute;z-index:30;top:calc(100% + 5px);right:0;min-width:128px;padding:4px;border:1px solid #d7dce2;border-radius:8px;background:#fff;box-shadow:0 10px 24px rgba(15,39,66,.14)}
+.item{display:flex;align-items:center;gap:8px;width:100%;height:30px;padding:0 9px;border:0;border-radius:5px;background:none;color:#38536f;font:inherit;font-size:12px;font-weight:600;text-align:left;cursor:pointer}
+.item:hover{background:#f3f7fb}
+.item svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.item:nth-child(1){color:#b83950}
+.item:nth-child(2){color:#0b7a2f}

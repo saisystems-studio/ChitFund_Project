@@ -101,3 +101,59 @@ class AccountingReportsTests(TestCase):
         self.assertEqual(Decimal(bs.data["total_assets"]), Decimal(bs.data["total_liabilities"]))
         trial_ranged = client.get("/api/finance/reports/trial-balance/", {"from": "2025-01-01", "to": "2025-01-31"})
         self.assertEqual(trial_ranged.status_code, 200, trial_ranged.data)
+
+    def test_missing_transfer_table_keeps_reports_available_with_warning(self):
+        from unittest.mock import patch
+        client = APIClient()
+        client.force_authenticate(User(is_staff=True))
+        with patch("django.db.backends.sqlite3.introspection.DatabaseIntrospection.table_names", return_value=[]):
+            for name, params in [("ledger", {"type": "cash"}), ("ledger", {"type": "bank"}), ("trial-balance", {}), ("profit-loss", {}), ("balance-sheet", {})]:
+                response = client.get(f"/api/finance/reports/{name}/", params)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("not been deployed", response.data["warnings"][0])
+
+    def test_invalid_and_reversed_dates_are_400(self):
+        client = APIClient()
+        client.force_authenticate(User(is_staff=True))
+        for name in ["ledger", "trial-balance", "profit-loss", "balance-sheet"]:
+            for params in [{"from": "invalid"}, {"from": "2025-02-01", "to": "2025-01-01"}]:
+                response = client.get(f"/api/finance/reports/{name}/", {"type": "cash", **params})
+                self.assertEqual(response.status_code, 400)
+
+    def test_transfers_post_both_sides_and_range_opening(self):
+        from .models import BankTransfer
+        BankTransfer.objects.create(date="2025-01-02", transaction_type="DEPOSIT", from_account=self.cash, to_account=self.bank, amount=Decimal("200"))
+        BankTransfer.objects.create(date="2025-01-03", transaction_type="WITHDRAWAL", from_account=self.bank, to_account=self.cash, amount=Decimal("50"))
+        client = APIClient()
+        client.force_authenticate(User(is_staff=True))
+        response = client.get("/api/finance/reports/ledger/", {"type": "bank", "from": "2025-01-03", "to": "2025-01-03"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["total_credit"], Decimal("170"))
+        self.assertEqual(response.data["closing_balance"], response.data["opening_balance"] - Decimal("170"))
+        self.assertEqual(trial_balance()["total_debit"], trial_balance()["total_credit"])
+        self.assertEqual(balance_sheet()["total_assets"], balance_sheet()["total_liabilities"])
+
+    def test_empty_reports_return_200(self):
+        client = APIClient()
+        client.force_authenticate(User(is_staff=True))
+        for name in ["ledger", "trial-balance", "profit-loss", "balance-sheet", "day-wise", "loan-wise"]:
+            response = client.get(f"/api/finance/reports/{name}/", {"type": "bank", "from": "2099-01-01", "to": "2099-01-02"})
+            self.assertEqual(response.status_code, 200)
+
+    def test_null_transfer_amount_is_zero(self):
+        from unittest.mock import Mock, patch
+        from .accounting_reports import ledger_balances
+        query = Mock()
+        query.values.return_value = [{"from_account_id": self.cash.id, "to_account_id": self.bank.id, "amount": None}]
+        before = ledger_balances()[1]
+        with patch("finance.accounting_reports.bank_transfer_queryset", return_value=query):
+            self.assertEqual(ledger_balances()[1], before)
+
+    def test_bank_subgroup_included_in_statement(self):
+        subgroup = Group.objects.create(name="Branch Banks", parent=self.bank_root, nature="ASSET")
+        Ledger.objects.create(name="Branch Account", group="", group_detail=subgroup, opening_balance=Decimal("75"))
+        client = APIClient()
+        client.force_authenticate(User(is_staff=True))
+        response = client.get("/api/finance/reports/ledger/", {"type": "bank"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["opening_balance"], Decimal("575"))

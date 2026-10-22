@@ -35,6 +35,7 @@ export default function MortgageViewModal({ item, onClose, onEdit }) {
           <Detail label="Product Group" icon="group" value={item.product_group || "-"}/>
           <Detail label="Product Name" icon="tag" value={item.product_name}/>
           <Detail label="Unit" icon="unit" value={item.unit}/>
+          <Detail label="UQC" icon="scale" value={item.uqc || "-"}/>
           <Detail label="Quantity" icon="scale" value={item.quantity ?? "-"}/>
           <Detail label="Current Rate" icon="rate" value={formatINR(item.current_rate)}/>
           <Detail label="Date" icon="calendar" value={dateLabel(item.rate_date)}/>

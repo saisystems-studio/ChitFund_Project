@@ -158,7 +158,7 @@ export default function ChitGroupForm({ api, auth, go, id }) {
       : <input value="Daily" readOnly />;
 
   return <div className={`${styles.page} chit-form-page`}>
-    <header><PageBreadcrumb root="Masters" current={id ? "Edit Chit Group" : "Add Chit Group"} onBack={() => go("/masters")} /><span className={styles.active}>● Active</span></header>
+    <header><PageBreadcrumb current={id ? "Edit Chit Group" : "Add Chit Group"} /><span className={styles.active}>● Active</span></header>
     {error && <div className={styles.error}>{error}</div>}
     <form data-chit-group-form onSubmit={save} className={styles.surface}>
       <section><h2>GROUP INFORMATION</h2><div className={`${styles.grid} ${styles.groupInfoRow}`}>

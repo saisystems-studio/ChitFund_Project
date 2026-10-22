@@ -1,10 +1,14 @@
+import "../../../styles/compact-report-toolbar.css";
 import { useCompanyProfile } from "../../../components/CompanyProfileContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { actionToast } from "../../../utils/actionToast";
 import apiErrorMessage from "../../../utils/apiErrorMessage";
 import styles from "./ChitGroupList.module.css";
 import { formatINR, formatINRNumber } from "../../../utils/currency";
-import ListPageToolbar from "../../../components/ListPageToolbar";
+import PageBreadcrumb from "../../../components/PageBreadcrumb";
+import { periodRange } from "../../../utils/periodRange";
+import ListExport, { exportFiltersLine } from "../../../components/ListExport/ListExport";
+import { useSession } from "../../../components/SessionContext";
 import "./chit-group-list-saas.css";
 import "./chit-group-list-pagination.css";
 import "./chit-group-list-active-style.css";
@@ -13,6 +17,9 @@ import "./chit-group-ui-final.css";
 import { downloadChitPdf, dateLabel } from "../../../utils/chitPdf";
 
 const money = formatINR;
+// Period presets filter on the chit group's Start Date (both ends inclusive).
+const PERIODS = ["Today", "This Week", "Last Week", "This Month", "Last Month", "This Year", "Custom Range"];
+const STATUSES = [["", "All Status"], ["active", "Active"], ["inactive", "Inactive"]];
 const durationLabel = value => value === "DAY" ? "Days" : value === "MONTH" ? "Months" : "Years";
 const collectionDayLabel = value => {
   const day = Number(String(value || "").slice(0, 10).split("-")[2]);
@@ -26,6 +33,7 @@ const PowerIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" aria-hid
 
 export default function ChitGroupList({ api, auth, go }) {
   const { profile } = useCompanyProfile();
+  const { isAdmin } = useSession();
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -33,6 +41,10 @@ export default function ChitGroupList({ api, auth, go }) {
   const [selected, setSelected] = useState(null);
   const [confirmItem, setConfirmItem] = useState(null);
   const [expandedMobile, setExpandedMobile] = useState(null);
+  const [period, setPeriod] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [status, setStatus] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -77,19 +89,55 @@ export default function ChitGroupList({ api, auth, go }) {
     }
   };
 
-  return <div className={`${styles.page} chit-group-list-page`}>
-    <ListPageToolbar eyebrow="MASTERS" title="Chit Groups" search={search} onSearch={setSearch} placeholder="Search chit groups..." action={<button className={styles.primary} onClick={() => go("/chit-groups/new")}>+ Add Chit Group</button>} />
+  const isCustom = period === "Custom Range";
+  const range = useMemo(() => periodRange(period, isCustom ? from : "", isCustom ? to : ""), [period, isCustom, from, to]);
+  const invalidRange = isCustom && from && to && to < from;
+  // Search stays server-side (unchanged API call); Period and Status filter the loaded rows.
+  const shown = useMemo(() => items.filter(item => {
+    if (status === "active" && item.is_active === false) return false;
+    if (status === "inactive" && item.is_active !== false) return false;
+    if (!invalidRange) {
+      const start = String(item.start_date || "").slice(0, 10);
+      if (range.from && (!start || start < range.from)) return false;
+      if (range.to && (!start || start > range.to)) return false;
+    }
+    return true;
+  }), [items, status, range, invalidRange]);
+  const changePeriod = value => { setPeriod(value); if (value !== "Custom Range") { setFrom(""); setTo(""); } };
+  const hasFilters = Boolean(search || period || status);
+  const clearFilters = () => { setSearch(""); setPeriod(""); setFrom(""); setTo(""); setStatus(""); };
+  const statusLabel = STATUSES.find(([value]) => value === status)?.[1];
+  const periodText = isCustom ? (from || to ? `${from ? dateLabel(from) : "…"} to ${to ? dateLabel(to) : "…"}` : "") : period;
+  return <div className={`${styles.page} chit-group-list-page data-page compact-report-page`}>
+    <div className="cg-header">
+      <PageBreadcrumb current="Chit Groups" />
+      
+    </div>
+    <div className={`cg-filters ${isCustom ? "is-custom" : ""}`} role="search">
+      <label className="cg-field cg-search"><span>Search</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search chit groups..." aria-label="Search Chit Groups" autoComplete="off" /></label>
+      <label className="cg-field cg-status"><span>Status</span><select value={status} onChange={event => setStatus(event.target.value)}>{STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label className="cg-field cg-period"><span>Period</span><select value={period} onChange={event => changePeriod(event.target.value)}><option value="">All Time</option>{PERIODS.map(option => <option key={option}>{option}</option>)}</select></label>
+      {isCustom && <>
+      <label className="cg-field cg-date" aria-hidden={!isCustom}><span>From Date</span><input type="date" value={from} max={to || undefined} disabled={!isCustom} onChange={event => setFrom(event.target.value)} /></label>
+      <label className="cg-field cg-date" aria-hidden={!isCustom}><span>To Date</span><input type="date" value={to} min={from || undefined} disabled={!isCustom} aria-invalid={invalidRange || undefined} onChange={event => setTo(event.target.value)} />{invalidRange && <small className="cg-range-error" role="alert">To Date cannot be earlier than From Date.</small>}</label>
+      </>}
+      <div className="cg-actions">
+        <button type="button" className="cg-clear" onClick={clearFilters} disabled={!hasFilters}>Clear Filters</button>
+        <ListExport title="Chit Group List" rows={shown} disabled={loading} filtersLine={exportFiltersLine([["Search", search], ["Status", status ? statusLabel : ""], ["Period", periodText]])} columns={[{ header: "Code", value: item => item.code }, { header: "Chit Group Name", value: item => item.name }, { header: "Duration", value: item => item.duration, align: "center" }, { header: "Duration Type", value: item => durationLabel(item.duration_type) }, { header: "Start Date", value: item => dateLabel(item.start_date), align: "center" }, { header: "Collection Date", value: item => dateLabel(item.collection_date), align: "center" }, { header: "Status", value: item => item.is_active ? "Active" : "Inactive" }]} />
+        <button className={styles.primary} onClick={() => go("/chit-groups/new")}>+ Add Chit Group</button>
+      </div>
+    </div>
     {error && <div className={styles.error}>{error}</div>}
-    <section className={`${styles.surface} list-container listContainer`}>
-      <div className={`${styles.tableWrap} tableWrapper`}><table><thead><tr><th>Code</th><th>Chit Group Name</th><th>Duration</th><th>Duration Type</th><th>Start Date</th><th>End Date</th><th>Collection Date</th><th>Status</th><th className={styles.actionHead}>Action</th></tr></thead><tbody>
-        {items.map(item => <tr className="clickable-data-row" tabIndex="0" key={item.id} onClick={() => viewDetails(item)} onKeyDown={event => { if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button,a,input,select,textarea")) { event.preventDefault(); viewDetails(item); } }}><td className={styles.code}>{item.code}</td><td><strong>{item.name}</strong></td><td>{item.duration}</td><td>{durationLabel(item.duration_type)}</td><td>{dateLabel(item.start_date)}</td><td>{dateLabel(item.end_date)}</td><td>{dateLabel(item.collection_date)}</td><td><span className={styles.status}>{item.is_active ? "Active" : "Inactive"}</span></td><td className={styles.rowActionCell}><div className={styles.actions}>
-          <button className={styles.editAction} title="Edit" aria-label="Edit" onClick={event => { event.stopPropagation(); go(`/chit-groups/${item.id}/edit`); }}><EditIcon /></button>
-          <button className={styles.deleteAction} title="Delete" aria-label="Delete" onClick={event => { event.stopPropagation(); setConfirmItem(item); }}><TrashIcon /></button>
+    <section className={`${styles.surface} list-container listContainer data-container`}>
+      <div className={`${styles.tableWrap} tableWrapper data-table-area`}><table><thead><tr><th>Code</th><th>Chit Group Name</th><th>Duration</th><th>Duration Type</th><th>Start Date</th><th>End Date</th><th>Collection Date</th><th>Status</th><th className={styles.actionHead}>Action</th></tr></thead><tbody>
+        {shown.map(item => <tr className="clickable-data-row" tabIndex="0" key={item.id} onClick={() => viewDetails(item)} onKeyDown={event => { if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button,a,input,select,textarea")) { event.preventDefault(); viewDetails(item); } }}><td className={styles.code}>{item.code}</td><td><strong>{item.name}</strong></td><td>{item.duration}</td><td>{durationLabel(item.duration_type)}</td><td>{dateLabel(item.start_date)}</td><td>{dateLabel(item.end_date)}</td><td>{dateLabel(item.collection_date)}</td><td><span className={styles.status}>{item.is_active ? "Active" : "Inactive"}</span></td><td className={styles.rowActionCell}><div className={styles.actions}>
+          {isAdmin && <button className={styles.editAction} title="Edit" aria-label="Edit" onClick={event => { event.stopPropagation(); go(`/chit-groups/${item.id}/edit`); }}><EditIcon /></button>}
+          {isAdmin && <button className={styles.deleteAction} title="Delete" aria-label="Delete" onClick={event => { event.stopPropagation(); setConfirmItem(item); }}><TrashIcon /></button>}
           <button className={styles.toggleAction} title={item.is_active ? "Deactivate" : "Activate"} aria-label={item.is_active ? "Deactivate" : "Activate"} onClick={event => { event.stopPropagation(); toggleActive(item); }}><PowerIcon /></button>
         </div></td></tr>)}
-      </tbody></table>{loading ? <div className={styles.empty}>Loading Chit Groups...</div> : !items.length && <div className={styles.empty}>No Chit Groups found.</div>}</div>
-      <div className={styles.mobileCards}>{items.map((item, index) => { const open = expandedMobile === item.id; return <article className={styles.mobileCard} key={item.id}><div className={styles.mobileCardMain}><b>{index + 1}</b><strong>{item.name || "-"}</strong><span className={styles.status}>{item.is_active ? "Active" : "Inactive"}</span></div>{open && <div className={styles.mobileDetails}><span><small>Code</small><b>{item.code || "-"}</b></span><span><small>Duration</small><b>{item.duration ?? "-"} {durationLabel(item.duration_type)}</b></span><span><small>Collection Date</small><b>{dateLabel(item.collection_date)}</b></span><span><small>Status</small><b>{item.is_active ? "Active" : "Inactive"}</b></span><span><small>Start Date</small><b>{item.start_date || "-"}</b></span><span><small>End Date</small><b>{item.end_date || "-"}</b></span></div>}<div className={styles.mobileCardActions}><button type="button" onClick={() => setExpandedMobile(open ? null : item.id)}>{open ? "View Less ▲" : "View More ▼"}</button><button type="button" className={styles.editAction} aria-label="Edit" onClick={() => go(`/chit-groups/${item.id}/edit`)}><EditIcon /></button><button type="button" className={styles.deleteAction} aria-label="Delete" title="Delete" onClick={() => setConfirmItem(item)}><TrashIcon /></button><button type="button" className={styles.toggleAction} aria-label={item.is_active ? "Deactivate" : "Activate"} title={item.is_active ? "Deactivate" : "Activate"} onClick={() => toggleActive(item)}><PowerIcon /></button></div></article>; })}</div>
-      <div className={`${styles.footer} paginationFooter`}><span>Showing {items.length ? `1-${items.length}` : 0} of {items.length}</span><div>Previous&nbsp;&nbsp; 1 &nbsp;&nbsp; Next</div></div>
+      </tbody></table>{loading ? <div className={styles.empty}>Loading Chit Groups...</div> : !shown.length && <div className={styles.empty}>No Chit Groups found.</div>}</div>
+      <div className={styles.mobileCards}>{shown.map((item, index) => { const open = expandedMobile === item.id; return <article className={styles.mobileCard} key={item.id}><div className={styles.mobileCardMain}><b>{index + 1}</b><strong>{item.name || "-"}</strong><span className={styles.status}>{item.is_active ? "Active" : "Inactive"}</span></div>{open && <div className={styles.mobileDetails}><span><small>Code</small><b>{item.code || "-"}</b></span><span><small>Duration</small><b>{item.duration ?? "-"} {durationLabel(item.duration_type)}</b></span><span><small>Collection Date</small><b>{dateLabel(item.collection_date)}</b></span><span><small>Status</small><b>{item.is_active ? "Active" : "Inactive"}</b></span><span><small>Start Date</small><b>{item.start_date || "-"}</b></span><span><small>End Date</small><b>{item.end_date || "-"}</b></span></div>}<div className={styles.mobileCardActions}><button type="button" onClick={() => setExpandedMobile(open ? null : item.id)}>{open ? "View Less ▲" : "View More ▼"}</button>{isAdmin && <button type="button" className={styles.editAction} aria-label="Edit" onClick={() => go(`/chit-groups/${item.id}/edit`)}><EditIcon /></button>}{isAdmin && <button type="button" className={styles.deleteAction} aria-label="Delete" title="Delete" onClick={() => setConfirmItem(item)}><TrashIcon /></button>}<button type="button" className={styles.toggleAction} aria-label={item.is_active ? "Deactivate" : "Activate"} title={item.is_active ? "Deactivate" : "Activate"} onClick={() => toggleActive(item)}><PowerIcon /></button></div></article>; })}</div>
+      <div className={`${styles.footer} paginationFooter data-footer`}><span>Showing {shown.length ? `1-${shown.length}` : 0} of {shown.length}</span><div>Previous&nbsp;&nbsp; 1 &nbsp;&nbsp; Next</div></div>
     </section>
 
     {selected && <div className={styles.modalBackdrop} onMouseDown={event => event.target === event.currentTarget && setSelected(null)}><div className={styles.detailModal} role="dialog" aria-modal="true">
@@ -102,5 +150,3 @@ export default function ChitGroupList({ api, auth, go }) {
     {confirmItem && <div className={styles.modalBackdrop}><div className={styles.confirmModal} role="dialog" aria-modal="true"><h2>Delete Chit Group?</h2><p>Are you sure you want to delete this record?</p><footer><button onClick={() => setConfirmItem(null)}>Cancel</button><button className={styles.dangerButton} onClick={deleteRecord}>Delete</button></footer></div></div>}
   </div>;
 }
-
-

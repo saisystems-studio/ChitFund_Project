@@ -1,0 +1,96 @@
+﻿.section{display:flex;flex-direction:column;gap:10px}
+.form{display:flex;flex-direction:column;gap:9px;padding:12px;border:1px solid #d8e4ef;border-radius:9px;background:#f8fbfe}
+.field{display:flex;flex-direction:column;gap:4px;max-width:260px;color:#173f65;font-size:12px;font-weight:700}
+.field select,.field input{height:36px;padding:0 10px;border:1px solid #d8e4ef;border-radius:7px;background:#fff;color:#173f65;font:inherit;font-size:13px;font-weight:500}
+.field select:focus,.field input:focus{outline:2px solid #2478b833;border-color:#2478b8}
+.required{color:#b83950}
+
+.dropzone{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 14px;border:1.5px dashed #c3d6e6;border-radius:9px;background:#fff;color:#607b93;text-align:center;transition:border-color .15s,background-color .15s}
+.dropzone p{margin:0;font-size:12.5px;line-height:1.5}
+.dropzoneActive{border-color:#2478b8;background:#eef6fc}
+.dropzone svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;color:#9fb6c9}
+.dropzoneActions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:2px}
+.filePicked{display:flex;align-items:center;gap:7px;color:#173f65;font-size:12.5px;font-weight:600}
+.filePicked svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;color:#2478b8}
+.filePicked button{border:0;background:none;color:#b83950;font-size:15px;line-height:1;cursor:pointer}
+
+.primaryBtn,.secondaryBtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:7px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.primaryBtn{align-self:flex-start;border:0;background:linear-gradient(135deg,#174d7c,#2478b8);color:#fff}
+.primaryBtn:disabled{opacity:.55;cursor:not-allowed}
+.secondaryBtn{border:1px solid #c3d6e6;background:#fff;color:#174d7c}
+.secondaryBtn:hover{background:#eef6fc}
+.secondaryBtn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
+
+.error{padding:7px 10px;border-radius:6px;background:#fdeef0;color:#b83950;font-size:12px;font-weight:600}
+
+.list{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 11px;border:1px solid #e3ecf4;border-radius:7px;background:#fff}
+.rowType{color:#173f65;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rowActions{display:flex;gap:6px;flex:0 0 auto}
+.rowActions button{height:26px;padding:0 10px;border:1px solid #c3d6e6;border-radius:6px;background:#fff;color:#174d7c;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer}
+.rowActions button:hover{background:#eef6fc}
+.empty{padding:14px 4px;color:#8a9dad;font-size:12.5px;text-align:center}
+
+.modalBackdrop{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:rgba(12,37,61,.32);padding:16px}
+.listModal,.cameraModal,.previewModal{display:flex;flex-direction:column;max-height:90vh;width:min(420px,100%);background:#fff;border-radius:11px;box-shadow:0 20px 48px rgba(16,52,82,.28);overflow:hidden}
+.previewModal{width:min(560px,100%)}
+.listModal header,.cameraModal header,.previewModal header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:1px solid #d8e4ef}
+.listModal header strong,.cameraModal header strong,.previewModal header strong{color:#0b3157;font-size:14px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listModal header button,.cameraModal header button,.previewModal header button{border:0;background:none;color:#607b93;font-size:19px;line-height:1;cursor:pointer}
+.listModalBody{padding:14px 16px;overflow-y:auto}
+.cameraModal footer,.previewModal footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #d8e4ef}
+.cameraPreview{width:100%;max-height:360px;object-fit:contain;background:#0b1b2b}
+.previewBody{flex:1;min-height:260px;max-height:70vh;overflow:auto;background:#eef2f6;display:flex;align-items:center;justify-content:center}
+.previewBody img{max-width:100%;max-height:70vh;object-fit:contain}
+.previewBody iframe{width:100%;height:70vh;border:0}
+
+@media(max-width:480px){.field{max-width:none}}
+
+/* Compact two-column attachment layout shared by customer and loan forms:
+   add controls on the left, attached documents on the right. Container queries
+   stack the columns whenever the section itself is narrow, wherever it is placed. */
+.section{container-type:inline-size;gap:8px}
+.sectionTitle{margin:0;color:#173f65;font-size:14px;font-weight:800}
+.columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:12px}
+.listOnly{display:block}
+.form{min-width:0;margin:0;padding:10px 12px;gap:6px}
+.columnTitle{color:#173f65;font-size:12.5px;font-weight:800}
+.labelText{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;font-size:12px;font-weight:700;color:#173f65}
+.addRow{display:flex;align-items:stretch;gap:6px;min-width:0}
+.proofSelect{flex:1 1 150px;min-width:0}
+.addRow .secondaryBtn{flex:0 0 auto;height:auto;min-height:34px;justify-content:center}
+.field{flex-direction:row;align-items:center;gap:6px;max-width:none;min-width:0}
+.field select,.field input{height:32px;width:180px;max-width:100%;box-sizing:border-box}
+.filePicked{flex-wrap:wrap;min-width:0}
+.filePicked>span{overflow-wrap:anywhere;min-width:0}
+.form>small{font-size:11px;line-height:1.4}
+.addBtn{align-self:center;display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 16px;margin-top:2px;border:0;border-radius:7px;background:linear-gradient(135deg,#174d7c,#2478b8);color:#fff;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.addBtn:disabled{opacity:.55;cursor:not-allowed}
+
+.attached{display:flex;flex-direction:column;gap:6px;min-width:0}
+.listHeading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px;color:#173f65;font-size:12.5px}
+.listHeading>span{font-size:11px;white-space:nowrap;color:#607b93}
+/* Fixed 220px block: heading + count stay on top, the list below scrolls internally
+   (wheel/touch) with the scrollbar hidden. 22px heading + 6px gap leaves 192px for
+   the list = exactly three 60px rows with two 6px gaps. */
+.columns .attached{height:220px;box-sizing:border-box;overflow:hidden}
+.columns .listHeading,.columns .attached>.error{flex:0 0 auto}
+.columns .list{flex:1 1 auto;min-height:0;flex-wrap:nowrap;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none}
+.columns .list::-webkit-scrollbar{display:none;width:0;height:0}
+.columns .list>li{flex:0 0 auto}
+.columns .list>.row{height:60px;box-sizing:border-box}
+.nativeFile{display:none!important}
+.accepted{color:#607b93;font-size:11px;line-height:1.4}
+.docIcon{display:inline-flex;flex:0 0 22px;color:#2478b8}
+.docIcon svg,.rowActions svg,.iconBtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.docDetails{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
+.filename{font-size:11px;color:#607b93;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pendingStatus,.savedStatus{font-size:10px;font-weight:700;white-space:nowrap;padding:3px 6px;border-radius:5px}
+.pendingStatus{color:#956a16;background:#fff6dc}.savedStatus{color:#247052;background:#edf8f2}
+.rowActions button{width:28px;padding:0}
+.rowActions button,.iconBtn{display:inline-flex;align-items:center;justify-content:center}
+.iconBtn{width:28px;height:28px;border:1px solid #c3d6e6!important;border-radius:5px}
+.filePicked .iconBtn{color:#174d7c;background:#fff}
+
+@container (max-width:640px){.columns{grid-template-columns:1fr}}
+@container (max-width:380px){.addRow{flex-wrap:wrap}.proofSelect{flex-basis:100%}.addRow .secondaryBtn{flex:1 1 0}.row{gap:6px;padding:8px}.rowActions{gap:4px}}

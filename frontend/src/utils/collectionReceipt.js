@@ -34,8 +34,10 @@ export const loadImage = src => new Promise(resolve => {
 });
 
 // Compact masthead: logo top-left, company name centred at top, one address/phone line directly beneath it.
-export function header(doc, company, logo) {
-  const { margin, width } = PAGE;
+// pageWidth/pageMargin default to the A4-portrait PAGE constant; generic (landscape-capable)
+// report PDFs pass the actual doc page size so the masthead still centres correctly.
+export function header(doc, company, logo, pageWidth = PAGE.width, pageMargin = PAGE.margin) {
+  const width = pageWidth, margin = pageMargin;
   const y = margin;
   if (logo) {
     const h = 14, w = Math.min(28, h * logo.width / logo.height);
@@ -110,8 +112,8 @@ function receiptPage(doc, { company, logo, customer, section }) {
 }
 
 // Shared by receipt and payment vouchers: centred title (letter spacing included), returns the next y.
-export function voucherTitle(doc, title, y) {
-  const { width } = PAGE, spacing = 1;
+export function voucherTitle(doc, title, y, pageWidth = PAGE.width) {
+  const width = pageWidth, spacing = 1;
   doc.setTextColor(...INK).setFont("helvetica", "bold").setFontSize(15);
   const titleWidth = doc.getTextWidth(title) + spacing * (title.length - 1);
   doc.text(title, (width - titleWidth) / 2, y, { charSpace: spacing });
