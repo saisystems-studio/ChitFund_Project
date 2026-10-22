@@ -40,16 +40,44 @@
 .group-table td{padding:8px 10px;border-bottom:1px solid #edf2f7;color:#17324d;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .group-table tbody tr:last-child td{border-bottom:0}
 .group-table tbody tr:hover td{background:#f5f9fd}
-.group-table th:first-child,.group-table td:first-child{width:12%}
-.group-table th:nth-child(2),.group-table td:nth-child(2){width:44%}
-.group-table th:last-child,.group-table td:last-child{width:44%}
+/* S.No | Name | Group | Action -- same proportions and alignment as the Ledger List. */
+.group-table th:first-child,.group-table td:first-child{width:8%}
+.group-table th:nth-child(2),.group-table td:nth-child(2){width:40%}
+.group-table th:nth-child(3),.group-table td:nth-child(3){width:38%}
+.group-table th:last-child,.group-table td:last-child{width:14%;text-align:right}
 .group-empty{padding:28px;text-align:center;color:#607b95;font-size:13px}
 
-@media(max-width:900px){.group-fields{grid-template-columns:1fr;gap:14px}}
-@media(max-width:600px){.group-actions{flex-direction:column-reverse}.group-actions button{width:100%}}
+/* Search header and pagination mirror the Ledger List. */
+.group-list-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}
+.group-search{display:flex;align-items:center;gap:8px;width:min(420px,100%);height:38px;box-sizing:border-box;padding:0 12px;border:1px solid #cfdcea;border-radius:6px;color:#607b95;transition:border-color .15s,box-shadow .15s}
+.group-search:focus-within{border-color:#176db3;box-shadow:0 0 0 3px rgba(23,109,179,.12)}
+.group-search input{flex:1;min-width:0;margin:0;border:0!important;outline:0!important;box-shadow:none!important;background:transparent;color:#17324d;font:inherit;font-size:13px}
+.group-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;color:#17324d;font-size:13px}
+.group-pager div{display:flex;align-items:center;gap:6px}
+.group-pager button{min-width:36px;height:34px;padding:0 12px;border:1px solid #e1eaf3;border-radius:6px;background:#fff;color:#17324d;font:inherit;font-size:13px;cursor:pointer}
+.group-pager button:disabled{color:#a3b3c2;cursor:not-allowed}
+.group-pager button.active{border-color:#123a63;background:#123a63;color:#fff;font-weight:700}
+.group-page .group-list .group-pager{margin-top:24px;padding:14px 4px 6px}
+
+@media(max-width:900px){.group-fields{grid-template-columns:1fr;gap:14px}.group-list-head{flex-direction:column;align-items:stretch}.group-search{width:100%}}
+@media(max-width:600px){.group-actions{flex-direction:column-reverse}.group-actions button{width:100%}.group-pager{flex-direction:column;align-items:flex-start}}
 
 /* One border per field: the wrapper owns the border and focus ring; inner controls never draw their own. */
 .group-page .group-input input{margin:0;border:0!important;outline:0!important;box-shadow:none!important;background-color:transparent}
 .group-page .group-input input:focus,.group-page .group-input input:focus-visible{border:0!important;outline:0!important;box-shadow:none!important}
 .group-page .group-input{box-sizing:border-box;border:1px solid #cfdcea;transition:border-color .15s,box-shadow .15s}
 .group-page .group-input:focus-within{border-color:#176db3;box-shadow:0 0 0 3px rgba(23,109,179,.12)}
+
+/* Many pages (large datasets): page buttons wrap instead of pushing "Next" off-screen. */
+.group-pager{flex-wrap:wrap;row-gap:8px}
+.group-pager>div:last-child{flex:1 1 auto;flex-wrap:wrap;justify-content:flex-end;row-gap:6px;min-width:0}
+/* HSN Code / Rate of Tax (Income & Expense groups only): the two fields sit straight in the
+   group grid, so they form the second row under Group Name / Group Tag at the same widths. */
+.group-tax-row,.group-tax-row>.mortgage-product-tax-grid{display:contents}
+.group-fields>.group-tax-row>.mortgage-product-tax-grid>.mortgage-tax-field{gap:7px;color:#17324d;font-size:13px;font-weight:700}
+.group-fields>.group-tax-row .mortgage-tax-field input,.group-fields>.group-tax-row .mortgage-tax-field select{height:40px;border-color:#cfdcea;border-radius:6px}
+/* Row alignment: a global label rule gives <label> fields a top margin that the Group Tag <div>
+   does not get; keep every Group field (incl. HSN / ROT) on the same top line and 40px controls. */
+.group-fields{align-items:start}
+.group-fields>.group-field,.group-fields>.group-tax-row>.mortgage-product-tax-grid>.mortgage-tax-field{margin:0;align-content:start}
+.group-fields>.group-field [role="combobox"]{height:40px;margin:0;box-sizing:border-box}

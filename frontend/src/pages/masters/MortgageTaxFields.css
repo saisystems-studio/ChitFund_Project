@@ -1,0 +1,16 @@
+.mortgage-product-tax-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-width:0}
+.mortgage-tax-field,.mortgage-uqc-field{display:flex;flex-direction:column;gap:6px;min-width:0;margin:0;color:#385975;font-size:12px;font-weight:750}
+.mortgage-tax-field>span>b,.mortgage-uqc-field>span>b{color:#ef4444}
+.mortgage-tax-field input,.mortgage-tax-field select,.mortgage-uqc-field input[role="combobox"]{box-sizing:border-box;width:100%;min-width:0;height:40px;margin:0;padding:0 10px;border:1px solid #cfe0ef;border-radius:7px;background:#fff;color:#294967;font:inherit;font-size:13px;font-weight:500}
+.mortgage-tax-field .custom-select{width:100%;min-width:0}
+.mortgage-tax-field .custom-select>select{width:100%;height:40px}
+.mortgage-edit-fields>.mortgage-product-tax-grid{width:100%}
+@media(max-width:760px){.mortgage-product-tax-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.mortgage-product-tax-grid{grid-template-columns:minmax(0,1fr)}}
+
+.mortgage-tax-field>span,.mortgage-uqc-field>span{display:block;min-height:17px;line-height:17px}
+.mortgage-product-tax-grid{align-items:start}
+@media(max-width:900px){.mortgage-product-tax-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.mortgage-product-tax-grid{grid-template-columns:minmax(0,1fr)}.mortgage-tax-field input,.mortgage-tax-field select,.mortgage-uqc-field input[role="combobox"],.mortgage-uqc-add input,.mortgage-uqc-add button{min-height:44px}}
+/* A global label rule resets display; keep HSN / ROT on the same flex column as Unit / UQC. */
+.mortgage-product-tax-grid>label.mortgage-tax-field{display:flex}

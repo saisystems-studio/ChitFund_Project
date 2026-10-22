@@ -2,16 +2,22 @@ from decimal import Decimal
 from calendar import monthrange
 from datetime import date
 import json
+import re
 from rest_framework import serializers
 from django.utils import timezone
 from django.db import transaction
+from .cash_bank import LedgerMappingError, is_account_ledger, resolve_account
 from .models import (
     LoanType, LoanInstallment, ChitGroup, ChitGroupInstallmentDetail,
-    Mortgage, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
+    Mortgage, MortgageUqc, CustomerLoanDetails, InterestDetails, CustomerChitDetails, MortgageLoanDetails,
     CustomerLoanInstallmentDetails, HolidayMaster, LoanHolidaySettings,
     CollectionTransaction, AdjustmentTypeMaster, MortgageRate, Ledger, PaymentEntry, Group,
+    LoanKycDocument, TransactionDocument,
 )
 from staff.serializers import DoneBySerializerMixin
+from customers.models import CustomerDocumentType
+from customers.serializers import KYC_ALLOWED_CONTENT_TYPES, KYC_ALLOWED_EXTENSIONS, KYC_MAX_FILE_SIZE
+from customers.kyc_security import validate_kyc_file, create_kyc_document
 
 
 class AllFields(serializers.ModelSerializer):
@@ -96,9 +102,20 @@ class MortgageSerializer(DoneBySerializerMixin, AllFields):
         data = super().to_representation(instance)
         latest = instance.rates.first()
         data["rate_date"] = latest.date if latest else None
+        data["uqc"] = str(instance.uqc or "").strip().upper()
         return data
 
     def validate(self, attrs):
+        # HSN Code / Rate of Tax now belong to Group & Ledger Master; the Mortgage
+        # Product form no longer sends them, so the existing columns keep their
+        # saved values and are not validated here.
+        for key, label in (("unit", "Unit"), ("uqc", "UQC")):
+            # Require new/full form submissions, but preserve untouched legacy fields on PATCH.
+            if self.instance is None or not self.partial or key in attrs:
+                value = str(attrs.get(key, getattr(self.instance, key, "")) or "").strip()
+                if not value:
+                    raise serializers.ValidationError({key: f"{label} is required."})
+                attrs[key] = value.upper() if key == "uqc" else value
         if "current_rate" in attrs and attrs["current_rate"] <= 0:
             raise serializers.ValidationError({"current_rate": "Current Rate must be greater than zero."})
         if "current_rate" in attrs and not attrs.get("rate_date"):
@@ -290,7 +307,31 @@ class CustomerLoanInstallmentDetailsSerializer(AllFields):
 
 
 class HolidayMasterSerializer(DoneBySerializerMixin, AllFields):
+    allocations = serializers.SerializerMethodField()
+
+    def get_allocations(self, obj):
+        return list(LoanHolidaySettings.objects.filter(holiday=obj, include_in_schedule=True).values("id", "loan_id", "loan__loan_no"))
+
     class Meta(AllFields.Meta): model = HolidayMaster
+
+    def validate_holiday_type(self, value):
+        value = str(value or "").strip().upper()
+        if value not in HolidayMaster.TYPES:
+            raise serializers.ValidationError("Select a valid Holiday Type.")
+        return value
+
+    def validate_holiday_name(self, value):
+        value = str(value or "").strip()
+        if not value:
+            raise serializers.ValidationError("Reason / Description is required.")
+        return value
+
+    def validate(self, attrs):
+        day = attrs.get("holiday_date", getattr(self.instance, "holiday_date", None))
+        kind = attrs.get("holiday_type", getattr(self.instance, "holiday_type", ""))
+        if kind == HolidayMaster.SUNDAY_WORKING and day and day.weekday() != 6:
+            raise serializers.ValidationError({"holiday_type": "Only a Sunday can be marked as a Working Sunday."})
+        return attrs
 
 
 class AdjustmentTypeMasterSerializer(AllFields):
@@ -306,16 +347,42 @@ class LedgerSerializer(DoneBySerializerMixin, AllFields):
     # sends group_detail instead, and validate() derives this legacy string
     # from it. Older/API callers may still post `group` directly.
     group = serializers.ChoiceField(choices=Ledger.GROUPS, required=False)
+    # Display-only name of the Group_tbl node; group_detail (the id) stays the saved FK.
+    group_detail_name = serializers.CharField(source="group_detail.name", read_only=True, default=None)
+    # Customer ID <-> Ledger ID link: set only by Customer Master (finance.signals), never by
+    # this API, so a ledger can never be re-pointed at another customer.
+    customer_name = serializers.CharField(source="customer.full_name", read_only=True, default=None)
 
     class Meta(AllFields.Meta):
         model = Ledger
-        read_only_fields = ('created_by', 'modified_by')
+        read_only_fields = ('created_by', 'modified_by', 'customer')
 
     def validate_name(self, value):
-        value = value.strip()
+        value = " ".join(value.strip().split())
         if not value:
             raise serializers.ValidationError('Name is required.')
+        # Customer Name = Party Ledger Name, so a linked ledger follows the customer name rules.
+        if self.instance is not None and self.instance.customer_id and (len(value) < 2 or not re.fullmatch(r"[A-Za-z .'-]+", value)):
+            raise serializers.ValidationError("This ledger is linked to a customer: enter a valid name with at least 2 letters.")
         return value
+
+    def update(self, instance, validated_data):
+        ledger = super().update(instance, validated_data)
+        if ledger.customer_id:
+            # Two-way binding: the linked customer keeps the ledger's name and group.
+            from customers.models import Customer
+            from customers.serializers import ROLE_BY_ROOT_NAME
+            changes = {"full_name": ledger.name}
+            if ledger.group_detail_id:
+                changes["group_id"] = ledger.group_detail_id
+                role = ROLE_BY_ROOT_NAME.get(ledger.group)
+                if role:
+                    changes["role"] = role
+            Customer.objects.filter(pk=ledger.customer_id).update(**changes)
+        return ledger
+
+    def validate_hsn_code(self, value):
+        return str(value or "").strip()
 
     def validate(self, attrs):
         # group_detail (the precise Group_tbl node chosen in the UI) is the
@@ -328,7 +395,67 @@ class LedgerSerializer(DoneBySerializerMixin, AllFields):
             attrs["group"] = group_detail.root().name
         elif not attrs.get("group", getattr(self.instance, "group", None)):
             raise serializers.ValidationError({"group": "Group is required."})
+        if self.instance is not None and self.instance.customer_id and attrs.get("group", self.instance.group) not in (Ledger.DEBTORS_GROUP, "Sundry Creditors"):
+            raise serializers.ValidationError({"group": "This ledger is linked to a customer: keep it under Sundry Debtors or Sundry Creditors."})
+        self._validate_single_cash_ledger(attrs)
+        self._validate_bank_details(attrs)
+        self._clear_tax_details(attrs, group_detail)
+        # Collection Type (Party Collection) belongs only to Sundry Debtors ledgers.
+        if attrs.get("group", getattr(self.instance, "group", None)) != Ledger.DEBTORS_GROUP:
+            attrs["collection_type"] = ""
         return attrs
+
+    def _validate_single_cash_ledger(self, attrs):
+        # Only one Cash in Hand ledger may exist (Cash mode always posts to it);
+        # any number of Bank Accounts ledgers are allowed.
+        # An existing Cash in Hand ledger can still be edited.
+        if attrs.get("group", getattr(self.instance, "group", None)) != Ledger.CASH_GROUP:
+            return
+        if self.instance is not None and self.instance.group == Ledger.CASH_GROUP:
+            return
+        others = Ledger.objects.filter(group=Ledger.CASH_GROUP)
+        if self.instance:
+            others = others.exclude(pk=self.instance.pk)
+        if others.exists():
+            raise serializers.ValidationError({"group": "A Cash in Hand ledger already exists. Only one Cash in Hand ledger is allowed."})
+
+    def _clear_tax_details(self, attrs, group_detail):
+        # HSN Code / Rate of Tax apply only to Income and Expense ledgers; every
+        # other category is saved without them.
+        if group_detail is not None:
+            taxable = group_detail.root().nature in Ledger.TAXABLE_NATURES
+        else:
+            taxable = attrs.get("group", getattr(self.instance, "group", None)) in Ledger.TAXABLE_GROUPS
+        if not taxable:
+            attrs["hsn_code"], attrs["rate_of_tax"] = "", 0
+
+    def _validate_bank_details(self, attrs):
+        # Bank Name / Branch / IFSC / Account Number belong only to ledgers whose
+        # group resolves to the "Bank Accounts" root. They are required there and
+        # cleared for every other group, so a ledger moved out of Bank Accounts
+        # never keeps stale bank details.
+        group = attrs.get("group", getattr(self.instance, "group", None))
+        if group != Ledger.BANK_GROUP:
+            for field in Ledger.BANK_FIELDS:
+                attrs[field] = ""
+            return
+        # A partial update that touches neither the group nor any bank field
+        # (e.g. renaming a legacy bank ledger) is left alone.
+        sent = getattr(self, "initial_data", None) or {}
+        if self.partial and not any(key in sent for key in (*Ledger.BANK_FIELDS, "group", "group_detail")):
+            return
+        values = {field: str(attrs.get(field, getattr(self.instance, field, "")) or "").strip() for field in Ledger.BANK_FIELDS}
+        values["ifsc_code"] = values["ifsc_code"].upper()
+        values["account_number"] = re.sub(r"\s+", "", values["account_number"])
+        labels = {"bank_name": "Bank Name", "branch_name": "Branch Name", "ifsc_code": "IFSC Code", "account_number": "Account Number"}
+        errors = {field: f"{labels[field]} is required." for field, value in values.items() if not value}
+        if values["ifsc_code"] and "ifsc_code" not in errors and not re.fullmatch(r"[A-Z]{4}0[A-Z0-9]{6}", values["ifsc_code"]):
+            errors["ifsc_code"] = "Enter a valid 11-character IFSC Code (e.g. SBIN0001234)."
+        if values["account_number"] and "account_number" not in errors and not re.fullmatch(r"\d{9,18}", values["account_number"]):
+            errors["account_number"] = "Account Number must be 9 to 18 digits."
+        if errors:
+            raise serializers.ValidationError(errors)
+        attrs.update(values)
 
 
 class GroupSerializer(DoneBySerializerMixin, AllFields):
@@ -341,7 +468,7 @@ class GroupSerializer(DoneBySerializerMixin, AllFields):
 
     class Meta(AllFields.Meta):
         model = Group
-        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "nature", "done_by_staff", "done_by_staff_name", "created_by", "create_date", "modified_by", "modified_date")
+        fields = ("id", "group_name", "parent_group_id", "is_system", "is_active", "nature", "hsn_code", "rate_of_tax", "unit", "uqc", "done_by_staff", "done_by_staff_name", "created_by", "create_date", "modified_by", "modified_date")
         read_only_fields = ("is_system", "created_by", "create_date", "modified_by", "modified_date")
 
     def validate_group_name(self, value):
@@ -349,6 +476,20 @@ class GroupSerializer(DoneBySerializerMixin, AllFields):
         if not value:
             raise serializers.ValidationError("Group Name is required.")
         return value
+
+    def validate_hsn_code(self, value):
+        return str(value or "").strip()
+
+    def validate_unit(self, value):
+        return str(value or "").strip()
+
+    def validate_uqc(self, value):
+        return str(value or "").strip().upper()
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["uqc"] = str(instance.uqc or "").strip().upper()
+        return data
 
     def validate(self, attrs):
         name = attrs.get("name", getattr(self.instance, "name", ""))
@@ -364,12 +505,20 @@ class GroupSerializer(DoneBySerializerMixin, AllFields):
                 if node.pk == self.instance.pk:
                     raise serializers.ValidationError({"parent_group_id": "A group cannot be moved under itself or one of its own sub-groups."})
                 node = node.parent
+        # HSN Code / Rate of Tax belong only to groups under an Income or Expense root (Direct /
+        # Indirect Expenses, Direct / Indirect Income), resolved from the Group Tag's root nature;
+        # every other group is saved without them (same rule as Ledger Master).
+        root = parent.root() if parent is not None else self.instance
+        if root is not None and root.nature not in Ledger.TAXABLE_NATURES:
+            attrs["hsn_code"], attrs["rate_of_tax"] = "", 0
         return attrs
 
 
 class PaymentEntrySerializer(DoneBySerializerMixin, AllFields):
     ledger_name = serializers.CharField(source='ledger.name', read_only=True, default=None)
     account_name = serializers.CharField(source='account.name', read_only=True, default=None)
+
+    ledger_group = serializers.CharField(required=False, allow_blank=True, max_length=30)
 
     class Meta(AllFields.Meta):
         model = PaymentEntry
@@ -382,18 +531,76 @@ class PaymentEntrySerializer(DoneBySerializerMixin, AllFields):
 
     def validate(self, attrs):
         mode = attrs.get('payment_mode', getattr(self.instance, 'payment_mode', None))
-        required = {'UPI': ('upi_id', 'transaction_utr'), 'Cheque': ('cheque_number', 'cheque_date', 'bank_name'),
-                    'NEFT': ('transaction_utr', 'bank_name')}.get(mode, ())
+        # Payment Entry: UPI needs only the UTR / transaction reference (the UPI ID is optional).
+        required = {'UPI': ('transaction_utr',), 'Cheque': ('cheque_number', 'cheque_date', 'bank_name'),
+                    'NEFT': ('transaction_utr', 'bank_name'), 'RTGS': ('transaction_utr', 'bank_name'),
+                    'IMPS': ('transaction_utr', 'bank_name')}.get(mode, ())
         errors = {key: 'This field is required.' for key in required
                   if not attrs.get(key, getattr(self.instance, key, None))}
         current = lambda key: attrs.get(key, getattr(self.instance, key, None))
         if not current('ledger') and not current('ledger_group'):
             errors['ledger_group'] = 'Select a Ledger.'
-        if not current('accounts') and not current('account'):
-            errors['account'] = 'Select an Account.'
-        account = attrs.get('account')
-        if account is not None and account.group not in PaymentEntry.ACCOUNT_GROUPS:
-            errors['account'] = 'Select a Cash or Bank account.'
+        # Cash/Bank side follows the Payment Mode: Cash -> default Cash-in-Hand ledger,
+        # other modes -> the selected Bank Accounts ledger (required).
+        if mode not in dict(PaymentEntry.PAYMENT_MODES):
+            errors['payment_mode'] = 'Select a Payment Mode.'
+        else:
+            try:
+                attrs['account'] = resolve_account(mode, attrs.get('account'), getattr(self.instance, 'account', None))
+            except LedgerMappingError as error:
+                errors[error.field] = error.message
+        if 'ledger' in attrs and is_account_ledger(attrs['ledger']):
+            errors['ledger'] = 'Cash in Hand and Bank Accounts belong in Accounts, not Ledger.'
+        if current('ledger'):
+            attrs['ledger_group'] = current('ledger').group
+        elif current('ledger_group') and current('ledger_group') not in dict(PaymentEntry.LEDGER_GROUPS):
+            errors['ledger_group'] = 'Select a valid Ledger.'
+        loan = current('loan')
+        if loan and (not current('ledger') or current('ledger').customer_id != loan.customer_id):
+            errors['loan'] = 'Loan Plan does not belong to the selected Ledger.'
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
+
+
+class LoanKycDocumentSerializer(serializers.ModelSerializer):
+    upload_token = serializers.UUIDField(required=False, allow_null=True, write_only=True)
+    """Mirrors CustomerKycDocumentSerializer (Phase 8) exactly — same file
+    validation, same OTHER-requires-a-name rule, same CustomerDocumentType
+    upsert-on-success — just scoped to a loan instead of a customer."""
+    document_type_display = serializers.CharField(source="get_document_type_display", read_only=True)
+    file = serializers.FileField(write_only=True)
+
+    class Meta:
+        model = LoanKycDocument
+        # "loan" is deliberately excluded: the view always supplies it from the URL
+        # (serializer.save(loan=loan)), never from the request body.
+        fields = ("id", "document_type", "document_type_display", "other_document_name",
+                   "file", "upload_token", "original_file_name", "file_type", "file_size", "created_at")
+        read_only_fields = ("id", "original_file_name", "file_type", "file_size", "created_at")
+
+    def validate_file(self, value):
+        return validate_kyc_file(value)
+
+    def validate(self, attrs):
+        document_type = attrs.get("document_type", getattr(self.instance, "document_type", ""))
+        other_name = attrs.get("other_document_name", getattr(self.instance, "other_document_name", ""))
+        if document_type == LoanKycDocument.DocumentType.OTHER and not str(other_name).strip():
+            raise serializers.ValidationError({"other_document_name": "Document Name is required for 'Other'."})
+        if document_type != LoanKycDocument.DocumentType.OTHER:
+            attrs["other_document_name"] = ""
+        return attrs
+
+    def create(self, validated_data):
+        return create_kyc_document(LoanKycDocument, validated_data)
+
+
+class TransactionDocumentSerializer(LoanKycDocumentSerializer):
+    """Same validation, OTHER-name rule and retry-safe upload_token handling as loan KYC
+    documents. The owning receipt/payment is never read from the body — the view supplies it."""
+
+    class Meta(LoanKycDocumentSerializer.Meta):
+        model = TransactionDocument
+
+    def create(self, validated_data):
+        return create_kyc_document(TransactionDocument, validated_data)

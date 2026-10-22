@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Shared layout for every Loan Report and General Report page.
+
+     .rl-page                      page root (alongside .data-page)
+       .rl-header                  title (left) · status · actions (right)
+         .rl-actions               Clear Filters | Export | Performance …
+       .rl-filters                 every filter on one row (desktop)
+         .rl-field                 label + control
+       .data-container             full-height white table container
+
+   Filters sit on a grid of 7 equal slots (the most filters any report has,
+   counting From / To). Pages with fewer filters leave the trailing slots empty,
+   so From / To appear right after Period without moving or resizing anything.
+   Each slot is at least 124px; when the content area is too narrow for 7 the
+   grid wraps evenly (tablet: two rows), and phones stack every filter.
+
+   Controls are 40px high with 8px corners everywhere. Selectors are scoped
+   under #root so they win over the older per-page rules.
+   ========================================================================== */
+
+.rl-page{--rl-h:40px;--rl-r:8px;--rl-gap:10px;--rl-border:#d7dce2;--rl-ink:#102a43;--rl-ink-2:#4f6a84;--rl-accent:#176db3}
+
+/* Compact top: the title row starts near the top of the content area. */
+@media (min-width:768px){
+  #root .app-shell .main-content:has(> .rl-page){padding-top:12px!important}
+}
+#root .main-content>.rl-page{width:100%;max-width:none!important;margin:0!important;padding-top:0!important;gap:0!important}
+/* Blocks between the filters and the table (errors, Active Loans' Performance panel). */
+#root .rl-page>:is(.active-error,.active-performance,.collection-entry-error){margin:0 0 12px}
+
+/* ---- Header row ------------------------------------------------------- */
+#root .rl-page>.rl-header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;min-height:var(--rl-h);margin:0 0 10px;padding:0;grid-column:1/-1}
+#root .rl-page>.rl-header>.page-breadcrumb{flex:0 1 auto;min-width:0;height:auto;margin:0;white-space:nowrap}
+#root .rl-page>.rl-header>.page-breadcrumb>.page-title{overflow:hidden;text-overflow:ellipsis}
+.rl-meta{flex:0 0 auto;padding:4px 10px;border-radius:20px;background:#e8f3fd;color:#1a6396;font-size:12px;font-weight:700;white-space:nowrap}
+/* Loading / error text lives in the header's free space, so it never pushes a filter. */
+.rl-status{flex:1 1 0;min-width:0;overflow:hidden;font-size:12px;text-align:right;white-space:nowrap;text-overflow:ellipsis;color:var(--rl-ink-2)}
+.rl-status .rpt-error,.rl-status .rl-error{color:#b83950}
+#root .rl-page .rl-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;flex:0 0 auto}
+#root .rl-page .rl-actions>*{flex:0 0 auto}
+
+/* Every header button: 40px, 8px corners, one font. */
+#root .rl-page .rl-actions :is(.rl-btn,.rpt-clear,.performance-button,.rpt-attachments-view,.primary,button[aria-haspopup="menu"]){
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;
+  width:auto;min-width:0;height:var(--rl-h);margin:0;padding:0 14px;
+  border:1px solid var(--rl-border);border-radius:var(--rl-r);background:#fff;color:#174d7c;
+  font:inherit;font-size:13px;font-weight:600;line-height:1;letter-spacing:0;text-decoration:none;white-space:nowrap;cursor:pointer;
+  transition:background-color .15s,border-color .15s
+}
+#root .rl-page .rl-actions :is(.rl-btn,.rpt-clear,.performance-button,.rpt-attachments-view,button[aria-haspopup="menu"]):hover:not(:disabled){background:#f5f8fb;border-color:#c3cedb}
+#root .rl-page .rl-actions button[aria-haspopup="menu"][aria-expanded="true"],
+#root .rl-page .rl-actions .performance-button[aria-expanded="true"]{border-color:var(--rl-accent);background:#eef6fc;color:var(--rl-accent)}
+#root .rl-page .rl-actions :is(.rl-btn,.rpt-clear,.performance-button,.rpt-attachments-view,button[aria-haspopup="menu"]):disabled{opacity:.5;cursor:not-allowed}
+#root .rl-page .rl-actions .primary{border:0;background:linear-gradient(110deg,#168bea,#174eaa);color:#fff;font-weight:700}
+#root .rl-page .rl-actions svg{width:13px;height:13px;flex:0 0 13px}
+#root .rl-page .rl-actions .performance-button span{float:none;font-size:14px;line-height:1;color:inherit}
+
+/* ---- Filters row ------------------------------------------------------ */
+#root .rl-page>.rl-filters{
+  display:grid;grid-column:1/-1;
+  grid-template-columns:repeat(auto-fill,minmax(max(124px,calc((100% - 6 * var(--rl-gap)) / 7)),1fr));
+  align-items:end;gap:var(--rl-gap);width:100%;min-width:0;margin:0 0 12px;padding:0;overflow:visible;flex-wrap:nowrap
+}
+#root .rl-page .rl-filters>.rl-field{display:flex;flex-direction:column;gap:4px;width:auto;min-width:0;max-width:none;margin:0;flex:none;grid-column:auto!important;color:var(--rl-ink-2);font-size:12px;font-weight:600;line-height:16px}
+#root .rl-page .rl-filters .rl-label{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#root .rl-page .rl-filters .rl-field>*:not(.rl-label),
+#root .rl-page .rl-filters .rpt-dropdown-wrap{width:100%!important;min-width:0;max-width:none}
+#root .rl-page .rl-filters .rl-field :is(input:not([type="checkbox"]):not([type="radio"]),select,[role="combobox"],button[aria-haspopup="listbox"]){
+  box-sizing:border-box;width:100%!important;min-width:0;max-width:none;height:var(--rl-h)!important;min-height:var(--rl-h);margin:0;
+  border:1px solid var(--rl-border);border-radius:var(--rl-r)!important;background-color:#fff;color:var(--rl-ink);
+  font:inherit;font-size:13px!important;font-weight:500;line-height:normal
+}
+#root .rl-page .rl-filters .rl-field :is(input[type="search"],input[type="date"],input:not([type]),input[type="text"],select){padding:0 10px}
+#root .rl-page .rl-filters .rl-field select{padding-right:28px}
+#root .rl-page .rl-filters .rl-field input[role="combobox"]{padding:0 32px 0 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#root .rl-page .rl-filters .rl-field :is(input,select,[role="combobox"]):focus{border-color:var(--rl-accent);outline:0;box-shadow:0 0 0 3px rgba(23,109,179,.1)}
+#root .rl-page .rl-filters .rpt-dropdown-wrap.has-value input[role="combobox"]{padding-right:50px}
+
+/* Phones: every filter full width, stacked; the actions share one even row. */
+@media (max-width:767px){
+  #root .rl-page>.rl-filters{grid-template-columns:minmax(0,1fr);gap:8px}
+  #root .rl-page>.rl-header>.page-breadcrumb{flex:1 1 auto}
+  #root .rl-page>.rl-header>.rl-status{flex:1 1 100%;order:3;text-align:left}
+  #root .rl-page .rl-actions{order:4;flex:1 1 100%;margin-left:0}
+  #root .rl-page .rl-actions>*{flex:1 1 0;min-width:0}
+  #root .rl-page .rl-actions>*>button[aria-haspopup="menu"],
+  #root .rl-page .rl-actions>:is(.rl-btn,.rpt-clear,.performance-button,.rpt-attachments-view,.primary){width:100%;padding:0 8px}
+}
+
+/* ---- Table container ---------------------------------------------------
+   Rows stay compact; on narrow screens the table scrolls sideways inside its
+   white container instead of widening the page. */
+#root .rl-page .data-container{min-width:0;max-width:100%}
+@media (max-width:1023px){
+  #root .main-content .rl-page .data-container>.data-table-area{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  #root .main-content .rl-page .data-container>.data-table-area>table{min-width:760px}
+}
+/* Keep real table rows on phones (older card-style rules would otherwise apply). */
+@media (max-width:767px){
+  #root .main-content .rl-page .data-table-area>table{display:table;width:100%}
+  #root .main-content .rl-page .data-table-area>table>thead{display:table-header-group}
+  #root .main-content .rl-page .data-table-area>table>tbody{display:table-row-group}
+  #root .main-content .rl-page .data-table-area>table>*>tr{display:table-row;position:static;padding:0}
+  #root .main-content .rl-page .data-table-area>table>*>tr>:is(td,th){display:table-cell;white-space:nowrap}
+  #root .main-content .rl-page .data-table-area>table>tbody>tr>td{width:auto}
+  #root .main-content .rl-page .data-table-area>table>tbody>tr>td::before{content:none}
+}
+#root .app-shell .main-content:has(> .rl-page){overflow-x:hidden!important}

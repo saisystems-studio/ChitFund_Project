@@ -112,3 +112,6 @@
 .exact-right .exact-table {
   width: 100%;
 }
+
+/* Mobile: title on its own line; application date and loan type wrap below it. */
+@media(max-width:767px){.exact-loan-page .exact-header,.main-content .exact-header{display:flex!important;flex-wrap:wrap;align-items:center;row-gap:6px;column-gap:10px}.exact-header>.page-breadcrumb{flex:1 1 100%;min-width:0}.exact-header .page-title{white-space:normal;overflow:visible}}

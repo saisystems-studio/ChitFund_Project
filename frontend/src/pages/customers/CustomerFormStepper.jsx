@@ -3,20 +3,16 @@ import styles from "./CustomerForm.module.css";
 import { actionToast } from "../../utils/actionToast";
 import DistrictDropdown from "../../components/DistrictDropdown";
 import GroupDropdown from "../../components/GroupDropdown/GroupDropdown";
+import { KycDocumentsSection } from "../../components/KycDocuments/KycDocuments";
+import { savePendingDocuments } from "../../components/KycDocuments/pendingDocuments";
 import "./CustomerFormCompact.css";
 import "./CustomerWhatsapp.css";
 import "./CustomerFormGrid.css";
 import PageBreadcrumb from "../../components/PageBreadcrumb";
+import { useSession } from "../../components/SessionContext";
+import { finishCustomerLink, pendingCustomerLink } from "../../utils/customerLedgerLink";
 
 const empty = { customer_code: "", full_name: "", dob: "", gender: "", occupation: "", monthly_income: "", group: "", email: "", primary_mobile: "", alternate_mobile: "", whatsapp_number: "", is_whatsapp_same_as_phone: false, aadhaar_number: "", pan_number: "", address: "", district: "", state: "", country: "India", pincode: "", is_active: true };
-const CUSTOMER_DRAFT_KEY = "chitufund:draft:add-customer";
-const loadDraft = () => {
-  try {
-    const saved = sessionStorage.getItem(CUSTOMER_DRAFT_KEY);
-    const parsed = saved ? JSON.parse(saved) : null;
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? { ...empty, ...parsed } : empty;
-  } catch { return empty; }
-};
 const numeric = new Set(["primary_mobile", "alternate_mobile", "whatsapp_number", "aadhaar_number", "pincode"]);
 const validators = {
   full_name: value => value.trim().length < 2 ? "Enter at least 2 characters." : !/^[A-Za-z .'-]+$/.test(value.trim()) ? "Use letters, spaces, dot or hyphen only." : "",
@@ -33,24 +29,53 @@ const validators = {
 };
 const required = new Set(["full_name", "primary_mobile", "address", "district", "state", "group"]);
 
-export default function CustomerFormStepper({ api, auth, go }) {
-  const [form, setForm] = useState(loadDraft);
+// Saved customer -> form values: every form key, with null/undefined shown as "".
+const formFromCustomer = data => Object.fromEntries(Object.keys(empty).map(key => [key, key === "is_whatsapp_same_as_phone" || key === "is_active" ? Boolean(data?.[key] ?? empty[key]) : data?.[key] ?? empty[key]]));
+const payloadFrom = form => ({ ...form, dob: form.dob || null, monthly_income: form.monthly_income === "" ? null : form.monthly_income, group: form.group || null });
+
+// `onSaved` / `onCancel` (optional) let another page host Add Customer, e.g. the Loan
+// Application's (+): the saved customer is handed back instead of staying on this form.
+// `id` switches the same form to Edit Customer: the saved customer is loaded and
+// pre-filled, Save updates that record (PATCH), and Reset restores the loaded values.
+export default function CustomerFormStepper({ api, auth, go, onSaved, onCancel, id }) {
+  const editing = Boolean(id);
+  const { isAdmin } = useSession();
+  // Opened from Add Ledger's "+ Add Customer": Customer Name comes from the Ledger Name and the
+  // Group is the exact Group ID chosen there (field hidden); Save / Cancel return to Add Ledger.
+  const [fromLedger] = useState(() => editing || onSaved ? null : pendingCustomerLink());
+  const ledgerDefaults = fromLedger ? { full_name: fromLedger.draft?.name || "", group: fromLedger.draft?.group_detail || "" } : {};
+  const [form, setForm] = useState(() => ({ ...empty, ...ledgerDefaults }));
+  const [loadState, setLoadState] = useState(editing ? "loading" : "ready");
+  const original = useRef(null);
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savedCustomer, setSavedCustomer] = useState(null);
+  const [pendingDocuments, setPendingDocuments] = useState([]);
+  const [documentsVersion, setDocumentsVersion] = useState(0);
+  const attachmentCustomerRef = useRef(null);
   const refs = useRef({});
   const checkboxEnter = useRef(0);
 
   useEffect(() => {
+    if (!editing) return undefined;
+    let active = true;
+    setLoadState("loading");
+    api.get(`/customers/${id}/`, auth).then(({ data }) => {
+      if (!active) return;
+      original.current = formFromCustomer(data); setForm(original.current); setLoadState("ready");
+    }).catch(() => { if (active) setLoadState("error"); });
+    return () => { active = false; };
+  }, [api, id]);
+  useEffect(() => {
+    if (editing) return undefined;
     let active = true;
     api.get("/customers/next-code/", auth).then(({ data }) => {
       if (active && data?.customer_code) setForm(current => ({ ...current, customer_code: data.customer_code }));
     }).catch(() => { if (active) actionToast("Unable to generate customer code.", false); });
     return () => { active = false; };
   }, [api, auth]);
-  useEffect(() => { try { sessionStorage.setItem(CUSTOMER_DRAFT_KEY, JSON.stringify(form)); } catch {} }, [form]);
-
   const focus = key => refs.current[key]?.focus();
   const nextKey = key => {
     const order = ["full_name", "email", "primary_mobile", "is_whatsapp_same_as_phone", "whatsapp_number", "alternate_mobile", "dob", "gender", "occupation", "monthly_income", "group", "address", "district", "state", "pincode", "aadhaar_number", "pan_number"];
@@ -80,10 +105,27 @@ export default function CustomerFormStepper({ api, auth, go }) {
     if (saving || !validate()) { if (!saving) actionToast("Unable to save customer. Please check the highlighted fields.", false); return; }
     setSaving(true); setNotice(""); setSaveError("");
     try {
-      const { data } = await api.post("/customers/", { ...form, dob: form.dob || null, monthly_income: form.monthly_income === "" ? null : form.monthly_income, group: form.group || null }, auth);
+      if (editing) {
+        const { data } = await api.patch(`/customers/${id}/`, payloadFrom(form), auth);
+        original.current = formFromCustomer(data); setForm(original.current); setErrors({});
+        const uploaded = await savePendingDocuments(api, auth, `/customers/${id}/kyc-documents/`, pendingDocuments);
+        setPendingDocuments(uploaded.remaining);
+        setDocumentsVersion(version => version + 1);
+        if (uploaded.error) { actionToast("Customer updated. Some documents were not attached. Save again to retry the remaining documents.", false); return; }
+        actionToast("Customer updated successfully.");
+        return;
+      }
+      const data = attachmentCustomerRef.current || (await api.post("/customers/", payloadFrom(form), auth)).data;
+      attachmentCustomerRef.current = data;
+      const uploaded = await savePendingDocuments(api, auth, `/customers/${data.id}/kyc-documents/`, pendingDocuments);
+      setPendingDocuments(uploaded.remaining);
+      if (uploaded.error) { actionToast("Customer saved. Some documents were not attached. Save again to retry the remaining documents.", false); return; }
       actionToast("Customer saved successfully.");
-      try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {}
+      if (fromLedger) { attachmentCustomerRef.current = null; finishCustomerLink(go, { id: data.id, full_name: data.full_name || form.full_name, ledger_id: data.ledger_id }); return; }
+      if (onSaved) { attachmentCustomerRef.current = null; onSaved({ ...data, id: data.id, full_name: data.full_name || form.full_name }); return; }
+      setSavedCustomer({ id: data.id, full_name: data.full_name || form.full_name });
       const next = await api.get("/customers/next-code/", auth);
+      attachmentCustomerRef.current = null;
       setForm({ ...empty, customer_code: next.data.customer_code }); setErrors({}); focus("full_name");
     } catch (error) {
       const raw = error.response?.data;
@@ -92,7 +134,10 @@ export default function CustomerFormStepper({ api, auth, go }) {
       setErrors(mapped); const message = Object.values(mapped).filter(Boolean).join(" ") || "Unable to save customer. Please check the highlighted fields."; actionToast(message, false);
     } finally { setSaving(false); }
   };
-  const reset = () => { try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {} setForm(current => ({ ...empty, customer_code: current.customer_code })); setErrors({}); setNotice(""); setSaveError(""); focus("full_name"); };
+  // Edit: back to the values loaded from the server. Saved attachments are untouched;
+  // only documents added since the last save (not yet uploaded) are dropped.
+  const reset = () => editing ? (setPendingDocuments([]), setForm(original.current || empty), setErrors({}), focus("full_name")) : resetAdd();
+  const resetAdd = () => { attachmentCustomerRef.current = null; setPendingDocuments([]); setForm(current => ({ ...empty, ...ledgerDefaults, customer_code: current.customer_code })); setErrors({}); setNotice(""); setSaveError(""); focus("full_name"); };
   const keyDown = (event, key) => {
     if (event.altKey && event.key.toLowerCase() === "s") { event.preventDefault(); event.stopPropagation(); save(event); return; }
     if (event.key !== "Enter" || event.isComposing) return;
@@ -105,20 +150,27 @@ export default function CustomerFormStepper({ api, auth, go }) {
   const field = (key, label, options = {}) => <Field key={key} inputRef={node => { refs.current[key] = node; }} label={label} required={required.has(key)} error={errors[key]} onKeyDown={event => keyDown(event, key)} value={form[key] || ""} onChange={event => set(key, event.target.value)} {...options}/>;
   const location = (key, label, kind, next, onSelect) => <label className={`${styles.field} ${errors[key] ? styles.invalid : ""}`} key={key}>{label} <b>*</b><DistrictDropdown kind={kind} value={form[key] || ""} inputRef={node => { refs.current[key] = node; }} nextRef={{ get current() { return refs.current[next]; } }} error={errors[key]} onChange={value => set(key, value)} onSelect={onSelect} /><FieldError message={errors[key]}/></label>;
 
-  const cancel = () => { try { sessionStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {} go("/customers"); };
-  return <div className={`${styles.page} add-customer-page`}><header className={styles.header}><PageBreadcrumb root="Masters" current="Add Customer" onBack={() => go("/masters")} /></header><form className={`${styles.form} ${styles.singleForm} add-customer-form`} onSubmit={save} onKeyDown={event => { if (event.altKey && event.key.toLowerCase() === "s") keyDown(event, ""); }} noValidate><div className={`${styles.formGrid} customer-form-grid`}>
+  const cancel = () => fromLedger ? finishCustomerLink(go, null) : onCancel ? onCancel() : go("/customers");
+  if (loadState === "loading") return <div className={`${styles.page} add-customer-page`}><header className={styles.header}><PageBreadcrumb current="Edit Customer" /></header><section className="panel">Loading customer...</section></div>;
+  if (loadState === "error") return <div className={`${styles.page} add-customer-page`}><header className={styles.header}><PageBreadcrumb current="Edit Customer" /></header><section className="panel"><div className="alert">Customer could not be loaded.</div><button type="button" className={styles.cancel} onClick={cancel}>Back to Customers</button></section></div>;
+  return <div className={`${styles.page} add-customer-page`}><header className={styles.header}><PageBreadcrumb current={editing ? "Edit Customer" : "Add Customer"} /></header><form className={`${styles.form} ${styles.singleForm} add-customer-form`} onSubmit={save} onKeyDown={event => { if (event.altKey && event.key.toLowerCase() === "s") keyDown(event, ""); }} noValidate><fieldset disabled={saving || Boolean(attachmentCustomerRef.current)} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }} className={`${styles.formGrid} customer-form-grid`}>
     <Field label="Customer Code" value={form.customer_code} readOnly tabIndex={-1} aria-readonly="true" className={styles.generatedCode}/>
     {field("full_name", "Customer Name")}{field("email", "Email", { type: "email" })}
     {field("primary_mobile", "Phone Number", { inputMode: "numeric" })}{field("alternate_mobile", "Alternative Number", { inputMode: "numeric" })}
     {field("whatsapp_number", "WhatsApp Number", { inputMode: "numeric", placeholder: "Enter WhatsApp Number", readOnly: form.is_whatsapp_same_as_phone, "aria-readonly": form.is_whatsapp_same_as_phone, labelExtra: <span className={styles.whatsappSame} onKeyDown={event => keyDown(event, "is_whatsapp_same_as_phone")}><input ref={node => { refs.current.is_whatsapp_same_as_phone = node; }} type="checkbox" checked={form.is_whatsapp_same_as_phone} onChange={event => set("is_whatsapp_same_as_phone", event.target.checked)}/> Same as Phone</span> })}
     {field("dob", "DOB", { type: "date" })}{field("gender", "Gender", { children: <select value={form.gender} onChange={event => set("gender", event.target.value)} onKeyDown={event => keyDown(event, "gender")}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select> })}{field("occupation", "Occupation")}
     {field("monthly_income", "Monthly Income", { type: "number", min: "0", step: "0.01" })}
-    {field("group", "Group", { children: <GroupDropdown api={api} auth={auth} rootNames={["Sundry Debtors", "Sundry Creditors"]} value={form.group || ""} onChange={value => set("group", value)} onEnterNext={() => moveNext("group")} placeholder="Select Group" allowClear/> })}
+    {!fromLedger && field("group", "Group", { children: <GroupDropdown api={api} auth={auth} rootNames={["Sundry Debtors", "Sundry Creditors"]} value={form.group || ""} onChange={value => set("group", value)} onEnterNext={() => moveNext("group")} placeholder="Select Group" allowClear/> })}
     {field("address", "Address", { type: "textarea" })}
     {location("district", "District", "district", "state", item => setForm(current => ({ ...current, district: item.name, state: item.state, country: item.country, pincode: item.pincode || "" })))}
     {location("state", "State", "state", "pincode", item => set("state", item.name))}
     {field("pincode", "Pincode", { inputMode: "numeric" })}{field("aadhaar_number", "Aadhar Number", { inputMode: "numeric" })}{field("pan_number", "PAN Number")}
-  </div><div className="form-action-footer customer-form-actions"><button type="button" className={styles.cancel} onClick={cancel}>Cancel</button><button type="button" className={styles.cancel} onClick={reset}>Reset</button><button type="submit" className={styles.primary} disabled={saving}>{saving ? "Saving..." : "Save Customer"}</button></div></form></div>;
+  </fieldset><section className="customer-kyc-panel"><KycDocumentsSection key={documentsVersion} api={api} auth={auth} customerId={editing ? id : undefined} allowDelete={editing && isAdmin} pendingDocuments={pendingDocuments} onPendingChange={setPendingDocuments} disabled={saving} /></section><div className="form-action-footer customer-form-actions"><button type="button" className={styles.cancel} onClick={cancel}>Cancel</button><button type="button" className={styles.cancel} disabled={saving} onClick={reset}>Reset</button><button type="submit" className={styles.primary} disabled={saving}>{saving ? "Saving..." : "Save Customer"}</button></div></form>
+  {savedCustomer && <section className="customer-kyc-panel">
+    <header><h2>KYC Documents Ã¢â‚¬â€ {savedCustomer.full_name}</h2><button type="button" className={styles.cancel} onClick={() => setSavedCustomer(null)}>Done</button></header>
+    <KycDocumentsSection api={api} auth={auth} customerId={savedCustomer.id} />
+  </section>}
+  </div>;
 }
 
 function Field({ label, required, error, wide, inputRef, type = "text", children, labelExtra, ...props }) { return <label className={`${styles.field} ${labelExtra ? "whatsapp-field" : ""} ${wide ? styles.wide : ""} ${error ? styles.invalid : ""}`}>{labelExtra ? <span className={styles.whatsappLabelRow}>{label}{required && <b> *</b>}{labelExtra}</span> : <>{label}{required && <b> *</b>}</>}{children || <input ref={inputRef} type={type} {...props}/>}<FieldError message={error}/></label>; }

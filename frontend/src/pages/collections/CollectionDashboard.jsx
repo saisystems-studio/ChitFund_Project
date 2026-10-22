@@ -1,40 +1,192 @@
+import "../../styles/compact-report-toolbar.css";
+import PageBreadcrumb from "../../components/PageBreadcrumb";
 import { useEffect, useMemo, useState } from "react";
 import { formatINR } from "../../utils/currency";
-import PageBreadcrumb from "../../components/PageBreadcrumb";
+import SearchableDropdown from "../../components/SearchableDropdown/SearchableDropdown";
+import ReportExportButtons from "../../components/ReportExportButtons/ReportExportButtons";
 import { useCompanyProfile } from "../../components/CompanyProfileContext";
-import { downloadTodayReport, printTodayReport } from "../../utils/todayReportPdf";
-import { actionToast } from "../../utils/actionToast";
-import apiErrorMessage from "../../utils/apiErrorMessage";
-import "./collection-dashboard.css";
-import "./collection-entry-polish.css";
-import "./collection-erp.css";
+import { downloadReportPdf, printReportPdf } from "../../utils/reportPdf";
+import { downloadReportExcel } from "../../utils/reportExcel";
+import { reportFilename } from "../../utils/reportFilename";
+import { periodRange } from "../../utils/periodRange";
+import { StatusBadge } from "./TodayCollectionDetail";
+import { detailPath } from "../reportDetail/reportDetailRoute";
+import "../modules/report-common.css";
+import "../../styles/report-layout.css";
 
+// Today Collection Report: collection dues as of the report date (period end, capped at
+// today) — one row per schedule installment that is still unpaid or was collected in the
+// period, with Due Amount, Received (saved collections allocated to it), Balance and Status
+// (Completed / Partial / Pending), served by /finance/reports/today-collection/. Clicking
+// Customer / Particulars opens the read-only details (with admin Edit / Delete).
 const money = formatINR;
-const localDate = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
-const shift = (value, days) => { const d = new Date(`${value}T00:00:00`); d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); };
-const labelDate = value => new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+const LOAN_TYPES = ["All", "Chit", "Interest", "Mortgage"];
+const PERIODS = ["Today", "This Week", "Past Week", "This Month", "All Time", "Custom Range"];
+const EMPTY = { rows: [], asOf: "" };
+const dateLabel = value => value ? new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+const dayMonthYear = value => value ? String(value).slice(0, 10).split("-").reverse().join("/") : "";
+const loanTypeName = loan => loan.loan_type?.name || "";
+const loanNumber = loan => loan.doc_no || loan.loan_no || `#${loan.id}`;
+
+function Icon({ name }) {
+  const paths = { back: <path d="M19 12H5m7 7-7-7 7-7" />, chevron: <path d="m9 6 6 6-6 6" /> };
+  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
+}
 
 export default function CollectionDashboard({ api, auth, go }) {
-  const [date, setDate] = useState(localDate()), [rows, setRows] = useState([]), [summary, setSummary] = useState({}), [search, setSearch] = useState(""), [loanType, setLoanType] = useState(""), [status, setStatus] = useState("ALL"), [previous, setPrevious] = useState(""), [selected, setSelected] = useState(null), [reminder, setReminder] = useState(null), [details, setDetails] = useState(null), [error, setError] = useState("");
-  const [outputBusy, setOutputBusy] = useState(null);
-  const { profile, refreshProfile } = useCompanyProfile() || {};
-  const load = () => Promise.all([api.get("/finance/collections/", { ...auth, params: { date, search, loan_type: loanType, status, previous } }), api.get("/finance/collections/summary/", auth)]).then(([list, totals]) => { setRows(list.data.results || []); setSummary(totals.data || {}); setError(""); }).catch(() => setError("Unable to load collection data."));
-  useEffect(() => { load(); }, [date, search, loanType, status, previous]);
-  const isToday = date === localDate();
-  const selectedLabel = isToday ? `Today · ${labelDate(date)}` : `Previous Collection · ${labelDate(date)}`;
-  const copyReminder = row => navigator.clipboard?.writeText(`Hello ${row.customer_name},\n\nYour ${row.loan_name} installment is still pending.\n\nDue Date: ${labelDate(row.due_date)}\nPending Amount: ${money(row.balance)}\n\nKindly make the payment at your earliest convenience.\n\nThank you.`);
-  const output = async action => {
-    if (outputBusy) return;
-    setOutputBusy(action);
-    try {
-      const company = await (refreshProfile ? refreshProfile().catch(() => profile) : profile);
-      await (action === "pdf" ? downloadTodayReport : printTodayReport)(rows, summary, selectedLabel, company);
-    } catch (requestError) { actionToast(apiErrorMessage(requestError, "Unable to prepare the report."), false); }
-    finally { setOutputBusy(null); }
+  const [loanType, setLoanType] = useState("All");
+  const [loanId, setLoanId] = useState("");
+  const [period, setPeriod] = useState("Today");
+  const [customFrom, setCustomFrom] = useState(""), [customTo, setCustomTo] = useState("");
+  const [loans, setLoans] = useState([]);
+  const [report, setReport] = useState(EMPTY);
+  const [loadedScope, setLoadedScope] = useState("");
+  const [loading, setLoading] = useState(false), [error, setError] = useState("");
+  const [reportError, setReportError] = useState("");
+  const [exportBusy, setExportBusy] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const { profile } = useCompanyProfile() || {};
+
+  useEffect(() => {
+    let active = true;
+    api.get("/finance/loans/", { ...auth, params: { status: "ALL", page_size: 10000 } })
+      .then(({ data }) => { if (active) setLoans(data.results ?? data ?? []); })
+      .catch(() => { if (active) setError("Unable to load loan numbers."); });
+    return () => { active = false; };
+  }, [api]);
+
+  // "Past Week" is the previous Monday–Sunday week, matching the shared Last Week range.
+  const range = useMemo(() => period === "Custom Range" ? { from: customFrom, to: customTo } : period === "All Time" ? { from: "", to: "" } : periodRange(period === "Past Week" ? "Last Week" : period), [period, customFrom, customTo]);
+  const rangeError = period === "Custom Range" && (!range.from || !range.to) ? "Select both From and To dates." : range.from && range.to && range.from > range.to ? "From Date cannot be after To Date." : "";
+  const scope = JSON.stringify([period, range.from, range.to, loanType, loanId]);
+  const changePeriod = value => {
+    setPeriod(value);
+    if (value !== "Custom Range") { setCustomFrom(""); setCustomTo(""); }
   };
-  return <div className="collection-dashboard"><div className="collection-dashboard-toolbar"><PageBreadcrumb root="Transactions" current="Collection" onBack={() => go("/dashboard")} /><div className="collection-date-tools"><button onClick={() => setDate(value => shift(value, -1))} aria-label="Previous day">◀</button><input type="date" value={date} onChange={event => { setDate(event.target.value); setPrevious(""); }} /><button className="today-button" onClick={() => { setDate(localDate()); setPrevious(""); }}>Today</button><button onClick={() => setDate(value => shift(value, 1))} aria-label="Next day">▶</button></div><span className="today-report-output"><button type="button" className="today-report-output-btn" disabled={Boolean(outputBusy)} onClick={() => output("pdf")}>PDF</button><button type="button" className="today-report-output-btn" disabled={Boolean(outputBusy)} onClick={() => output("print")}>Print</button></span><button className="history-link" onClick={() => go("/collection-history")}>Collection History</button></div><div className="collection-selected-date">{selectedLabel}</div><section className="collection-kpis"><Kpi label="Today Due" value={money(summary.today_due)}/><Kpi label="Today Collected" value={money(summary.today_collected)}/><Kpi label="Today Remaining" value={money(summary.today_remaining)}/><Kpi label="Yesterday Pending" value={money(summary.yesterday_pending)}/><Kpi label="Total Overdue" value={money(summary.total_overdue)}/></section>{Number(summary.yesterday_pending) > 0 && <div className="collection-reminder">⚠ Yesterday Pending: <b>{money(summary.yesterday_pending)}</b> from {summary.yesterday_count || 0} customers <button onClick={() => { setDate(shift(localDate(), -1)); setPrevious("yesterday"); }}>View Pending</button></div>}<div className="collection-filters"><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search customer, code, phone, loan..."/><select value={status} onChange={event => setStatus(event.target.value)}><option value="ALL">All Status</option><option value="PENDING">Pending</option><option value="PARTIAL">Partial</option><option value="OVERDUE">Overdue</option></select><select value={previous} onChange={event => setPrevious(event.target.value)}><option value="">Selected Date</option><option value="yesterday">Yesterday</option><option value="last_7_days">Last 7 Days</option><option value="this_month">This Month Pending</option><option value="all_previous">All Previous Pending</option></select></div>{error && <div className="collection-error">{error}</div>}<section className="collection-table-card"><div className="collection-table-wrap"><table><thead><tr>{["S.No", "Loan", "Customer", "Due Date", "Due Amount", "Paid", "Balance", "Status", "Action"].map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr className="clickable-data-row" tabIndex="0" key={row.id} onClick={() => setDetails(row)} onKeyDown={event => { if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button,a,input,select,textarea")) { event.preventDefault(); setDetails(row); } }}><td>{index + 1}</td><td>{row.loan_name}<small>{row.loan_no}</small></td><td>{row.customer_name}<small>{row.customer_code}</small></td><td>{labelDate(row.due_date)}</td><td>{money(row.due_amount)}</td><td>{money(row.total_paid)}</td><td className="balance">{money(row.balance)}</td><td><span className={`collection-status ${row.is_overdue ? "overdue" : row.payment_status.toLowerCase()}`}>{row.payment_status}{row.is_overdue ? ` · ${row.days_overdue}d overdue` : ""}</span></td><td><button className="collect-action" onClick={event => { event.stopPropagation(); setSelected(row); }}>Collect</button><button className="icon-action" title="Reminder" onClick={event => { event.stopPropagation(); setReminder(row); }}>↗</button></td></tr>)}</tbody></table>{!rows.length && <div className="collection-empty">No pending collections for this view.</div>}</div><footer className="collection-footer paginationFooter"><span>Showing {rows.length?`1-${rows.length}`:0} of {rows.length}</span><div>Previous&nbsp;&nbsp; 1 &nbsp;&nbsp; Next</div></footer></section>{selected && <CollectPanel api={api} auth={auth} row={selected} onClose={() => setSelected(null)} onSaved={() => { setSelected(null); load(); }}/>} {reminder && <ReminderPanel row={reminder} onClose={() => setReminder(null)} onCopy={() => copyReminder(reminder)}/>} {details && <DetailsPanel row={details} onClose={() => setDetails(null)}/>}</div>;
+
+  useEffect(() => {
+    if (rangeError) { setReport(EMPTY); setLoadedScope(""); setReportError(""); setLoading(false); return undefined; }
+    let active = true;
+    setLoading(true);
+    setReportError("");
+    api.get("/finance/reports/today-collection/", { ...auth, params: { from: range.from || undefined, to: range.to || undefined, all_time: period === "All Time" ? "true" : undefined, loan_type: loanType === "All" ? undefined : loanType, loan_id: loanId || undefined } })
+      .then(({ data }) => { if (active) { setReport({ rows: data.rows || [], asOf: data.as_of || "" }); setLoadedScope(scope); setError(""); setReportError(""); } })
+      .catch(requestError => { if (active) { setReport(EMPTY); setLoadedScope(""); setReportError(requestError.response?.data?.detail || "Unable to load the Today Collection History."); } })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [api, scope, rangeError, reloadKey]);
+
+  const loanOptions = useMemo(() => loans
+    .filter(loan => loanType === "All" || loanTypeName(loan).toLowerCase() === loanType.toLowerCase())
+    .map(loan => ({ value: loan.id, label: `${loanNumber(loan)} • ${loanTypeName(loan) || "Loan"} • ${loan.customer?.full_name || loan.customer?.name || ""}`, doc_no: loanNumber(loan), customer: loan.customer?.full_name || loan.customer?.name || "", loan_type: loanTypeName(loan) })), [loans, loanType]);
+  const changeLoanType = value => { setLoanType(value); if (loanId && !loans.some(loan => String(loan.id) === String(loanId) && (value === "All" || loanTypeName(loan).toLowerCase() === value.toLowerCase()))) setLoanId(""); };
+  const selectedLoanNo = loanOptions.find(option => String(option.value) === String(loanId))?.doc_no;
+
+  const rows = loadedScope === scope ? report.rows : [];
+  // The open detail follows the refreshed report row (same filters) after an Edit / Delete.
+  // Double-click opens the latest receipt voucher with its allocated dues; a due with no receipt yet opens its loan.
+  const openRow = row => go(row.collection?.voucher_no ? detailPath("voucher", row.collection.voucher_no) : detailPath("loan", row.loan_id, { installment: row.installment_id }));
+  const exportReady = !loading && !rangeError && loadedScope === scope;
+  const rangeLine = period === "All Time" ? "All Time" : range.from === range.to ? dateLabel(range.from) : `${dateLabel(range.from)} to ${dateLabel(range.to)}`;
+  const asOfLine = report.asOf ? `As of ${dateLabel(report.asOf)}` : "";
+  const filtersLine = [asOfLine, `Period: ${period} (${rangeLine})`, loanType !== "All" && `Loan Type: ${loanType}`, selectedLoanNo && `Loan: ${selectedLoanNo}`].filter(Boolean).join("   •   ");
+  const exportFilename = () => reportFilename("Today_Collection_Report", loanType !== "All" && loanType, selectedLoanNo,
+    period === "Today" ? "" : period === "Custom Range" ? `${dayMonthYear(range.from)}_to_${dayMonthYear(range.to)}` : period);
+
+  const handleExportPdf = async (mode = "pdf") => {
+    if (exportBusy || !exportReady) return;
+    setExportBusy(mode); setError("");
+    try {
+      await (mode === "print" ? printReportPdf : downloadReportPdf)({
+        title: "Today Collection History", filtersLine, profile, orientation: "landscape",
+        columns: [
+          { header: "S.No", align: "center", width: 11 }, { header: "Date", align: "left", width: 22 }, { header: "Transaction Type", align: "left", width: 22 },
+          { header: "Loan Type", align: "left", width: 18 }, { header: "Loan Number", align: "left", width: 22 },
+          { header: "Customer / Particulars", align: "left", width: 58 }, { header: "Due Days", align: "right", width: 15 },
+          { header: "Due Amount", align: "right", width: 25 }, { header: "Received", align: "right", width: 25 }, { header: "Balance", align: "right", width: 25 },
+          { header: "Status", align: "left", width: 22 },
+        ],
+        rows: rows.map((row, index) => [index + 1, dateLabel(row.date), row.transaction_type, row.loan_type || "—", row.loan_no || "—",
+          row.particulars, String(row.due_days), money(row.due_amount), money(row.received_amount), money(row.balance_amount), row.status]),
+      }, exportFilename());
+    } catch { setError("PDF download failed. Please retry after the report finishes loading."); }
+    finally { setExportBusy(null); }
+  };
+  const handleExportExcel = async () => {
+    if (exportBusy || !exportReady) return;
+    setExportBusy("excel"); setError("");
+    try {
+      const columns = [
+        { header: "S.No", numeric: true, width: 7 }, { header: "Date", width: 13 }, { header: "Transaction Type", width: 16 }, { header: "Loan Type", width: 12 },
+        { header: "Loan Number", width: 15 }, { header: "Customer / Particulars", width: 42 }, { header: "Due Days", numeric: true, width: 10 },
+        { header: "Due Amount", numeric: true, width: 14 }, { header: "Received", numeric: true, width: 14 }, { header: "Balance", numeric: true, width: 14 },
+        { header: "Status", width: 12 },
+      ];
+      await downloadReportExcel({
+        filename: exportFilename(), title: "Today Collection History", subtitle: filtersLine, columns,
+        rows: rows.map((row, index) => [index + 1, dayMonthYear(row.date), row.transaction_type, row.loan_type || "—", row.loan_no || "—", row.particulars,
+          Number(row.due_days || 0), Number(row.due_amount || 0), Number(row.received_amount || 0), Number(row.balance_amount || 0), row.status]),
+      });
+    } catch { setError("Excel download failed. Please retry after the report finishes loading."); }
+    finally { setExportBusy(null); }
+  };
+
+  return <div className="rpt-page rl-page today-collection-page data-page compact-report-page">
+    <div className="rl-header">
+      <PageBreadcrumb className="rpt-breadcrumb" current="Today Collection History">{asOfLine && <span className="today-collection-as-of" style={{ marginLeft: 10, color: "var(--rpt-muted)", fontSize: 12 }}>{asOfLine}</span>}</PageBreadcrumb>
+      <div className="rl-status" role="status">{(error || reportError || rangeError) ? <span className="rpt-error" role="alert">{error || reportError || rangeError}</span> : loading ? "Updating…" : null}</div>
+      
+    </div>
+    <div className="rl-filters" role="search">
+      <label className="rl-field"><span className="rl-label">Loan Type</span>
+        <select value={loanType} onChange={event => changeLoanType(event.target.value)}>{LOAN_TYPES.map(option => <option key={option}>{option}</option>)}</select>
+      </label>
+      <label className="rl-field"><span className="rl-label">Loan Number</span>
+        <div className={`rpt-dropdown-wrap ${loanId ? "has-value" : ""}`}>
+          <SearchableDropdown options={loanOptions} searchKeys={["doc_no", "customer", "loan_type"]} value={loanId} onChange={value => setLoanId(value ? String(value) : "")} portal searchInside placeholder="All Loans" />
+        </div>
+      </label>
+      <label className="rl-field"><span className="rl-label">Period</span>
+        <select value={period} onChange={event => changePeriod(event.target.value)}>{PERIODS.map(option => <option key={option}>{option}</option>)}</select>
+      </label>
+      {period === "Custom Range" && <>
+        <label className="rl-field"><span className="rl-label">From Date</span><input type="date" value={customFrom} max={customTo || undefined} onChange={event => setCustomFrom(event.target.value)} /></label>
+        <label className="rl-field"><span className="rl-label">To Date</span><input type="date" value={customTo} min={customFrom || undefined} onChange={event => setCustomTo(event.target.value)} /></label>
+      </>}
+      <div className="rl-actions">
+        <ReportExportButtons portal downloadLabels onPdf={() => handleExportPdf()} onExcel={handleExportExcel} onPrint={() => handleExportPdf("print")} busy={exportBusy} disabled={!exportReady} />
+      </div>
+    </div>
+
+    <div className="rpt-card rpt-table-card data-container">
+      <div className="rpt-table-wrap data-table-area">
+        <table className="rpt-table">
+          <colgroup>{["5%", "9%", "10%", "7%", "9%", "16%", "6%", "9%", "9%", "9%", "11%"].map((width, index) => <col key={index} style={{ width }} />)}</colgroup>
+          <thead><tr>
+            <th>S.No</th><th>Date</th><th>Transaction Type</th><th>Loan Type</th><th>Loan Number</th><th>Customer / Particulars</th>
+            <th className="num">Due Days</th><th className="num">Due Amount</th><th className="num" title="Saved collections allocated to this due">Received</th>
+            <th className="num" title="Due Amount − Received, as of the report date">Balance</th><th>Status</th>
+          </tr></thead>
+          <tbody>
+            {rows.map((row, index) => <tr key={row.key} className="clickable-data-row" tabIndex={0} title="Double-click to view more" style={{ cursor: "pointer" }}
+              onDoubleClick={event => { if (!event.target.closest("button,a,input,select,textarea")) openRow(row); }} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); openRow(row); } }}>
+              <td>{index + 1}</td><td>{dateLabel(row.date)}</td><td>{row.transaction_type}</td>
+              <td>{row.loan_type || "—"}</td><td>{row.loan_no || "—"}</td>
+              <td style={{ whiteSpace: "normal", padding: "6px 10px" }}><span className="tcr-particulars">{row.particulars}</span></td>
+              <td className="num">{row.status === "Completed" ? "—" : row.due_days}</td>
+              <td className="num">{money(row.due_amount)}</td>
+              <td className="num">{money(row.received_amount)}</td>
+              <td className="num">{money(row.balance_amount)}</td>
+              <td><StatusBadge status={row.status} /></td>
+            </tr>)}
+            {!rows.length && <tr className="rpt-empty-row"><td colSpan={11}>
+              <strong>{loading ? "Loading collection dues…" : reportError ? "Unable to load collection dues." : rangeError || "No collection dues"}</strong>
+              {reportError && <button type="button" className="tcr-btn tcr-retry" disabled={loading} onClick={() => setReloadKey(key => key + 1)}>Retry</button>}
+              {!loading && !reportError && !rangeError && <span>Nothing is pending on or before {dateLabel(report.asOf || range.to)}, and no collections were received in this period.</span>}
+            </td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>;
 }
-function Kpi({ label, value }) { return <div className="collection-kpi"><span>{label}</span><strong>{value}</strong></div>; }
-function CollectPanel({ api, auth, row, onClose, onSaved }) { const [amount, setAmount] = useState(""), [date, setDate] = useState(localDate()), [mode, setMode] = useState("Cash"), [reference, setReference] = useState(""), [remarks, setRemarks] = useState(""), [error, setError] = useState(""), [saving, setSaving] = useState(false); const save = async event => { event.preventDefault(); const value = Number(amount); if (!(value > 0)) return setError("Collection amount must be greater than zero."); if (value > Number(row.balance)) return setError(`Collection amount cannot exceed pending balance ${money(row.balance)}.`); setSaving(true); try { await api.post("/finance/collections/create/", { installment_id: row.installment_id, collection_amount: amount, collection_date: date, payment_mode: mode, reference_no: reference, remarks }, auth); onSaved(); } catch (requestError) { setError(requestError.response?.data?.detail || "Collection could not be saved. Please try again."); } finally { setSaving(false); } }; return <div className="collection-drawer-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}><aside className="collection-drawer"><header><h2>Collect Payment</h2><button onClick={onClose}>×</button></header><dl><dt>Customer</dt><dd>{row.customer_name}</dd><dt>Loan</dt><dd>{row.loan_name} · {row.loan_no}</dd><dt>Installment</dt><dd>{row.due_date} · Due {money(row.due_amount)}</dd><dt>Already Paid</dt><dd>{money(row.total_paid)}</dd><dt>Balance</dt><dd>{money(row.balance)}</dd></dl><form onSubmit={save}><label>Collection Amount <span className="required-star">*</span><input autoFocus type="number" min="0.01" max={row.balance} step="0.01" value={amount} onChange={event => setAmount(event.target.value)} /></label><label>Collection Date <span className="required-star">*</span><input type="date" value={date} onChange={event => setDate(event.target.value)} /></label><label>Payment Mode <span className="required-star">*</span><select value={mode} onChange={event => setMode(event.target.value)}><option>Cash</option><option>UPI</option><option>Bank</option><option>Other</option></select></label><label>Reference No<input value={reference} onChange={event => setReference(event.target.value)} /></label><label>Remarks<textarea value={remarks} onChange={event => setRemarks(event.target.value)} /></label>{error && <div className="collection-error">{error}</div>}<footer><button type="button" onClick={onClose}>Cancel</button><button className="collect-save" disabled={saving}>{saving ? "Saving…" : "Save Collection"}</button></footer></form></aside></div>; }
-function ReminderPanel({ row, onClose, onCopy }) { return <div className="collection-drawer-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}><aside className="collection-drawer reminder-panel"><header><h2>Payment Reminder</h2><button onClick={onClose}>×</button></header><p>Hello {row.customer_name},</p><p>Your {row.loan_name} installment is still pending.</p><dl><dt>Due Date</dt><dd>{labelDate(row.due_date)}</dd><dt>Pending Amount</dt><dd>{money(row.balance)}</dd><dt>Days Overdue</dt><dd>{row.days_overdue}</dd><dt>Phone</dt><dd>{row.phone || "—"}</dd></dl><button className="collect-save" onClick={onCopy}>Copy Reminder</button></aside></div>; }
-function DetailsPanel({ row, onClose }) { return <div className="collection-drawer-backdrop" onMouseDown={event => event.target === event.currentTarget && onClose()}><aside className="collection-drawer"><header><h2>Collection Details</h2><button onClick={onClose}>×</button></header><dl><dt>Customer</dt><dd>{row.customer_name}</dd><dt>Customer Code</dt><dd>{row.customer_code || "—"}</dd><dt>Phone</dt><dd>{row.phone || "—"}</dd><dt>Loan</dt><dd>{row.loan_name}</dd><dt>Loan Number</dt><dd>{row.loan_no || "—"}</dd><dt>Due Date</dt><dd>{labelDate(row.due_date)}</dd><dt>Due Amount</dt><dd>{money(row.due_amount)}</dd><dt>Total Paid</dt><dd>{money(row.total_paid)}</dd><dt>Balance</dt><dd>{money(row.balance)}</dd><dt>Status</dt><dd>{row.payment_status}{row.is_overdue ? ` · ${row.days_overdue}d overdue` : ""}</dd></dl></aside></div>; }

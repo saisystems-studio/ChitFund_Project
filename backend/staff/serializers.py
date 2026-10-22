@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Staff
 
@@ -28,6 +29,25 @@ class StaffSerializer(serializers.ModelSerializer):
         if value and (len(value) != 12 or not value.isdigit()):
             raise serializers.ValidationError("Enter a valid 12-digit Aadhaar number.")
         return value
+
+    def validate_date_of_birth(self, value):
+        if value and value > timezone.localdate():
+            raise serializers.ValidationError("Date of Birth cannot be in the future.")
+        return value
+
+    def validate_anniversary_date(self, value):
+        if value and value > timezone.localdate():
+            raise serializers.ValidationError("Anniversary Date cannot be in the future.")
+        return value
+
+    def validate(self, attrs):
+        # Date of Birth and Anniversary Date are both optional (null allowed), in the
+        # API and in the Add/Edit Staff form.
+        dob = attrs.get("date_of_birth", getattr(self.instance, "date_of_birth", None))
+        anniversary = attrs.get("anniversary_date", getattr(self.instance, "anniversary_date", None))
+        if dob and anniversary and anniversary < dob:
+            raise serializers.ValidationError({"anniversary_date": "Anniversary Date cannot be before Date of Birth."})
+        return attrs
 
 
 class DoneBySerializerMixin(serializers.Serializer):

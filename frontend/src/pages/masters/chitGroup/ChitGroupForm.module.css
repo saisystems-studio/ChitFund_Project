@@ -54,3 +54,6 @@
 .actions{margin-top:auto;flex:0 0 auto}
 
 @media(max-width:600px){.page{height:100%;min-height:0;overflow:hidden}.surface{flex:1 1 auto;overflow:hidden}.scheduleSection{overflow:hidden}.scheduleSection .tableWrap{max-height:none;overflow:auto}.actions{position:static}}
+
+/* Tablet / laptop below 1360px: the six group-info fields need ~875px+; use two rows of three. */
+@media (min-width:768px) and (max-width:1359px){.groupInfoRow{grid-template-columns:repeat(3,minmax(0,1fr))}}

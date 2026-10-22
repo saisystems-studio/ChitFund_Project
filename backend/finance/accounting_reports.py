@@ -1,15 +1,15 @@
 """Trial Balance / Profit & Loss / Balance Sheet -- a basic, modular
 accounting layer built on the existing Group (chart of accounts) and
 Ledger tables, fed by the real postings already made through Collection
-Entry (`CollectionTransaction.account` / `.ledger`) and Payment Entry
+Entry (`CollectionTransaction.account` / `.party_ledger` / `.ledger`) and Payment Entry
 (`PaymentEntry.account` / `.ledger`).
 
 Sign convention matches the rest of the project (Ledger.opening_balance,
 LedgerStatement report): a ledger's signed balance is positive for Debit,
 negative for Credit.
 
-Scope note (intentional, see the task that introduced this file): plain
-loan-installment collections that don't carry an explicit "Other Charges"
+Collection Entry posts Debit Cash/Bank, Credit the selected (party) Ledger.
+Scope note: older loan-installment collections saved without a party
 ledger post only to the Cash/Bank side -- there is no per-customer
 receivable ledger yet, so that money has no classified opposite leg. Doing
 nothing would silently leave Trial Balance unbalanced; inventing a
@@ -21,8 +21,9 @@ are later wired to real per-customer ledgers, that gap -- and this file's
 synthetic suspense step -- shrinks to zero on its own.
 """
 from decimal import Decimal
+from django.db import connections
 
-from .models import CollectionTransaction, Group, Ledger, PaymentEntry
+from .models import BankTransfer, CollectionTransaction, Group, JournalLine, Ledger, PartyCollection, PartyDue, PaymentEntry
 
 ZERO = Decimal("0.00")
 SUSPENSE_LABEL = "Suspense Account (Unclassified)"
@@ -41,6 +42,28 @@ LEGACY_GROUP_ALIASES = {
     "Indirect Expense": "Indirect Expenses",
     "Income": "Indirect Income",
 }
+
+
+BANK_TRANSFER_WARNING = "Bank Transactions are unavailable: their database table has not been deployed. Report totals exclude bank transfers."
+
+
+def bank_transfer_queryset():
+    """Support databases where the optional transfer module is not yet deployed.
+    Do not swallow query/connection errors or cache table absence across deployment.
+    """
+    query = BankTransfer.objects.all()
+    connection = connections[query.db]
+    with connection.cursor() as cursor:
+        tables = connection.introspection.table_names(cursor)
+    return query if BankTransfer._meta.db_table.lower() in {name.lower() for name in tables} else query.none()
+
+
+def report_warnings():
+    warnings = [BANK_TRANSFER_WARNING] if bank_transfer_queryset().query.is_empty() else []
+    opening_difference = sum((value or ZERO for value in Ledger.objects.values_list("opening_balance", flat=True)), ZERO)
+    if opening_difference:
+        warnings.append(f"Existing opening balances differ by {abs(opening_difference):.2f}. Trial Balance and Balance Sheet require opening-balance reconciliation; no balancing entries have been invented.")
+    return warnings
 
 
 def _group_lookup():
@@ -65,7 +88,7 @@ def _path_of(group, groups_by_id):
         seen.add(node.id)
         node = groups_by_id.get(node.parent_id)
     return list(reversed(path))
-
+    
 
 def ledger_balances(from_date=None, to_date=None):
     """{ledger_id: signed balance} for every real Ledger row, plus the
@@ -79,21 +102,25 @@ def ledger_balances(from_date=None, to_date=None):
         collections = collections.filter(collection_date__gte=from_date)
     if to_date:
         collections = collections.filter(collection_date__lte=to_date)
-    for row in collections.values("account_id", "ledger_id", "collection_amount", "ledger_amount"):
+    for row in collections.values("account_id", "ledger_id", "party_ledger_id", "collection_amount", "ledger_amount"):
         amount = row["collection_amount"] or ZERO
         ledger_amount = row["ledger_amount"] or ZERO
+        # Debit Cash/Bank with the full receipt.
         if row["account_id"] in balances:
             balances[row["account_id"]] += amount
         else:
             suspense += amount
+        # Legacy "Other Charges" share: credit its own ledger.
         if row["ledger_id"] in balances:
             balances[row["ledger_id"]] -= ledger_amount
         else:
             suspense -= ledger_amount
-        # The part of the collection not posted to an explicit ledger (the
-        # common case: a plain installment payment, no "Other Charges")
-        # has no classified opposite leg yet -- see module docstring.
-        suspense += ledger_amount - amount
+        # The rest credits the selected (party) Ledger; older receipts saved
+        # without one keep falling to suspense -- see module docstring.
+        if row["party_ledger_id"] in balances:
+            balances[row["party_ledger_id"]] -= amount - ledger_amount
+        else:
+            suspense += ledger_amount - amount
 
     payments = PaymentEntry.objects.all()
     if from_date:
@@ -108,6 +135,48 @@ def ledger_balances(from_date=None, to_date=None):
             suspense -= amount
         if row["ledger_id"] in balances:
             balances[row["ledger_id"]] += amount
+        else:
+            suspense += amount
+
+    # Party Collection: a due is Dr Party / Cr its counter ledger; a receipt is Dr Cash/Bank /
+    # Cr Party. Allocations (incl. advances applied later) never post.
+    dues = PartyDue.objects.all()
+    if from_date:
+        dues = dues.filter(due_date__gte=from_date)
+    if to_date:
+        dues = dues.filter(due_date__lte=to_date)
+    for row in dues.values("party_id", "counter_ledger_id", "amount"):
+        balances[row["party_id"]] += row["amount"]
+        balances[row["counter_ledger_id"]] -= row["amount"]
+    receipts = PartyCollection.objects.all()
+    if from_date:
+        receipts = receipts.filter(date__gte=from_date)
+    if to_date:
+        receipts = receipts.filter(date__lte=to_date)
+    for row in receipts.values("account_id", "party_id", "amount"):
+        balances[row["account_id"]] += row["amount"]
+        balances[row["party_id"]] -= row["amount"]
+
+    # Journal Entry: each line posts to its ledger (Dr adds, Cr reduces); vouchers balance.
+    journal = JournalLine.objects.all()
+    if from_date:
+        journal = journal.filter(voucher__date__gte=from_date)
+    if to_date:
+        journal = journal.filter(voucher__date__lte=to_date)
+    for row in journal.values("ledger_id", "side", "amount"):
+        balances[row["ledger_id"]] += row["amount"] if row["side"] == JournalLine.DEBIT else -row["amount"]
+
+    transfers = bank_transfer_queryset()
+    if from_date: transfers = transfers.filter(date__gte=from_date)
+    if to_date: transfers = transfers.filter(date__lte=to_date)
+    for row in transfers.values('from_account_id', 'to_account_id', 'amount'):
+        amount = row['amount'] or ZERO
+        if row['from_account_id'] in balances:
+            balances[row['from_account_id']] -= amount
+        else:
+            suspense -= amount
+        if row['to_account_id'] in balances:
+            balances[row['to_account_id']] += amount
         else:
             suspense += amount
 

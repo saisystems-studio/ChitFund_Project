@@ -47,3 +47,6 @@
 .active-loans-page .loan-details-modal .installment-table th:nth-child(5){width:20%}
 .active-loans-page .loan-details-modal .installment-table th:nth-child(3){text-align:right}
 .active-loans-page .loan-details-modal .installment-table td:nth-child(4),.active-loans-page .loan-details-modal .installment-table td:nth-child(5){text-align:left}
+
+/* Previously inherited from the global sidebar `aside` rule (now scoped to .app-shell > aside). */
+.loan-detail{display:flex;flex-direction:column;color:#fff}

@@ -109,3 +109,46 @@ export async function downloadInterestSchedulePdf(loan, company) {
   const name = String(loan.customerName || "interest-loan").replace(/[^a-z0-9_-]/gi, "_");
   (await createInterestSchedulePdf(loan, company)).save(`Interest-Schedule-${name}.pdf`);
 }
+
+// Same running Total Paid / Balance shown live in the Chit Loan Schedule Preview table.
+export function buildChitScheduleRows(rows, totalAmount) {
+  let paid = 0;
+  return rows.map((row, index) => {
+    const value = Number(row.amount || row.installment_amount || 0);
+    paid += value;
+    return { number: row.installment_number ?? index + 1, schedule: row.schedule_value ?? "-", date: row.due_date, amount: value, paid, balance: Math.max(0, Number(totalAmount || 0) - paid) };
+  });
+}
+
+// Chit schedule PDF: identical layout to the Interest schedule (header, centred heading,
+// 3-column details grid, banded grid table, page footers), filled with Chit schedule data.
+export async function createChitSchedulePdf(loan, company = {}) {
+  const logo = await loadLogo(company.logo);
+  const doc = new jsPDF({ format: "a4", unit: "mm" });
+  const rows = buildChitScheduleRows(loan.rows || [], loan.totalAmount);
+
+  let y = drawHeader(doc, company, logo);
+  y = drawSectionHeading(doc, y, "CHIT LOAN SCHEDULE");
+
+  y = drawDetailsGrid(doc, y, [
+    [["Customer Name", loan.customerName || "-"], ["Plan Type", loan.planType || "-"], ["Chit Group", loan.groupName || "-"]],
+    [["Chit Amount", amount(loan.totalAmount)], ["Start Date", dateLabel(loan.startDate)], ["End Date", dateLabel(loan.endDate)]],
+    [["Duration", loan.durationLabel || "-"], ["Total Installments", String(rows.length)]],
+  ]);
+
+  autoTable(doc, {
+    startY: y, margin: { top: PAGE.margin, left: PAGE.margin, right: PAGE.margin, bottom: 18 },
+    head: [["S.No", "Schedule", "Schedule Date", "Installment Amount", "Total Paid", "Balance"]],
+    body: rows.map((row, index) => [index + 1, row.schedule, dateLabel(row.date), amount(row.amount), amount(row.paid), amount(row.balance)]),
+    showHead: "everyPage", theme: "grid",
+    styles: { font: "helvetica", fontSize: 8.5, textColor: INK, lineColor: LINE, lineWidth: 0.2, cellPadding: 2, valign: "middle" },
+    headStyles: { fillColor: BAND, textColor: INK, fontStyle: "bold", halign: "left" },
+    columnStyles: { 0: { cellWidth: 14, halign: "center" }, 1: { cellWidth: 26 }, 2: { cellWidth: 28 }, 3: { cellWidth: 38, halign: "right" }, 4: { cellWidth: 38, halign: "right" }, 5: { cellWidth: 38, halign: "right" } },
+    didParseCell: data => { if (data.section === "head" && data.column.index > 2) data.cell.styles.halign = "right"; if (data.section === "head" && data.column.index === 0) data.cell.styles.halign = "center"; },
+  });
+
+  drawFooters(doc);
+  return doc;
+}
+
+export const chitScheduleFileName = loan => `Chit-Schedule-${String(loan.customerName || "chit-loan").replace(/[^a-z0-9_-]/gi, "_")}.pdf`;

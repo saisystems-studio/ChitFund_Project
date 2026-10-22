@@ -1,0 +1,151 @@
+/* Journal Entry & Journal List — CHITUFUND navy / white theme.
+   Entry: one white container holding header, a single 4-column accounting grid, totals,
+   narration and centred actions. No inner cards or double borders. */
+
+.jv-page{width:100%;max-width:1240px;margin:0 auto;color:#17324d}
+.jv-breadcrumb{margin:0 0 10px}
+.jv-container{padding:16px 20px 18px;border:1px solid #dde7f1;border-radius:8px;background:#fff;box-shadow:0 4px 16px rgba(18,59,99,.06)}
+.jv-container fieldset{min-width:0;margin:0;padding:0;border:0}
+
+.jv-field{display:flex;flex-direction:column;gap:5px;color:#385975;font-size:12px;font-weight:700}
+.jv-required{margin-left:3px;color:#d94a57}
+.jv-field input,.jv-field textarea{box-sizing:border-box;width:100%;border:1px solid #c9d9e8;border-radius:7px;background:#fff;color:#17324d;font:inherit;font-size:13px;font-weight:500}
+.jv-field input{height:38px;padding:0 10px}
+.jv-field input:focus,.jv-field textarea:focus,.jv-grid input:focus{outline:none;border-color:#176db3;box-shadow:0 0 0 3px #176db322}
+.jv-header{display:grid;grid-template-columns:repeat(2,minmax(0,220px));gap:14px;margin-bottom:14px}
+.jv-voucher{background:#f4f8fc!important;color:#123a63!important;font-weight:700!important}
+
+.jv-grid-wrap{border:1px solid #dde7f1;border-radius:7px;overflow:hidden}
+.jv-grid{width:100%;table-layout:fixed;border-collapse:collapse}
+.jv-col-ledger{width:34%}.jv-col-amount{width:14%}.jv-col-action{width:44px}
+.jv-grid th{height:36px;padding:0 10px;background:#123a63;color:#fff;font-size:12px;font-weight:700;letter-spacing:.3px;text-align:left;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jv-grid th+th{border-left:1px solid rgba(255,255,255,.15)}
+.jv-grid td{height:44px;padding:4px 8px;border-bottom:1px solid #edf2f7;vertical-align:middle}
+.jv-grid td+td{border-left:1px solid #edf2f7}
+.jv-grid .num{text-align:right;font-variant-numeric:tabular-nums}
+.jv-grid select,.jv-grid input[role="combobox"],.jv-grid .jv-amount{box-sizing:border-box;width:100%;height:36px;border:1px solid #c9d9e8;border-radius:6px;background:#fff;color:#17324d;font:inherit;font-size:13px}
+.jv-grid .jv-amount{padding:0 10px;text-align:right;font-variant-numeric:tabular-nums}
+.jv-grid tfoot td{height:40px;padding:0 10px;border-top:1px solid #c9d9e8;border-bottom:0;background:#f4f8fc;color:#102a43;font-size:13px;font-weight:700}
+.jv-total-label{color:#385975!important;font-size:12px!important;letter-spacing:.03em;text-transform:uppercase}
+.jv-row-action{text-align:center}
+.jv-delete-row{display:inline-grid;place-items:center;width:28px;height:28px;padding:0;border:1px solid transparent;border-radius:6px;background:transparent;color:#c22f3e;cursor:pointer}
+.jv-delete-row svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.jv-delete-row:hover:not(:disabled){border-color:#f2c4c9;background:#fff5f6}
+.jv-delete-row:disabled{color:#c3cfdb;cursor:not-allowed}
+
+.jv-grid-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-top:8px}
+.jv-add-row{height:30px;padding:0 12px;border:1px dashed #176db3;border-radius:6px;background:#fff;color:#176db3;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.jv-add-row:hover{background:#f2f8fd}
+.jv-narration{margin-top:14px}
+.jv-narration textarea{min-height:58px;padding:8px 10px;resize:vertical}
+.jv-actions{justify-content:center}
+.jv-container .collection-entry-error{margin-top:10px}
+
+/* Edit popup */
+.jv-modal-backdrop{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;background:#102f5055}
+.jv-modal{display:flex;flex-direction:column;width:min(620px,100%);max-height:calc(100vh - 32px);overflow:auto;border-radius:12px;background:#fff;box-shadow:0 18px 50px #0c253d40}
+.jv-modal-wide{width:min(1100px,100%)}
+.jv-modal-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid #dde7f1}
+.jv-modal-heading h2{margin:0;color:#102a43;font-size:16px}
+.jv-modal-heading button{width:30px;height:30px;border:0;border-radius:6px;background:transparent;color:#607b95;font-size:22px;cursor:pointer}
+.jv-in-modal .jv-container{border:0;border-radius:0;box-shadow:none}
+
+/* Journal List — full-height white container, pager pinned at the bottom (data-page rules). */
+.jv-list-page .jv-date-filter{display:flex;align-items:center;gap:6px;color:#385975;font-size:12px;font-weight:700}
+.jv-list-page .jv-date-filter input{height:36px;padding:0 8px;border:1px solid #c9d9e8;border-radius:7px;font:inherit;font-size:13px}
+.jv-new{height:36px;padding:0 14px;border:1px solid #174d7c;border-radius:7px;background:linear-gradient(135deg,#123a63,#1d5f91);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.jv-list-card{padding:14px;border:1px solid #dde7f1;border-radius:8px;background:#fff;box-shadow:0 4px 16px rgba(18,59,99,.06)}
+.jv-list-table{width:100%;table-layout:fixed;border-collapse:collapse}
+.jv-list-table th{padding:9px 10px;background:#123a63;color:#fff;font-size:12px;font-weight:700;letter-spacing:.3px;text-align:left;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jv-list-table th+th{border-left:1px solid rgba(255,255,255,.15)}
+.jv-list-table td{padding:8px 10px;border-bottom:1px solid #edf2f7;color:#17324d;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jv-list-table tbody tr:hover td{background:#f5f9fd}
+.jv-list-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.jv-list-table tr.jv-empty td{height:54px;color:#71879a;text-align:center}
+.jv-list-table tr.jv-empty:hover td{background:transparent}
+.jv-view-more{margin-left:8px;padding:0;border:0;background:none;color:#176db3;font:inherit;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline}
+.jv-pager{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding-top:12px;color:#17324d;font-size:13px}
+.jv-pager>div{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.jv-page-group{display:inline-flex;align-items:center;gap:6px}
+.jv-ellipsis{color:#71879a}
+.jv-pager button{min-width:36px;height:34px;padding:0 12px;border:1px solid #e1eaf3;border-radius:6px;background:#fff;color:#17324d;font:inherit;font-size:13px;cursor:pointer}
+.jv-pager button:disabled{color:#a3b3c2;cursor:not-allowed}
+.jv-pager button.active{border-color:#123a63;background:#123a63;color:#fff;font-weight:700}
+
+/* View popup */
+.jv-view-body{display:flex;flex-direction:column;gap:12px;padding:16px 18px}
+.jv-view-meta{display:flex;flex-wrap:wrap;gap:6px 22px;margin:0;color:#607b95;font-size:13px}
+.jv-view-meta b{margin-left:6px;color:#102a43}
+.jv-view-table{width:100%;border-collapse:collapse;font-size:13px}
+.jv-view-table th{padding:8px 10px;background:#eef4fa;color:#385975;font-size:11px;font-weight:700;letter-spacing:.03em;text-align:left;text-transform:uppercase}
+.jv-view-table td{padding:8px 10px;border-bottom:1px solid #edf2f7;color:#17324d}
+.jv-view-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.jv-view-table tfoot td{border-top:1px solid #c9d9e8;border-bottom:0;font-weight:700}
+.jv-view-narration{display:flex;flex-direction:column;gap:3px;margin:0;color:#17324d;font-size:13px}
+.jv-view-narration span,.jv-audit strong{color:#607b95;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.jv-audit{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#385975}
+.jv-audit ul{margin:0;padding-left:18px}
+.jv-audit-empty{color:#71879a}
+.jv-modal .jv-actions{margin:0;padding:12px 18px 16px;align-items:center}
+
+@media(max-width:760px){
+  .jv-container{padding:12px}
+  .jv-header{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  /* The grid stacks into one block per row on phones (labels from data-label). */
+  .jv-grid colgroup,.jv-grid thead{display:none}
+  .jv-grid,.jv-grid tbody,.jv-grid tfoot,.jv-grid tr,.jv-grid td{display:block;width:100%;box-sizing:border-box}
+  .jv-grid tbody tr{position:relative;padding:8px 40px 8px 8px;border-bottom:1px solid #dde7f1}
+  .jv-grid td{height:auto;padding:3px 0;border:0!important}
+  .jv-grid td[data-label]::before{content:attr(data-label);display:block;margin-bottom:3px;color:#385975;font-size:11px;font-weight:700}
+  .jv-grid .jv-row-action{position:absolute;top:8px;right:6px;width:auto}
+  .jv-grid tfoot tr{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:8px}
+  .jv-grid tfoot td{height:auto;padding:0;background:transparent}
+  .jv-grid tfoot td:last-child{display:none}
+  .jv-list-page .data-table-area{overflow-x:auto}
+  .jv-list-table{min-width:720px}
+}
+@media(max-width:600px){
+  .jv-actions button{flex:1}
+}
+.jv-grid .jv-amount.jv-auto,.jv-grid .jv-amount[readonly]{background:#eef3f8;color:#3d5873;cursor:default}
+/* Add page: white container fills the viewport; Cancel / Reset / Save pinned to its bottom. */
+.jv-page.data-page .jv-container{display:flex;flex-direction:column}
+.jv-page.data-page .jv-container fieldset{flex:1 1 auto;display:flex;flex-direction:column}
+.jv-page.data-page .jv-actions{margin-top:auto}
+
+/* Add Journal Entry: aligned header fields, fixed-layout DR / CR grid, pinned centred actions.
+   Scoped to the entry page (.jv-page.data-page); the Edit popup keeps its own look. */
+.jv-page.data-page .jv-label{display:flex;align-items:center;gap:4px;min-height:18px;line-height:18px}
+.jv-page.data-page .jv-required{margin-left:0}
+.jv-page.data-page .jv-header{grid-template-columns:repeat(2,260px);gap:16px;align-items:start;margin-bottom:16px}
+.jv-page.data-page .jv-field{gap:8px}
+.jv-page.data-page .jv-field input{height:44px}
+.jv-page.data-page .jv-grid-wrap{overflow:auto;max-height:calc(100vh - 440px);min-height:176px}
+.jv-page.data-page .jv-grid{min-width:820px}
+.jv-page.data-page .jv-grid th{position:sticky;top:0;z-index:1;height:44px}
+.jv-page.data-page .jv-grid td{height:56px;padding:8px 10px}
+.jv-page.data-page .jv-grid select,.jv-page.data-page .jv-grid input[role="combobox"],.jv-page.data-page .jv-grid .jv-amount{height:42px}
+.jv-page.data-page .jv-col-action{width:4%}
+.jv-page.data-page .jv-grid tfoot td{height:48px}
+.jv-page.data-page .jv-grid-bar{justify-content:flex-start;margin-top:12px}
+.jv-page.data-page .jv-narration{margin-top:14px;gap:8px}
+.jv-page.data-page .jv-narration textarea{min-height:80px}
+.jv-page.data-page .jv-actions{padding-top:16px;gap:12px}
+.jv-page.data-page .jv-actions button{min-width:120px;height:42px;padding:0 20px;box-sizing:border-box}
+@media (max-width:640px){.jv-page.data-page .jv-header{grid-template-columns:minmax(0,1fr)}.jv-page.data-page .jv-actions button{flex:1 1 0;min-width:0}}
+.jv-page.data-page .jv-field{margin:0}
+/* Phones keep the real DR / CR grid (scrolls sideways inside its box) instead of the stacked cards. */
+@media (max-width:760px){
+  .jv-page.data-page .jv-grid{display:table;width:100%}
+  .jv-page.data-page .jv-grid colgroup{display:table-column-group}
+  .jv-page.data-page .jv-grid thead{display:table-header-group}
+  .jv-page.data-page .jv-grid tbody{display:table-row-group}
+  .jv-page.data-page .jv-grid tfoot{display:table-footer-group}
+  .jv-page.data-page .jv-grid tr,.jv-page.data-page .jv-grid tfoot tr{display:table-row;position:static;padding:0;width:auto}
+  .jv-page.data-page .jv-grid td{display:table-cell;width:auto;padding:8px 10px;border-bottom:1px solid #edf2f7!important}
+  .jv-page.data-page .jv-grid td[data-label]::before{content:none}
+  .jv-page.data-page .jv-grid .jv-row-action{position:static}
+  .jv-page.data-page .jv-grid tfoot td{background:#f4f8fc;padding:0 10px}
+  .jv-page.data-page .jv-grid tfoot td:last-child{display:table-cell}
+}
+.jv-page.data-page .jv-field.jv-narration{margin-top:16px}

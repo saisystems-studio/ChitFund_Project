@@ -166,7 +166,7 @@
 
 /* Compact, mutually exclusive Holiday / Schedule accordions. */
 .clean-loan-page .holiday-rules-section.loan-accordion{margin-top:16px;border:1px solid #dce8f5;border-radius:9px;background:#fff;overflow:hidden}
-.clean-loan-page .loan-accordion-toggle,.clean-loan-page .schedule-preview-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:42px;padding:10px 13px;border:0;background:#f8fbff;color:#173f65;font:800 13px/1.2 inherit;text-align:left;cursor:pointer}
+.clean-loan-page .loan-accordion-toggle,.clean-loan-page .schedule-preview-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:42px;padding:10px 13px;border:0;background:#f8fbff;color:#173f65;font-family:inherit;font-size:13px;font-weight:800;line-height:1.2;text-align:left;cursor:pointer}
 .clean-loan-page .loan-accordion-toggle:hover,.clean-loan-page .schedule-preview-toggle:hover{background:#edf6ff}
 .clean-loan-page .loan-accordion-toggle.active{border-color:#91c4ef!important;background:#eaf4ff!important;color:#176db3!important}
 .clean-loan-page .loan-accordion-toggle span:last-child,.clean-loan-page .schedule-preview-toggle span:last-child{color:#176db3;font-size:15px}
@@ -185,3 +185,133 @@
 
 .loan-application-date{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:12px;color:var(--text-muted,#607b93)}
 .loan-application-date strong{color:var(--text,#17324d);white-space:nowrap}
+
+.clean-loan-page .loan-accordion-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+.clean-loan-page .loan-accordion-toggle{box-sizing:border-box;gap:6px}
+.clean-loan-page .loan-accordion-toggle>span:first-child{min-width:0}
+.clean-loan-page .accordion-chevron{width:16px;height:16px;flex:0 0 16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.clean-loan-page .schedule-preview-heading-group{position:relative;display:block;min-width:0}
+.clean-loan-page .schedule-preview-heading-group .loan-accordion-toggle{width:100%}
+.clean-loan-page .schedule-preview-heading-group .accordion-chevron{margin-right:36px}
+.clean-loan-page .schedule-preview-heading-group .schedule-preview-pdf{position:absolute;right:7px;top:7px;width:28px;height:28px;border:0;background:transparent}
+@media(max-width:480px){.clean-loan-page .loan-accordion-row{gap:8px}.clean-loan-page .loan-accordion-toggle{padding:5px 8px;font-size:12px}.clean-loan-page .schedule-preview-heading-group .accordion-chevron{margin-right:28px}.clean-loan-page .schedule-preview-heading-group .schedule-preview-pdf{right:4px;top:9px;width:24px;height:24px}}
+
+/* Consistent Loan Details field row across the application variants. */
+.clean-loan-page .clean-top-grid.loan-details-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start;margin-bottom:12px}
+.clean-loan-page .loan-details-grid>.exact-field{min-width:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.clean-loan-page .loan-details-grid>.exact-field>span{margin:0;min-height:16px;line-height:16px;font-size:12px}
+.clean-loan-page .loan-details-grid>.exact-field input,.clean-loan-page .loan-details-grid>.exact-field select{height:37px;min-height:37px;box-sizing:border-box;width:100%;padding:0 10px;font-size:12px}
+@media(max-width:1024px){.clean-loan-page .clean-top-grid.loan-details-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.clean-loan-page .clean-top-grid.loan-details-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* ---- Loan Application alignment (Interest + Mortgage only; Chit unchanged) ----
+   1) Customer / Loan Type / Salesman: three equal columns (was a 4-column grid with an
+      empty fourth column).
+   2) Interest: Loan Amount | Interest Percent | Collection Plan | Collection Date in one
+      4-column row; Collection Date keeps the same column for D / W / M, its label lines up
+      with the others, and the weekday picker is compact (no separate boxed panel). */
+.clean-loan-page.is-interest .clean-top-grid.loan-details-grid,
+.clean-loan-page.is-mortgage .clean-top-grid.loan-details-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;column-gap:16px!important}
+.clean-loan-page.is-interest .loan-details-grid>.exact-field,
+.clean-loan-page.is-mortgage .loan-details-grid>.exact-field{margin:0;min-width:0}
+
+.clean-loan-page.is-interest .interest-top-row{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:16px;row-gap:12px;align-items:start;flex-wrap:initial}
+.clean-loan-page.is-interest .interest-top-row>*{flex:none!important;width:auto!important;max-width:none!important;min-width:0;margin:0!important}
+.clean-loan-page.is-interest .interest-top-row>.exact-field input,
+.clean-loan-page.is-interest .interest-top-row .percent-input{width:100%;max-width:100%}
+.clean-loan-page.is-interest .interest-top-row .collection-plan-field{display:flex;flex-direction:column}
+.clean-loan-page.is-interest .interest-collection-date>.exact-field{margin:0;width:100%}
+.clean-loan-page.is-interest .interest-collection-date select,
+.clean-loan-page.is-interest .interest-collection-date input{width:100%;max-width:100%}
+.clean-loan-page.is-interest .interest-collection-date .interest-schedule-field{margin:0;padding:0;border:0;background:none}
+.clean-loan-page.is-interest .interest-weekdays{flex-wrap:nowrap;gap:4px}
+.clean-loan-page.is-interest .interest-weekdays button{flex:0 0 30px;width:30px;height:30px;padding:0;font-size:11.5px}
+@media(max-width:1100px){.clean-loan-page.is-interest .interest-top-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1024px){.clean-loan-page.is-interest .clean-top-grid.loan-details-grid,.clean-loan-page.is-mortgage .clean-top-grid.loan-details-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:600px){.clean-loan-page.is-interest .clean-top-grid.loan-details-grid,.clean-loan-page.is-mortgage .clean-top-grid.loan-details-grid,.clean-loan-page.is-interest .interest-top-row{grid-template-columns:minmax(0,1fr)!important}}
+/* Same label → control offset as the other fields (label 17px + 6px + 13px = control at 36px). */
+.clean-loan-page.is-interest .interest-top-row .collection-plan-field{padding-top:0}
+.clean-loan-page.is-interest .interest-top-row .collection-plan-options{min-height:37px}
+.clean-loan-page.is-interest .interest-collection-date .interest-schedule-field>b{margin:0 0 6px;line-height:16.8px}
+.clean-loan-page.is-interest .interest-collection-date .interest-weekdays{margin-top:13px;height:37px;align-items:center}
+.clean-loan-page.is-interest .interest-collection-date .interest-schedule-field{display:flex;flex-direction:column}
+/* Seven day circles always fit the column: 30px each, shrinking evenly when narrower. */
+.clean-loan-page.is-interest .interest-top-row>.interest-collection-date{container-type:inline-size}
+.clean-loan-page.is-interest .interest-collection-date .interest-weekdays{display:flex;gap:4px;width:100%}
+.clean-loan-page.is-interest .interest-collection-date .interest-weekdays button{flex:0 0 auto;width:min(30px,calc((100cqw - 24px) / 7));height:min(30px,calc((100cqw - 24px) / 7))}
+
+/* The shared "← Page Name" header: a loan stylesheet hides every h1 in .exact-header,
+   which also hid the page title — show it at the app-wide header size. */
+#root .exact-header .page-breadcrumb h1.page-title{display:block!important;margin:0!important;font-size:16px!important;line-height:1.25!important}
+
+/* Chit schedule PDF: Preview / Download / Print share the Interest PDF button look. */
+.clean-loan-page .chit-schedule-heading .chit-schedule-pdf-actions{position:absolute;right:7px;top:7px;display:flex;gap:2px}
+.clean-loan-page .chit-schedule-heading .chit-schedule-pdf-actions .schedule-preview-pdf{position:static;width:28px;height:28px}
+.clean-loan-page .chit-schedule-heading .accordion-chevron{margin-right:96px}
+@media(max-width:480px){.clean-loan-page .chit-schedule-heading .chit-schedule-pdf-actions{right:4px;top:9px}.clean-loan-page .chit-schedule-heading .chit-schedule-pdf-actions .schedule-preview-pdf{width:24px;height:24px}.clean-loan-page .chit-schedule-heading .accordion-chevron{margin-right:82px}}
+
+/* Customer dropdown + (+) Add Customer. */
+.loan-customer-select{display:flex;align-items:stretch;gap:8px;min-width:0}
+.loan-customer-select>select{flex:1;min-width:0}
+.loan-customer-select .icon-tooltip-wrap{display:flex;flex:0 0 auto}
+.loan-customer-select button{width:42px;min-height:38px;border:0;border-radius:8px;background:#1471e8;color:#fff;font-size:22px;line-height:1;cursor:pointer}
+.loan-customer-select button:hover{background:#0f5fc6}
+
+/* Add Customer opened from the Loan Application (+). */
+.loan-add-customer-backdrop{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,39,66,.32)}
+.loan-add-customer-modal{box-sizing:border-box;width:min(1200px,100%);max-height:calc(100dvh - 32px);overflow:auto;padding:14px 18px;border-radius:10px;background:#f6f9fc;box-shadow:0 22px 65px rgba(15,39,66,.3)}
+@media(max-width:600px){.loan-add-customer-backdrop{padding:0}.loan-add-customer-modal{max-height:100dvh;border-radius:0;padding:10px}}
+
+/* The form owns the white surface; only its content scrolls. The footer has
+   its own flex slot so it never covers dynamic fields. */
+#root .app-shell:is(.layout-desktop,.layout-tablet,.layout-mobile) .main-content:has(> .clean-loan-page) { display:flex; flex-direction:column; }
+#root .app-shell .main-content:has(> .clean-loan-page) > :not(.clean-loan-page) { flex-shrink:0; }
+#root .app-shell:is(.layout-desktop,.layout-tablet,.layout-mobile) .main-content > .clean-loan-page {
+  flex:1 1 0; display:flex; flex-direction:column; min-height:0; height:auto;
+  width:100%; max-width:none; margin:0; padding:0; box-sizing:border-box;
+}
+#root .clean-loan-page > .exact-header { flex:0 0 auto; width:100%; max-width:none; }
+#root .clean-loan-page > form {
+  flex:1 1 0; display:flex; flex-direction:column; min-height:0; overflow:hidden;
+  width:100%; max-width:none; margin:0; padding:18px 20px 16px;
+  box-sizing:border-box; background:#fff; border:1px solid #d9e6f1; border-radius:10px;
+}
+#root .clean-loan-page > form > .clean-panel {
+  flex:1 1 0; min-height:0; width:100%; max-width:none; overflow:auto;
+  margin:0; padding:0; border:0; border-radius:0; background:#fff; box-shadow:none;
+}
+#root .clean-loan-page > form > .clean-actions {
+  flex:0 0 auto; width:100%; max-width:none; margin:0; padding:18px 0 4px;
+  justify-content:center; background:#fff;
+}
+#root .clean-loan-page .loan-details-heading {
+  margin:0 0 16px; padding:0; color:#123b63; font-size:15px; font-weight:700; line-height:1.4;
+}
+/* Avoid "primary" in layout class names: theme.css reserves that substring for buttons. */
+#root .clean-loan-page .loan-party-grid {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 16px;
+  align-items:start; margin:0 0 16px;
+}
+#root .clean-loan-page .loan-party-grid > .exact-field {
+  display:flex; flex-direction:column; gap:6px; min-width:0; margin:0;
+}
+#root .clean-loan-page .loan-party-grid > .exact-field > span {
+  margin:0; min-height:16px; line-height:16px; font-size:12px; color:#294967;
+}
+#root .clean-loan-page .loan-party-grid select {
+  height:37px; min-height:37px; margin:0; padding:0 10px;
+  border:1px solid #c9dbe9; border-radius:6px; background:#fff; color:#294967; font-size:12px;
+}
+#root .clean-loan-page .loan-customer-select { display:flex; align-items:stretch; gap:8px; min-width:0; }
+#root .clean-loan-page .loan-customer-select > select { flex:1 1 0; width:0; min-width:0; }
+#root .clean-loan-page .loan-customer-select .icon-tooltip-wrap { flex:0 0 42px; margin:0; }
+#root .clean-loan-page .loan-customer-select button { height:37px; min-height:37px; margin:0; padding:0; }
+#root .clean-loan-page .clean-top-grid.chit-four-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media(max-width:1024px) {
+  #root .clean-loan-page .clean-top-grid.chit-four-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:600px) {
+  #root .clean-loan-page .loan-party-grid,
+  #root .clean-loan-page .clean-top-grid.chit-four-grid { grid-template-columns:minmax(0,1fr); }
+  #root .clean-loan-page > form { padding:14px 12px; }
+}

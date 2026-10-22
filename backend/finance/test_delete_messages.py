@@ -1,3 +1,4 @@
+from .test_support import ensure_cash_ledger
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
@@ -9,6 +10,7 @@ from .models import ChitGroup, ChitGroupInstallmentDetail, Ledger, LoanInstallme
 
 class DeleteMessageTests(TestCase):
     def setUp(self):
+        ensure_cash_ledger()
         self.client = APIClient()
         self.client.force_authenticate(User.objects.create_user('delete-admin', is_staff=True))
         self.customer = Customer.objects.create(customer_code='DEL001', full_name='Delete Customer', primary_mobile='9876500002', role='BORROWER')

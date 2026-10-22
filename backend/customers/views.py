@@ -1,18 +1,22 @@
 from rest_framework import status, viewsets
 from django.db import transaction
 from django.db.models import ProtectedError
-from rest_framework.decorators import action, api_view
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.db.models import Q
 from django.db.models.functions import Lower
-from .models import CountryMaster, Customer, DistrictMaster, StateMaster
-from .serializers import CustomerSerializer
-from accounts.permissions import CanWriteFinanceData
+from .models import CountryMaster, Customer, CustomerDocumentType, CustomerKycDocument, DistrictMaster, StateMaster
+from .serializers import CustomerDocumentTypeSerializer, CustomerKycDocumentSerializer, CustomerSerializer
+from customers.kyc_security import CanAccessKycDocuments, secure_kyc_response
+from accounts.permissions import CanWriteFinanceData, is_admin_user
+from rest_framework.exceptions import PermissionDenied
 from finance.delete_utils import delete_response
 
 class CustomerViewSet(viewsets.ModelViewSet):
     pagination_class = None
-    queryset = Customer.objects.select_related("group", "done_by_staff").filter(is_active=True)
+    queryset = Customer.objects.select_related("group", "done_by_staff").prefetch_related("ledgers").filter(is_active=True)
     serializer_class = CustomerSerializer
     search_fields = ("customer_code", "full_name", "primary_mobile")
     ordering_fields = ("full_name", "customer_code", "created_at")
@@ -52,7 +56,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         serializer.save(customer_code=f"CUS_{number:03d}")
 
     def get_queryset(self):
-        queryset = Customer.objects.select_related("group", "done_by_staff").filter(is_active=True)
+        queryset = Customer.objects.select_related("group", "done_by_staff").prefetch_related("ledgers").filter(is_active=True)
         role = self.request.query_params.get("role")
         search = self.request.query_params.get("search")
         if role: queryset = queryset.filter(role=role.upper())
@@ -98,6 +102,56 @@ def location_search(request):
         seen.add(identity)
         result.append({"id": row.id, "name": row.name, "state": row.state.name, "country": row.state.country.name, "pincode": row.pincode or ""})
     return Response(result)
+
+@api_view(["GET", "POST"])
+@permission_classes([CanAccessKycDocuments])
+def customer_kyc_documents(request, customer_id):
+    customer = get_object_or_404(Customer, pk=customer_id, is_active=True)
+    if request.method == "POST":
+        serializer = CustomerKycDocumentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(customer=customer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    documents = customer.kyc_documents.all()
+    return Response(CustomerKycDocumentSerializer(documents, many=True).data)
+
+
+# Removing a saved customer document (Edit Customer). Same rule as Staff documents:
+# an Edit/Delete action, so it is reserved for administrators.
+@api_view(["DELETE"])
+@permission_classes([CanAccessKycDocuments])
+def customer_kyc_document_detail(request, customer_id, document_id):
+    if not is_admin_user(request.user):
+        raise PermissionDenied("Only administrators can delete a saved document.")
+    get_object_or_404(CustomerKycDocument, pk=document_id, customer_id=customer_id, customer__is_active=True).delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["GET"])
+@permission_classes([CanWriteFinanceData])
+def customer_document_types(request):
+    # Built-in types live in CustomerKycDocument.DocumentType; this only lists the
+    # custom "Other" names customers have actually used, for the ID Proof dropdown.
+    types = CustomerDocumentType.objects.order_by("name")
+    return Response(CustomerDocumentTypeSerializer(types, many=True).data)
+
+
+@api_view(["GET"])
+@permission_classes([CanAccessKycDocuments])
+def customer_kyc_document_file(request, customer_id, document_id):
+    # Every document is served only through this authenticated endpoint â€” never a raw
+    # media URL â€” and is scoped to the customer id in the path, not just the document id,
+    # so one customer's document link can never be swapped onto another customer.
+    document = get_object_or_404(CustomerKycDocument, pk=document_id, customer_id=customer_id, customer__is_active=True)
+    try:
+        handle = document.file.open("rb")
+    except FileNotFoundError:
+        raise Http404("Document file is missing.")
+    response = FileResponse(handle, as_attachment=bool(request.query_params.get("download")),
+                            filename=document.original_file_name,
+                            content_type=document.file_type or "application/octet-stream")
+    return secure_kyc_response(response)
+
 
 @api_view(["GET"])
 def dashboard(request):

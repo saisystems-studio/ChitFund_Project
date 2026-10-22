@@ -1,4 +1,8 @@
+import os
+import uuid
+
 from django.db import models
+from .kyc_security import private_kyc_storage
 
 
 class CountryMaster(models.Model):
@@ -82,3 +86,56 @@ class Customer(models.Model):
 
     def __str__(self):
         return f"{self.customer_code} - {self.full_name}"
+
+
+def kyc_document_upload_path(instance, filename):
+    # Random filename (never the original) so a guessed/shared path leaks nothing —
+    # documents are only ever served through the authenticated file endpoint anyway.
+    ext = os.path.splitext(filename)[1].lower()
+    return f"kyc_documents/customer_{instance.customer_id}/{uuid.uuid4().hex}{ext}"
+
+
+class CustomerDocumentType(models.Model):
+    """Reusable custom "Other" document-type names, offered back in the ID Proof
+    dropdown once a customer has used them. Built-in types (Aadhaar, PAN, ...) are
+    not stored here — only names a user actually typed under "Other"."""
+    name = models.CharField(max_length=100, unique=True, db_column="Name")
+    created_at = models.DateTimeField(auto_now_add=True, db_column="CreatedAt")
+
+    class Meta:
+        db_table = "CustomerDocumentType_tbl"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class CustomerKycDocument(models.Model):
+    upload_token = models.UUIDField(null=True, blank=True, unique=True)
+    class DocumentType(models.TextChoices):
+        AADHAAR = "AADHAAR", "Aadhaar Card"
+        PAN = "PAN", "PAN Card"
+        RATION = "RATION", "Ration Card"
+        VOTER_ID = "VOTER_ID", "Voter ID"
+        DRIVING_LICENCE = "DRIVING_LICENCE", "Driving Licence"
+        PASSPORT = "PASSPORT", "Passport"
+        BANK_PASSBOOK = "BANK_PASSBOOK", "Bank Passbook"
+        OTHER = "OTHER", "Other"
+
+    id = models.AutoField(primary_key=True, db_column="ID")
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="kyc_documents", db_column="CustomerID")
+    document_type = models.CharField(max_length=20, choices=DocumentType.choices, db_column="DocumentType")
+    other_document_name = models.CharField(max_length=100, blank=True, default="", db_column="OtherDocumentName")
+    file = models.FileField(upload_to=kyc_document_upload_path, storage=private_kyc_storage, db_column="File")
+    original_file_name = models.CharField(max_length=255, db_column="OriginalFileName")
+    file_type = models.CharField(max_length=100, db_column="FileType")
+    file_size = models.PositiveIntegerField(default=0, db_column="FileSize")
+    created_at = models.DateTimeField(auto_now_add=True, db_column="CreatedAt")
+    updated_at = models.DateTimeField(auto_now=True, db_column="UpdatedAt")
+
+    class Meta:
+        db_table = "CustomerKYCDocument_tbl"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.customer.customer_code} - {self.get_document_type_display()}"

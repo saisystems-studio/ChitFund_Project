@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -73,6 +74,21 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
+# Not served by a public static()/media() route — uploaded files (KYC documents) are
+# only ever read back through the authenticated file-streaming endpoint in customers.views.
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
+KYC_PRIVATE_ROOT = Path(os.getenv("KYC_PRIVATE_ROOT", str(BASE_DIR / "private_kyc")))
+# Keeps a single oversized/garbled upload from being accepted at the WSGI layer at all.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CORS_ALLOWED_ORIGINS = [item.strip() for item in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",") if item.strip()]
 REST_FRAMEWORK = {"DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"], "DEFAULT_AUTHENTICATION_CLASSES": ["accounts.temporary_auth.DevelopmentTokenAuthentication"], "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend", "rest_framework.filters.SearchFilter", "rest_framework.filters.OrderingFilter"], "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination", "PAGE_SIZE": 15}
+
+# Cash-in-Hand ledger that Cash-mode Collection / Payment entries post to.
+# Required whenever more than one Cash-in-Hand ledger exists.
+CHITFUND_DEFAULT_CASH_LEDGER_ID = os.getenv("CHITFUND_DEFAULT_CASH_LEDGER_ID", "").strip()
+# A real database ledger id never applies to the throwaway test database.
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    CHITFUND_DEFAULT_CASH_LEDGER_ID = ""

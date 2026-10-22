@@ -1,3 +1,5 @@
+from .test_support import ensure_cash_ledger
+from .models import Ledger
 from datetime import timedelta
 from decimal import Decimal
 
@@ -13,6 +15,7 @@ from .models import (ChitGroup, ChitGroupInstallmentDetail, CollectionTransactio
 
 class ClientRequirementsTests(TestCase):
     def setUp(self):
+        ensure_cash_ledger()
         self.client = APIClient()
         self.client.force_authenticate(User.objects.create_user('requirements-admin', is_staff=True))
         self.customer = Customer.objects.create(customer_code='REQ001', full_name='Test Customer',
@@ -148,7 +151,8 @@ class ClientRequirementsTests(TestCase):
         ledger = self.client.post('/api/finance/ledgers/', {'name': 'Rent', 'group': 'Indirect Expense'}, format='json')
         self.assertEqual(ledger.status_code, 201, getattr(ledger, 'data', None))
         paid_on = (timezone.localdate() - timedelta(days=2)).isoformat()
-        payload = {'ledger': ledger.data['id'], 'accounts': 'Card', 'amount': '75.50',
+        bank = Ledger.objects.create(name='Bank', group='Bank Accounts')
+        payload = {'ledger': ledger.data['id'], 'account': bank.id, 'amount': '75.50',
                    'payment_mode': 'UPI', 'date': paid_on, 'upi_id': 'test@upi', 'transaction_utr': 'REQ123'}
         response = self.client.post('/api/finance/payment-entries/', payload, format='json')
         self.assertEqual(response.status_code, 201, getattr(response, 'data', None))
@@ -158,7 +162,7 @@ class ClientRequirementsTests(TestCase):
         self.assertEqual(saved['transaction_utr'], 'REQ123')
         self.assertEqual(Decimal(saved['amount']), Decimal('75.50'))
         self.assertEqual(self.client.delete(f"/api/finance/ledgers/{ledger.data['id']}/").status_code, 409)
-        for invalid in ({'amount': '0'}, {'accounts': 'Debit'}, {'payment_mode': 'Other'}, {'ledger': None}, {'upi_id': ''}):
+        for invalid in ({'amount': '0'}, {'accounts': 'Debit'}, {'payment_mode': 'Other'}, {'ledger': None}, {'transaction_utr': ''}):
             response = self.client.post('/api/finance/payment-entries/', {**payload, **invalid}, format='json')
             self.assertEqual(response.status_code, 400, response.data)
 

@@ -1,0 +1,79 @@
+/* ===========================================================================
+   Final responsive layer — imported last so it wins over page styles.
+   Layout only: no colours, no business behaviour.
+   =========================================================================== */
+
+/* ---- Invisible scrollbars, scrolling stays functional (Chrome/Edge/Safari/Firefox) ---- */
+*,*::before,*::after{scrollbar-width:none!important;-ms-overflow-style:none!important}
+*::-webkit-scrollbar,*::-webkit-scrollbar-thumb,*::-webkit-scrollbar-track{width:0!important;height:0!important;display:none!important;background:transparent!important}
+.invisible-scroll{overflow:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+
+/* ---- No accidental page-level horizontal scroll ---- */
+html,body{max-width:100%;overflow-x:hidden;overflow-x:clip}
+#root{max-width:100vw;min-width:0}
+#root .app-shell{max-width:100vw;min-width:0}
+#root .main-content{min-width:0;max-width:100%;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+img,svg,video,canvas{max-width:100%}
+
+/* ---- Shrinkable flex/grid children ---- */
+#root .main-content :is(section,form,article,fieldset,.panel,.card,.list-container,.data-container,.form-grid,.form-row,.field,label){min-width:0}
+#root .main-content :is(input,select,textarea){max-width:100%;box-sizing:border-box}
+
+/* ---- Tables scroll inside their own container, columns preserved ---- */
+#root .main-content :is(.table-wrap,.tableWrap,.data-table-area,.scrollable-grid,.rpt-table-wrap,.cwr-table-wrap,.hol-horizontal-scroll){max-width:100%;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+
+/* ---- Touch-friendly controls on coarse pointers ---- */
+@media (pointer:coarse){
+  #root .main-content :is(button,select,input:not([type=checkbox]):not([type=radio])){min-height:36px}
+}
+
+/* ---- Tablet & below: forms wrap, toolbars wrap ---- */
+@media (max-width:1023px){
+  #root .main-content :is(.form-grid,.formGrid,[class*="_formGrid_"]){grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))!important}
+  #root .main-content :is(.page-header,.panel-head,.list-toolbar-controls,.form-actions){flex-wrap:wrap;gap:8px}
+}
+
+/* ---- Phones: single column forms, full-width actions ---- */
+@media (max-width:599px){
+  #root .main-content :is(.form-grid,.formGrid,[class*="_formGrid_"]){grid-template-columns:minmax(0,1fr)!important}
+  #root .main-content .form-actions>button{flex:1 1 auto}
+  /* Dropdown menus, calendars and popovers stay inside the screen */
+  :is([class*="dropdown"],[class*="Dropdown"],[class*="menu"],[class*="calendar"],[class*="Calendar"],[class*="popover"]):is([class*="list"],[class*="List"],[class*="panel"],[class*="Panel"],[class*="popup"],[class*="Popup"]){max-width:calc(100vw - 16px)}
+}
+
+/* ---- Very small phones (≤360px, iPhone SE / fold outer screen) ---- */
+@media (max-width:360px){
+  #root .main-content{padding-left:8px!important;padding-right:8px!important}
+}
+
+/* ===========================================================================
+   Mobile scrolling (≤767px only) — tablet/desktop untouched.
+   The page itself never scrolls; .main-content and the sidebar menu are the two
+   independent scroll areas, both sized to the *visible* viewport (100dvh), so
+   swiping always reaches the last item/footer. Scrollbars stay invisible.
+   =========================================================================== */
+@media (max-width:767px){
+  html,body,#root{height:100%;height:100dvh;overscroll-behavior:none}
+  #root .app-shell.layout-mobile{height:100vh!important;height:100dvh!important;min-height:0!important;max-height:100dvh;overflow:hidden}
+
+  /* Page scroll area — overrides the ≤600px height:auto rule that stopped it scrolling */
+  #root .app-shell.layout-mobile .main-content{display:block;height:100vh!important;height:100dvh!important;min-height:0!important;max-height:100dvh!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scroll-behavior:smooth;padding-bottom:calc(16px + env(safe-area-inset-bottom))!important;box-sizing:border-box}
+
+  /* Pages built as fixed-height viewport panels (calc(100vh - X) + overflow:hidden)
+     grow with their content instead of clipping it; the main area scrolls them. */
+  #root .app-shell.layout-mobile .main-content>:not(.mobile-topbar):not(.table-wrap):not(.scrollable-grid):not([class*="backdrop"]):not([class*="Backdrop"]):not([class*="overlay"]):not([class*="drawer"]):not([class*="modal"]):not([class*="Modal"]),
+  #root .app-shell.layout-mobile .main-content :is(.active-loans-page,.loan-workflow-page,.loan-workflow-card,.chit-form-page,.report-essential-table,.data-page,.collection-page-scroll){height:auto!important;max-height:none!important;overflow-y:visible!important;overflow-x:clip!important}
+  /* List pages still fill the screen when records are few (footer at bottom) */
+  #root .app-shell.layout-mobile .main-content>:is(.data-page,.page,[class*="-page"]){min-height:calc(100dvh - 76px)}
+
+  /* Sidebar drawer: fixed to visible height; the menu (incl. every expanded
+     submenu / nested submenu) scrolls on its own, brand + footer stay put. */
+  #root .app-shell.layout-mobile>aside{height:100dvh!important;max-height:100dvh!important;display:flex!important;flex-direction:column!important;padding-bottom:calc(14px + env(safe-area-inset-bottom))!important;box-sizing:border-box}
+  #root .app-shell.layout-mobile>aside>nav{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+  #root .app-shell.layout-mobile>aside>nav :is([class*="submenu"],[class*="Submenu"],[class*="group"]){max-height:none!important;overflow:visible!important}
+  #root .app-shell.layout-mobile>aside>:not(nav){flex:0 0 auto}
+
+  /* Sidebar open: lock the page behind it (scroll position kept) */
+  #root .app-shell.layout-mobile.mobile-sidebar-open .main-content{overflow-y:hidden!important;touch-action:none}
+  .mobile-sidebar-backdrop{touch-action:none;overscroll-behavior:none}
+}

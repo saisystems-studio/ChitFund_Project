@@ -16,6 +16,7 @@ import "./styles/tooltips.css";
 import "./styles/table-row-hover.css";
 import "./styles/dropdown-chevrons.css";
 import "./styles/scrollable-grids.css";
+import "./styles/responsive-final.css";
 enableTableScrolling(document.getElementById("root"));
 enableZeroSelectOnFocus(document);
 createRoot(document.getElementById("root")).render(<React.StrictMode><CompanyProfileProvider><App /></CompanyProfileProvider></React.StrictMode>);

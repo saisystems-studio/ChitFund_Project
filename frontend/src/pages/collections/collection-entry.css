@@ -25,3 +25,30 @@
 .main-content:has(>.collection-entry-page){padding-top:16px!important;padding-bottom:16px!important;overflow-y:auto}
 .collection-entry-heading{align-items:center}
 .collection-entry-heading .system-date{margin:0}
+
+/* Collection Entry: the page's real scroll container is .main-content, which a global rule
+   (compact-lists.css) locks with overflow:hidden!important — so an expanded "Other Charges"
+   pushed Notes / Save / Cancel below the screen with no way to reach them. On this route the
+   container scrolls vertically again, with the scrollbar hidden in every modern browser;
+   wheel, touchpad, touch and keyboard scrolling keep working. */
+.app-shell .main-content.collection-page-scroll{
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  scrollbar-width:none!important;        /* Firefox */
+  -ms-overflow-style:none!important;     /* legacy Edge / IE */
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+}
+.app-shell .main-content.collection-page-scroll::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}  /* Chrome, Edge, Safari */
+
+/* "Enable Denomination" checkbox (Collection Entry + Payment Entry, Cash account only). */
+.denomination-toggle{display:inline-flex;align-items:center;gap:6px;margin:6px 8px 0 0;color:#385975;font-size:11.5px;font-weight:650;cursor:pointer;user-select:none}
+#root .entry-field .denomination-toggle input[type="checkbox"]{flex:0 0 auto;width:14px;height:14px;margin:0;padding:0;border:0;box-shadow:none;accent-color:#176db3;cursor:pointer}
+.denomination-toggle+.cash-denom-chip{margin-left:0}
+
+/* Previously inherited from the global sidebar `aside` rule (now scoped to .app-shell > aside). */
+.payment-preview{display:flex;flex-direction:column;box-shadow:8px 0 30px #0a37651f}
+@media(max-width:767px){.collection-entry-card .collection-entry-fields,.collection-entry-card .payment-mode-row{grid-template-columns:minmax(0,1fr)}.collection-entry-card .collection-entry-fields>*{grid-column:auto}}
+
+/* Ledger picker (formerly Customer): empty search result line. */
+.entry-customer-options .entry-customer-empty{display:block;padding:8px 10px;color:#8a9dad;font-size:12px}

@@ -34,3 +34,6 @@
   min-width: 16px;
   margin: 0;
 }
+
+.customer-kyc-edit-panel { margin-top: 16px; }
+.customer-kyc-edit-panel h2 { margin: 0 0 10px; color: #1f2937; font-size: 14px; font-weight: 700; }

@@ -1,0 +1,119 @@
+/* ==========================================================================
+   GLOBAL UI STANDARD — full-height white content container for every List /
+   Report / data-grid page.
+
+     Page header / filters
+     .data-container            (white; fills the rest of the screen)
+        .data-table-area        (table header + actual rows, at the top)
+        … flexible white space …
+        .data-footer            (pagination / report footer, at the bottom)
+
+   Roles (classes, or the <DataPage>/<DataContainer>/… wrappers in
+   components/DataPage):
+     .data-page       page root (optional when the container is a direct child of
+                      .main-content)
+     .data-fill       an intermediate wrapper that must pass the height through
+     .data-container  the white container
+     .data-table-area the table region (rows stay at the top, never stretched)
+     .data-footer     pagination / totals footer (pinned to the bottom)
+
+   The shell's .main-content is already a fixed-height scroll area (100vh), so
+   no fixed pixel heights are used: the page is a flex column that grows with its
+   content, the container takes the remaining height, and long lists simply grow
+   the page (single scroll, no nested table scrolling).
+   ========================================================================== */
+
+#root .app-shell .main-content:has(> .data-page),
+#root .app-shell .main-content:has(> .data-container) {
+  display: flex !important;
+  flex-direction: column !important;
+  padding-bottom: 0 !important;          /* no grey strip under the container */
+  overflow-y: auto !important;           /* the page (not the table) scrolls */
+}
+
+/* Headers / toolbars / filters above the container keep their natural height.
+   Without this, the fixed-height flex column shrinks them to their min-height
+   and controls that wrap onto extra lines (tablet/mobile) get painted over. */
+#root .app-shell .main-content:has(> .data-page) > :not(.data-page),
+#root .app-shell .main-content:has(> .data-container) > :not(.data-container),
+#root .data-page > :not(.data-container, .data-fill),
+#root .data-fill > :not(.data-container, .data-fill) { flex-shrink: 0 !important; }
+
+#root .app-shell .main-content > .data-page {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 0 auto !important;
+  overflow: visible !important;
+  width: 100%;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+#root .data-page > .data-fill,
+#root .data-fill > .data-fill {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 0 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  min-height: 0;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#root .app-shell .main-content > .data-container,
+#root .data-page > .data-container,
+#root .data-fill > .data-container {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  margin-bottom: 0 !important;
+  background: #fff !important;
+  /* flush with the bottom of the screen */
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-bottom-width: 0 !important;
+}
+
+/* Rows stay at the top in their natural height; the table area takes the spare
+   height as white space (rows are never stretched — tables keep auto height). */
+#root .data-container > .data-table-area {
+  flex: 1 0 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0;
+  background: #fff;
+}
+#root .data-container > .data-table-area > table,
+#root .data-container > .data-table-area table { height: auto !important; }
+
+/* One page scroll instead of a capped, inner-scrolling grid. */
+#root .data-container .scrollable-grid,
+#root .data-container.scrollable-grid {
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+
+/* Pagination / report footer: always at the bottom of the white container. */
+#root .data-container > .data-footer {
+  margin-top: auto !important;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+[data-theme="dark"] .data-container,
+[data-theme="dark"] .data-container > .data-table-area,
+[data-theme="dark"] .data-container > .data-footer { background: var(--surface-bg, #17222e); }
+
+@media print {
+  .app-shell .main-content > .data-page,
+  .data-page > .data-container { flex: none !important; }
+}

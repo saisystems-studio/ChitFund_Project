@@ -14,6 +14,12 @@
 .mortgage-modal footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding:14px 18px;border-top:1px solid #e5eef7;background:#fbfdff}
 .mortgage-modal footer button{border:1px solid #cfe0ef;background:#fff;color:#176db3;border-radius:7px;padding:9px 14px;font-weight:750;cursor:pointer}
 .mortgage-modal-add footer{justify-content:center}
+.mortgage-modal-add{width:min(780px,calc(100vw - 28px))}
+.mortgage-modal-add .mortgage-product-tax-grid{margin:0 18px}
+.mortgage-modal-add .mortgage-tax-field{margin:0;font-size:12px}
+.mortgage-modal-add .mortgage-tax-field input,.mortgage-modal-add .mortgage-tax-field select{margin:0}
+.mortgage-modal-add .mortgage-tax-field .custom-select{margin:0}
+.mortgage-modal-add .mortgage-uqc-field{font-size:12px}
 .mortgage-master-surface .table-wrap td.mortgage-row-action-cell{text-align:right;white-space:nowrap;width:90px}
 .mortgage-master-surface .mortgage-action-head{text-align:right;width:90px}
 .mortgage-master-surface .table-wrap th:nth-child(1),.mortgage-master-surface .table-wrap td:nth-child(1){width:6%}

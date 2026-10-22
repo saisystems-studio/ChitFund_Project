@@ -58,6 +58,38 @@ def _shift_to_valid(candidate, include_sunday, holidays, previous):
     return current
 
 
+def holiday_calendar():
+    """The saved Holiday Calendar as (off_dates, working_sundays).
+
+    Every active HolidayMaster date is an Off day (no collection), except records of
+    type SUNDAY_WORKING: those mark a Sunday ticked as a Working Day in the calendar.
+    An unticked Sunday is Off by default."""
+    off, working = set(), set()
+    for day, kind in HolidayMaster.objects.filter(is_active=True).values_list("holiday_date", "holiday_type"):
+        if kind == HolidayMaster.SUNDAY_WORKING:
+            if day.weekday() == 6:
+                working.add(day)
+        else:
+            off.add(day)
+    return off, working
+
+
+def calendar_blocked_dates(start, horizon, include_sunday=False, included=(), calendar=None):
+    """Dates between start and horizon on which no installment may fall: saved holidays
+    (unless the loan explicitly includes them) and Sundays that are not ticked Working.
+    A loan's own "Sunday Collection" (include_sunday) keeps every Sunday open, exactly as
+    before; Sunday holidays are then also kept open, matching the existing chit rule."""
+    off, working = calendar or holiday_calendar()
+    included = set(included)
+    blocked = {day for day in off if day not in included and not (include_sunday and day.weekday() == 6)}
+    cursor = start
+    while cursor <= horizon:
+        if cursor.weekday() == 6 and not include_sunday and cursor not in working and cursor not in included:
+            blocked.add(cursor)
+        cursor += timedelta(days=1)
+    return blocked
+
+
 def is_collection_working_day(day, customer_loan, chit_details, holiday_settings=()):
     """Apply the loan-specific Sunday and holiday rules in one place."""
     settings = {item.holiday.holiday_date: item.include_in_schedule for item in holiday_settings}
@@ -65,8 +97,11 @@ def is_collection_working_day(day, customer_loan, chit_details, holiday_settings
     if settings.get(day) is True:
         return True
     if day.weekday() == 6:
-        return bool(chit_details.include_sunday)
-    holiday = HolidayMaster.objects.filter(holiday_date=day, is_active=True).first()
+        if chit_details.include_sunday:
+            return True
+        # A Sunday ticked Working in the Holiday Calendar allows collection.
+        return HolidayMaster.objects.filter(holiday_date=day, is_active=True, holiday_type=HolidayMaster.SUNDAY_WORKING).exists()
+    holiday = HolidayMaster.objects.filter(holiday_date=day, is_active=True).exclude(holiday_type=HolidayMaster.SUNDAY_WORKING).first()
     return holiday is None
 
 
@@ -148,27 +183,11 @@ def generate_customer_chit_installments(loan, chit_details, holiday_settings=())
     """Recalculate and persist a customer's copied schedule in one transaction."""
     group = chit_details.chit_group
     holiday_settings = list(holiday_settings)
-    settings = {setting.holiday_id: setting.include_in_schedule for setting in holiday_settings}
-    active_holidays = HolidayMaster.objects.filter(is_active=True)
-    blocked = set()
-    for holiday in active_holidays:
-        if settings.get(holiday.id, False):
-            continue
-        # IncludeSunday applies to every Sunday, even if it is also listed in
-        # HolidayMaster as a Sunday/custom/government holiday.
-        if holiday.holiday_date.weekday() == 6 and chit_details.include_sunday:
-            continue
-        blocked.add(holiday.holiday_date)
+    # Holidays the loan explicitly includes stay open; everything else follows the saved
+    # Holiday Calendar (holidays Off, Sundays Off unless ticked Working / Sunday Collection).
+    included = {setting.holiday.holiday_date for setting in holiday_settings if setting.include_in_schedule}
     horizon = loan.loan_start_date + timedelta(days=(group.duration * 3 if group.duration_type == "DAY" else group.duration * 366))
-    cursor = loan.loan_start_date
-    while cursor <= horizon:
-        if cursor.weekday() == 6 and not chit_details.include_sunday and cursor not in {
-            setting.holiday.holiday_date for setting in holiday_settings if setting.include_in_schedule
-        }:
-            blocked.add(cursor)
-        cursor += timedelta(days=1)
-    allowed_sundays = {setting.holiday.holiday_date for setting in holiday_settings if setting.include_in_schedule and setting.holiday.holiday_date.weekday() == 6}
-    blocked.difference_update(allowed_sundays)
+    blocked = calendar_blocked_dates(loan.loan_start_date, horizon, bool(chit_details.include_sunday), included)
     rows = generate_chit_schedule(
         loan.loan_start_date, group.duration, group.duration_type,
         collection_day=group.collection_day, collection_month=group.collection_month,
@@ -193,8 +212,12 @@ def generate_customer_chit_installments(loan, chit_details, holiday_settings=())
     return created
 
 
-def generate_customer_interest_installments(loan, interest, include_sunday=False):
-    """Persist the flat-interest schedule without changing the Chit schedule path."""
+def generate_customer_interest_installments(loan, interest, include_sunday=False, included_dates=()):
+    """Persist the flat-interest schedule without changing the Chit schedule path.
+
+    Due dates follow the saved Holiday Calendar: a date on a holiday or an Off Sunday
+    moves forward to the next working day (never duplicating or dropping a row).
+    Installment amounts are unchanged."""
     kind = interest.loan_installment.name
     if kind in ("Daily", "100 Days"):
         rows = [ChitScheduleRow(index + 1, interest.start_date + timedelta(days=index)) for index in range(interest.installment_count)]
@@ -209,6 +232,15 @@ def generate_customer_interest_installments(loan, interest, include_sunday=False
         rows = [ChitScheduleRow(index + 1, _month_date(first_year + index, interest.collection_month, interest.collection_date.day)) for index in range(interest.installment_count)]
     else:
         rows = [ChitScheduleRow(index + 1, _month_date((interest.start_date.replace(day=1) + timedelta(days=32 * index)).year, (interest.start_date.month + index - 1) % 12 + 1, interest.collection_date.day)) for index in range(interest.installment_count)]
+    if rows:
+        horizon = max(row.due_date for row in rows) + timedelta(days=400)
+        blocked = calendar_blocked_dates(min(row.due_date for row in rows), horizon, bool(include_sunday), included_dates)
+        shifted, previous = [], None
+        for row in rows:
+            due = _shift_to_valid(row.due_date, True, blocked, previous)
+            shifted.append(ChitScheduleRow(row.installment_number, due))
+            previous = due
+        rows = shifted
     unit = Decimal(str(interest.installment_amount))
     total = Decimal(str(interest.total_payable_amount))
     created = [CustomerLoanInstallmentDetails(
@@ -227,7 +259,9 @@ def generate_customer_interest_installments(loan, interest, include_sunday=False
 
 def generate_customer_mortgage_installment(loan, mortgage):
     total = money(Decimal(str(mortgage.loan_amount)) + Decimal(str(mortgage.daily_interest_amount)))
-    due_date = loan.loan_start_date + timedelta(days=1)
+    # The single due date (the day after the start) also follows the Holiday Calendar.
+    candidate = loan.loan_start_date + timedelta(days=1)
+    due_date = _shift_to_valid(candidate, True, calendar_blocked_dates(candidate, candidate + timedelta(days=400)), None)
     row = CustomerLoanInstallmentDetails(
         loan=loan,
         installment_number=1,

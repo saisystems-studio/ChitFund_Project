@@ -9,6 +9,7 @@ from rest_framework.response import Response
 
 from accounts.permissions import CanWriteFinanceData
 from staff.serializers import DoneBySerializerMixin
+from .cash_bank import LedgerMappingError, is_account_ledger, resolve_account
 from .models import CollectionAllocation, CollectionTransaction, CustomerLoanDetails, PaymentEntry
 
 ZERO = Decimal('0.00')
@@ -24,6 +25,7 @@ class CollectionAllocationSerializer(serializers.ModelSerializer):
 
 
 class CollectionTransactionSerializer(DoneBySerializerMixin, serializers.ModelSerializer):
+    ledger_group = serializers.CharField(required=False, allow_blank=True, max_length=30)
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
     loan_no = serializers.CharField(source='loan.loan_no', read_only=True)
     allocations = CollectionAllocationSerializer(many=True, read_only=True)
@@ -31,7 +33,7 @@ class CollectionTransactionSerializer(DoneBySerializerMixin, serializers.ModelSe
     class Meta:
         model = CollectionTransaction
         fields = '__all__'
-        read_only_fields = ('customer', 'loan', 'installment', 'created_by', 'modified_by')
+        read_only_fields = ('customer', 'loan', 'installment', 'created_by', 'modified_by', 'advance_amount', 'request_key')
 
     def validate(self, attrs):
         current = lambda key: attrs.get(key, getattr(self.instance, key, None))
@@ -43,17 +45,28 @@ class CollectionTransactionSerializer(DoneBySerializerMixin, serializers.ModelSe
         mode = current('payment_mode')
         if mode not in dict(PaymentEntry.PAYMENT_MODES):
             errors['payment_mode'] = 'Select a valid payment mode.'
-        required = {'UPI': ('upi_id', 'reference_no'), 'Cheque': ('cheque_number', 'cheque_date', 'bank_name'), 'NEFT': ('reference_no', 'bank_name')}.get(mode, ())
+        required = {'UPI': ('upi_id', 'reference_no'), 'Cheque': ('cheque_number', 'cheque_date', 'bank_name'), 'NEFT': ('reference_no', 'bank_name'),
+                    'RTGS': ('reference_no', 'bank_name'), 'IMPS': ('reference_no', 'bank_name')}.get(mode, ())
         for key in required:
             if not current(key):
                 errors[key] = 'This field is required.'
-        account, ledger, group = current('account'), current('ledger'), current('ledger_group')
-        if account and account.group not in PaymentEntry.ACCOUNT_GROUPS:
-            errors['account'] = 'Select a Cash or Bank account.'
-        if ledger and (ledger.group not in dict(CollectionTransaction.LEDGER_GROUPS) or (group and group != ledger.group)):
+        ledger, group = current('ledger'), current('ledger_group')
+        # Cash/Bank side follows the Payment Mode (see cash_bank.resolve_account); an edit
+        # that keeps a valid Cash/Bank ledger keeps it, so history is not re-posted.
+        if 'payment_mode' not in errors:
+            try:
+                attrs['account'] = resolve_account(mode, attrs.get('account'), getattr(self.instance, 'account', None))
+            except LedgerMappingError as error:
+                errors[error.field] = error.message
+        if ledger and group and group != ledger.group:
             errors['ledger'] = 'Select a Ledger matching the selected group.'
         if ledger and not group:
             attrs['ledger_group'] = group = ledger.group
+        party = current('party_ledger')
+        if party and party.customer_id and party.customer_id != current('customer').pk:
+            errors['party_ledger'] = 'Select a Ledger belonging to the existing customer.'
+        if 'party_ledger' in attrs and is_account_ledger(party):
+            errors['party_ledger'] = 'Cash in Hand and Bank Accounts belong in Accounts, not Ledger.'
         if current('ledger_amount') and not group:
             errors['ledger_group'] = 'Select a Ledger for the Ledger Amount.'
         if errors:
@@ -64,7 +77,7 @@ class CollectionTransactionSerializer(DoneBySerializerMixin, serializers.ModelSe
 def reverse_collection(receipt, rows):
     by_id = {row.pk: row for row in rows}
     splits = list(receipt.allocations.all())
-    if not splits:
+    if not splits and receipt.collection_amount > receipt.advance_amount:
         # Only a single-installment loan has an unambiguous legacy split.
         row = by_id.get(receipt.installment_id)
         other_legacy = receipt.loan.collection_transactions.exclude(pk=receipt.pk).filter(allocations__isnull=True).exists()
@@ -123,24 +136,40 @@ class CollectionTransactionViewSet(mixins.RetrieveModelMixin, mixins.UpdateModel
         receipt, loan, rows = self.locked_receipt()
         serializer = self.get_serializer(receipt, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        # The installments the user allocated this receipt to (View Statement) are kept on edit.
+        original = [(split.installment_id, split.amount) for split in receipt.allocations.all()]
         reverse_collection(receipt, rows)
         data = serializer.validated_data
         amount = data.get('collection_amount', receipt.collection_amount)
         penalty = data.get('adjustment_amount', receipt.adjustment_amount)
         discount = data.get('discount_amount', receipt.discount_amount)
         available = sum((max(ZERO, row.installment_amount - row.paid_amount) for row in rows), ZERO)
-        if amount > available + penalty - discount:
+        if amount < receipt.advance_amount:
+            raise serializers.ValidationError({'collection_amount': 'Amount cannot be less than the saved advance.'})
+        if amount - receipt.advance_amount > available + penalty - discount:
             raise serializers.ValidationError({'collection_amount': 'Amount exceeds the remaining loan outstanding.'})
-        remaining, splits = amount, []
-        for row in rows:
-            applied = min(max(ZERO, row.installment_amount - row.paid_amount), remaining)
+        by_id = {row.pk: row for row in rows}
+        remaining, applied_to = amount - receipt.advance_amount, {}
+
+        def apply(row, limit):
+            nonlocal remaining
+            applied = min(limit, max(ZERO, row.installment_amount - row.paid_amount), remaining)
             if applied > 0:
                 row.paid_amount += applied
                 remaining -= applied
-                splits.append((row, applied))
-        if not splits:
+                applied_to[row.pk] = applied_to.get(row.pk, ZERO) + applied
+
+        # Saved split first (a reduced amount trims it from the last due back); only an
+        # increased amount spreads its extra oldest-first.
+        for installment_id, value in original:
+            if installment_id in by_id:
+                apply(by_id[installment_id], value)
+        for row in rows:
+            apply(row, remaining)
+        splits = [(row, applied_to[row.pk]) for row in rows if row.pk in applied_to]
+        if not splits and amount > receipt.advance_amount:
             raise serializers.ValidationError({'collection_amount': 'No installment balance is available for this collection.'})
-        first = splits[0][0]
+        first = splits[0][0] if splits else by_id[receipt.installment_id]
         first.penalty_amount += penalty
         receipt = serializer.save(installment=first, modified_by=request.user.get_username())
         CollectionAllocation.objects.bulk_create([CollectionAllocation(transaction=receipt, installment=row, amount=applied) for row, applied in splits])

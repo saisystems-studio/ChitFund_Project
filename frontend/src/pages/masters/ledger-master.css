@@ -89,3 +89,23 @@
 /* Ledger List footer: more space above, sits near the card bottom with its own padding. */
 .ledger-page .ledger-list .ledger-pager{align-items:center;margin-top:24px;padding:14px 4px 6px}
 .ledger-page .ledger-list .ledger-pager>div{align-items:center}
+.ledger-return-hint{margin:-4px 0 12px;padding:7px 10px;border:1px solid #cfe0ef;border-radius:6px;background:#f1f7fd;color:#174d7c;font-size:12px}
+
+/* Bank Details: shown below the ledger fields only when Group resolves to Bank Accounts. */
+.ledger-bank{min-width:0;margin:12px 0 0;padding:12px 14px 14px;border:1px solid #e6eef6;border-radius:6px;background:#fbfdff}
+.ledger-bank legend{padding:0 6px;color:#123a63;font-size:13px;font-weight:800}
+.ledger-bank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px}
+.ledger-bank .ledger-input{height:38px}
+.ledger-bank-summary{display:block;margin-top:2px;color:#607b93;font-size:11px;font-weight:500;overflow-wrap:anywhere}
+@media(max-width:600px){.ledger-bank-grid{grid-template-columns:1fr;gap:12px}.ledger-bank{padding:10px 12px 12px}}
+
+/* Many pages (large datasets): page buttons wrap instead of pushing "Next" off-screen. */
+.ledger-pager{flex-wrap:wrap;row-gap:8px}
+.ledger-pager>div:last-child{flex:1 1 auto;flex-wrap:wrap;justify-content:flex-end;row-gap:6px;min-width:0}
+/* Linked-customer note (Add Ledger -> Add Customer -> back). */
+.ledger-linked-note{color:#2f7a4f;font-size:12px;font-weight:600}
+/* Keep Name / Group / Opening Balance on one line: fields start at the top (the linked note under
+   Group must not stretch the rows) and the Group dropdown is the same 40px as the inputs. */
+.ledger-fields{align-items:start}
+.ledger-fields>.ledger-field{align-content:start}
+.ledger-fields>.ledger-field [role="combobox"]{height:40px;margin:0;box-sizing:border-box}

@@ -1,0 +1,9 @@
+.mortgage-uqc-field{display:flex;flex-direction:column;gap:6px;min-width:0;color:#385975;font-size:12px;font-weight:750}
+.mortgage-uqc-field>span>b{color:#ef4444}
+.mortgage-uqc-field>.searchable-select,.mortgage-uqc-field>div{min-width:0}
+.mortgage-uqc-field input[role="combobox"]{box-sizing:border-box;width:100%;min-width:0;height:40px;margin:0;padding:0 10px;border:1px solid #cfe0ef;border-radius:7px;background:#fff;color:#294967;font:inherit;font-size:13px;font-weight:500}
+.mortgage-uqc-add{display:flex;gap:5px;min-width:0}
+.mortgage-uqc-add input{box-sizing:border-box;flex:1;min-width:0;height:40px;margin:0;padding:0 9px;border:1px solid #cfe0ef;border-radius:7px;color:#294967;font:inherit;font-size:13px}
+.mortgage-uqc-add button{flex:0 0 auto;height:40px;padding:0 8px;border:1px solid #cfe0ef;border-radius:7px;background:#edf6ff;color:#176db3;font:inherit;font-size:12px;font-weight:750;white-space:nowrap;cursor:pointer}
+.mortgage-uqc-add button:disabled{opacity:.55;cursor:wait}
+.mortgage-uqc-field small{color:#b83950;font-size:11px}

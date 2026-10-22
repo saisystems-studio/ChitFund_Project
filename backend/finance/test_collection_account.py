@@ -52,6 +52,6 @@ class CollectionAccountTests(TestCase):
             self.assertEqual(self.collect(account_id=account_id).status_code, 400)
         self.assertFalse(CollectionTransaction.objects.exists())
 
-    def test_account_remains_optional_for_existing_callers(self):
+    def test_cash_collection_without_account_posts_to_cash_in_hand(self):
         self.assertEqual(self.collect().status_code, 200)
-        self.assertIsNone(CollectionTransaction.objects.get(loan_id=self.loan['id']).account_id)
+        self.assertEqual(CollectionTransaction.objects.get(loan_id=self.loan['id']).account_id, self.cash.id)

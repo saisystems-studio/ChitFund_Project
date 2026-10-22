@@ -1,0 +1,49 @@
+/* Today Collection Report: status badges, clickable particulars, and the read-only detail modal. */
+.tcr-status{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.tcr-status-completed{background:#e3f5e8;color:#0b7a2f}
+.tcr-status-partial{background:#fff3dc;color:#9a5b00}
+.tcr-status-pending{background:#eef2f6;color:#4f6a84}
+
+.tcr-particulars{display:block;width:100%;padding:0;border:0;background:none;color:var(--rpt-accent,#176db3);font:inherit;font-size:12px;font-weight:700;text-align:left;cursor:pointer;white-space:normal}
+.tcr-particulars:hover{text-decoration:underline}
+.tcr-particulars:focus-visible{outline:2px solid #8ec5f5;outline-offset:2px;border-radius:3px}
+
+.tcr-detail-backdrop{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(12,37,61,.32)}
+.tcr-detail{display:flex;flex-direction:column;width:min(760px,100%);max-height:92vh;overflow:hidden;border-radius:11px;background:#fff;box-shadow:0 20px 48px rgba(16,52,82,.28);color:#102a43}
+.tcr-detail>header{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #d8e4ef}
+.tcr-detail>header>div{flex:1 1 auto;min-width:0}
+.tcr-detail>header h2{margin:0;overflow:hidden;color:#0b3157;font-size:15px;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+.tcr-detail>header small{color:#6b7f93;font-size:11.5px}
+.tcr-detail-close{flex:0 0 auto;border:0;background:none;color:#607b93;font-size:21px;line-height:1;cursor:pointer}
+.tcr-detail-body{flex:1 1 auto;overflow-y:auto;padding:12px 16px 4px}
+.tcr-detail-section{margin:0 0 12px;padding:10px 12px;border:1px solid #e5edf5;border-radius:8px}
+.tcr-detail-section h3{margin:0 0 8px;color:#123a63;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.tcr-detail-section dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 14px;margin:0}
+.tcr-detail-section dl>div{min-width:0}
+.tcr-detail-section dl>div.wide{grid-column:1/-1}
+.tcr-detail-section dt{color:#6b7f93;font-size:10.5px;font-weight:700}
+.tcr-detail-section dd{margin:2px 0 0;overflow-wrap:anywhere;color:#102a43;font-size:12.5px;font-weight:600}
+.tcr-history-wrap{overflow-x:auto}
+.tcr-history{width:100%;border-collapse:collapse;font-size:12px}
+#root .tcr-history thead{background:none!important}
+#root .tcr-history thead th{height:auto;padding:6px 8px;border-radius:0!important;background:#f3f7fb!important;color:#4f6a84!important;font-size:10px;text-align:left}
+.tcr-history td{padding:6px 8px;border-bottom:1px solid #eef2f6;white-space:nowrap}
+.tcr-history .num{text-align:right;font-variant-numeric:tabular-nums}
+.tcr-history tbody tr{cursor:pointer}
+.tcr-history tbody tr.selected td{background:#eef6fc}
+.tcr-detail-empty,.tcr-detail-hint{margin:4px 0 0;color:#6b7f93;font-size:12px}
+.tcr-detail>footer{display:flex;justify-content:flex-end;gap:8px;padding:11px 16px;border-top:1px solid #d8e4ef}
+.tcr-btn{height:34px;min-width:84px;padding:0 14px;border:1px solid #cfdcea;border-radius:6px;background:#fff;color:#174d7c;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.tcr-btn:hover:not(:disabled){background:#f1f7fd}
+.tcr-btn:disabled{opacity:.55;cursor:not-allowed}
+.tcr-btn-danger{border-color:#efc2c9;color:#b83950}
+.tcr-btn-danger:hover:not(:disabled){background:#fdf0f2}
+.tcr-btn-primary{border-color:#174d7c;background:linear-gradient(135deg,#123a63,#1d5f91);color:#fff}
+.tcr-btn-primary:hover:not(:disabled){background:#123a63}
+@media(max-width:640px){.tcr-detail-section dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+body:has(.tcr-detail-backdrop) .transaction-edit-backdrop{z-index:110}
+/* Today Collection Report table: 11 columns — headers may wrap to two lines and cells use
+   slightly tighter padding so nothing is clipped at common laptop widths. */
+.today-collection-page .rpt-table th{white-space:normal;line-height:1.2;padding:4px 8px;text-overflow:clip}
+.today-collection-page .rpt-table td{padding-left:8px;padding-right:8px}
+.today-collection-page .rpt-table td:last-child{overflow:visible}
